@@ -84,6 +84,7 @@ h3 { margin-bottom: 8px; color: var(--warning); }
 .level-panel, .level-card, .editor-card, .result-card { padding: 24px; }
 .play-area { display: grid; gap: 24px; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.panel-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 
 .level-list { display: grid; gap: 12px; }
 .level-button {
