@@ -20,8 +20,12 @@ const elements = {
   resetProgressButton: document.querySelector('#resetProgressButton'),
   databaseIntro: document.querySelector('#databaseIntro'),
   gameLayout: document.querySelector('#gameLayout'),
+  pathSelection: document.querySelector('#pathSelection'),
+  beginnerIntro: document.querySelector('#beginnerIntro'),
   createDatabaseButton: document.querySelector('#createDatabaseButton'),
   startLevelsButton: document.querySelector('#startLevelsButton'),
+  startBeginnerPathButton: document.querySelector('#startBeginnerPathButton'),
+  startLevelOneButton: document.querySelector('#startLevelOneButton'),
   backToLevelsButton: document.querySelector('#backToLevelsButton'),
   showDatabaseInfoButton: document.querySelector('#showDatabaseInfoButton'),
   introFeedback: document.querySelector('#introFeedback')
@@ -31,6 +35,8 @@ let SQL;
 let db;
 let isDatabaseReady = false;
 let hasLevelSessionStarted = false;
+let selectedPath = null;
+let hasBeginnerIntroCompleted = false;
 let currentLevelIndex = 0;
 let progress = loadProgress();
 
@@ -41,7 +47,9 @@ elements.nextButton.addEventListener('click', goToNextLevel);
 elements.resetProgressButton.addEventListener('click', resetProgress);
 elements.createDatabaseButton.addEventListener('click', createPracticeDatabase);
 elements.startLevelsButton.addEventListener('click', startLevels);
-elements.backToLevelsButton.addEventListener('click', showLevels);
+elements.startBeginnerPathButton.addEventListener('click', startBeginnerPath);
+elements.startLevelOneButton.addEventListener('click', completeBeginnerIntro);
+elements.backToLevelsButton.addEventListener('click', showLearningFlow);
 elements.showDatabaseInfoButton.addEventListener('click', showDatabaseInfo);
 
 async function init() {
@@ -79,10 +87,58 @@ function createPracticeDatabase() {
 }
 
 function startLevels() {
-  currentLevelIndex = Math.min(progress.currentLevelIndex || 0, LEVELS.length - 1);
   hasLevelSessionStarted = true;
+  showLearningFlow();
+}
+
+function startBeginnerPath() {
+  selectedPath = 'beginner';
+  hasLevelSessionStarted = true;
+  showLearningFlow();
+}
+
+function completeBeginnerIntro() {
+  hasBeginnerIntroCompleted = true;
+  currentLevelIndex = Math.min(progress.currentLevelIndex || 0, LEVELS.length - 1);
   showLevels();
   setFeedback('Bereit für deine erste Quest!', 'info');
+}
+
+function showLearningFlow() {
+  if (!isDatabaseReady) {
+    setIntroFeedback('Bitte erstelle zuerst die Übungsdatenbank.', 'error');
+    showDatabaseInfo();
+    return;
+  }
+
+  if (!selectedPath) {
+    showPathSelection();
+    return;
+  }
+
+  if (selectedPath === 'beginner' && !hasBeginnerIntroCompleted) {
+    showBeginnerIntro();
+    return;
+  }
+
+  showLevels();
+}
+
+function hideLearningViews() {
+  elements.databaseIntro.hidden = true;
+  elements.pathSelection.hidden = true;
+  elements.beginnerIntro.hidden = true;
+  elements.gameLayout.hidden = true;
+}
+
+function showPathSelection() {
+  hideLearningViews();
+  elements.pathSelection.hidden = false;
+}
+
+function showBeginnerIntro() {
+  hideLearningViews();
+  elements.beginnerIntro.hidden = false;
 }
 
 function showLevels() {
@@ -92,15 +148,15 @@ function showLevels() {
     return;
   }
 
-  elements.databaseIntro.hidden = true;
+  hideLearningViews();
   elements.gameLayout.hidden = false;
   renderLevelList();
   loadLevel(currentLevelIndex);
 }
 
 function showDatabaseInfo() {
+  hideLearningViews();
   elements.databaseIntro.hidden = false;
-  elements.gameLayout.hidden = true;
   updateDatabaseIntroActions();
 }
 
