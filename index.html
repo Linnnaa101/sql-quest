@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Quest</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero card">
+      <div>
+        <p class="eyebrow">Lernspiel für Datenbanken</p>
+        <h1>SQL Quest</h1>
+        <p class="hero-text">Löse kurze SQL-Aufgaben direkt im Browser und sammle Punkte für deinen Fortschritt.</p>
+      </div>
+      <div class="score-card" aria-live="polite">
+        <span>Punktestand</span>
+        <strong id="score">0</strong>
+      </div>
+    </header>
+
+    <main class="game-layout">
+      <aside class="card level-panel" aria-label="Level-Auswahl">
+        <div class="panel-heading">
+          <h2>Level</h2>
+          <button id="resetProgressButton" class="ghost-button" type="button">Zurücksetzen</button>
+        </div>
+        <nav id="levelList" class="level-list"></nav>
+      </aside>
+
+      <section class="play-area">
+        <article class="card level-card">
+          <div class="level-meta">
+            <span id="difficulty" class="pill">Anfänger</span>
+            <span id="topic" class="pill secondary">SELECT</span>
+          </div>
+          <h2 id="levelTitle">Level wird geladen …</h2>
+          <p id="explanation" class="muted"></p>
+          <div class="task-box">
+            <h3>Aufgabe</h3>
+            <p id="task"></p>
+          </div>
+          <p id="hintText" class="hint-text" hidden></p>
+        </article>
+
+        <article class="card editor-card">
+          <label for="sqlInput">Deine SQL-Abfrage</label>
+          <textarea id="sqlInput" spellcheck="false" rows="7" aria-describedby="editorHelp"></textarea>
+          <p id="editorHelp" class="muted small">Erlaubt sind nur lesende Abfragen, zum Beispiel SELECT.</p>
+          <div class="button-row">
+            <button id="runButton" class="primary-button" type="button">Ausführen</button>
+            <button id="hintButton" class="secondary-button" type="button">Hinweis</button>
+            <button id="nextButton" class="secondary-button" type="button">Nächstes Level</button>
+          </div>
+          <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+        </article>
+
+        <article class="card result-card">
+          <div class="panel-heading">
+            <h2>Ergebnis</h2>
+            <span id="rowCount" class="muted small"></span>
+          </div>
+          <div id="resultTable" class="table-wrap empty-state">Noch keine Abfrage ausgeführt.</div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+  <script src="levels.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
