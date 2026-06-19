@@ -35,6 +35,24 @@ Anfängerinnen und Anfänger sollen SQL-Abfragen Schritt für Schritt üben kön
 
 > Hinweis: Für `sql.js` wird eine Internetverbindung benötigt, weil die Bibliothek im MVP über ein CDN geladen wird.
 
+## Online-Demo
+
+Die App kann über GitHub Pages veröffentlicht werden. Nach Aktivierung von GitHub Pages unter den Repository-Einstellungen ist SQL Quest online erreichbar.
+
+## Entwicklung
+
+Für lokale Entwicklung kann ein einfacher statischer Server genutzt werden:
+
+```bash
+python3 -m http.server 8000
+```
+
+Dann im Browser öffnen:
+
+```text
+http://localhost:8000
+```
+
 ## Geplante nächste Schritte
 
 - Weitere Level und Themen wie `LIMIT`, Aggregationen, `GROUP BY` und Joins ergänzen
