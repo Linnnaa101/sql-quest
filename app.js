@@ -10,9 +10,11 @@ const elements = {
   explanation: document.querySelector('#explanation'),
   task: document.querySelector('#task'),
   hintText: document.querySelector('#hintText'),
+  solutionBox: document.querySelector('#solutionBox'),
   sqlInput: document.querySelector('#sqlInput'),
   runButton: document.querySelector('#runButton'),
   hintButton: document.querySelector('#hintButton'),
+  solutionButton: document.querySelector('#solutionButton'),
   nextButton: document.querySelector('#nextButton'),
   feedback: document.querySelector('#feedback'),
   resultTable: document.querySelector('#resultTable'),
@@ -43,6 +45,7 @@ let progress = loadProgress();
 window.addEventListener('DOMContentLoaded', init);
 elements.runButton.addEventListener('click', runPlayerQuery);
 elements.hintButton.addEventListener('click', showHint);
+elements.solutionButton.addEventListener('click', showSolution);
 elements.nextButton.addEventListener('click', goToNextLevel);
 elements.resetProgressButton.addEventListener('click', resetProgress);
 elements.createDatabaseButton.addEventListener('click', createPracticeDatabase);
@@ -238,9 +241,10 @@ function seedDatabase() {
 }
 
 function loadProgress() {
-  const fallback = { score: 0, solvedLevelIds: [], currentLevelIndex: 0 };
+  const fallback = { score: 0, solvedLevelIds: [], currentLevelIndex: 0, savedQueries: {} };
   try {
-    return { ...fallback, ...JSON.parse(localStorage.getItem(STORAGE_KEY)) };
+    const storedProgress = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    return { ...fallback, ...storedProgress, savedQueries: storedProgress.savedQueries || {} };
   } catch {
     return fallback;
   }
@@ -276,7 +280,9 @@ function loadLevel(index) {
   elements.task.textContent = level.task;
   elements.hintText.textContent = `💡 Tipp: ${level.hint}`;
   elements.hintText.hidden = true;
-  elements.sqlInput.value = '';
+  elements.solutionBox.textContent = `Lösung: ${level.expectedSql}`;
+  elements.solutionBox.hidden = true;
+  elements.sqlInput.value = progress.savedQueries[level.id] || '';
   elements.sqlInput.placeholder = 'Schreibe hier deine SQL-Abfrage …';
   elements.resultTable.className = 'table-wrap empty-state';
   elements.resultTable.textContent = 'Noch keine Abfrage ausgeführt.';
@@ -376,6 +382,8 @@ function renderResult(result) {
 
 function markLevelSolved() {
   const level = LEVELS[currentLevelIndex];
+  const sql = elements.sqlInput.value.trim();
+  progress.savedQueries[level.id] = sql;
   if (!progress.solvedLevelIds.includes(level.id)) {
     progress.solvedLevelIds.push(level.id);
     progress.score += level.points;
@@ -390,13 +398,18 @@ function showHint() {
   setFeedback('Der Hinweis ist jetzt sichtbar.', 'info');
 }
 
+function showSolution() {
+  elements.solutionBox.hidden = false;
+  setFeedback('Die Musterlösung ist jetzt sichtbar. Führe sie aus, wenn du das Level lösen möchtest.', 'info');
+}
+
 function goToNextLevel() {
   const nextIndex = (currentLevelIndex + 1) % LEVELS.length;
   loadLevel(nextIndex);
 }
 
 function resetProgress() {
-  progress = { score: 0, solvedLevelIds: [], currentLevelIndex: 0 };
+  progress = { score: 0, solvedLevelIds: [], currentLevelIndex: 0, savedQueries: {} };
   saveProgress();
   loadLevel(0);
 }

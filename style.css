@@ -435,3 +435,14 @@ button:disabled {
   .path-grid { grid-template-columns: 1fr; }
   .path-card { min-height: auto; }
 }
+
+.solution-box {
+  margin-top: 16px;
+  padding: 16px 18px;
+  border: 1px solid rgba(57, 217, 138, 0.45);
+  border-radius: 16px;
+  background: rgba(57, 217, 138, 0.12);
+  color: #d8fff0;
+  font: 1rem/1.5 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  white-space: pre-wrap;
+}
