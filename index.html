@@ -126,6 +126,55 @@ produkte 1 ─── n bestellpositionen</pre>
       <div id="introFeedback" class="feedback info" role="status" aria-live="polite">Bereit zum Erstellen der Übungsdatenbank.</div>
     </section>
 
+    <section id="pathSelection" class="card path-selection" aria-labelledby="pathSelectionTitle" hidden>
+      <p class="eyebrow">Schritt 2</p>
+      <h2 id="pathSelectionTitle">Wähle deinen Lernpfad</h2>
+      <p class="muted">Starte passend zu deinem Wissen. Weitere Lernpfade werden später freigeschaltet.</p>
+
+      <div class="path-grid">
+        <article class="path-card active-path">
+          <div class="path-card-header">
+            <h3>Anfänger</h3>
+          </div>
+          <p>Starte mit den Grundlagen: SELECT, Spalten, WHERE, Sortieren und einfache Auswertungen.</p>
+          <button id="startBeginnerPathButton" class="primary-button" type="button">Anfänger starten</button>
+        </article>
+
+        <article class="path-card disabled-path" aria-disabled="true">
+          <div class="path-card-header">
+            <h3>Fortgeschrittene</h3>
+            <span class="coming-soon-badge">Kommt bald</span>
+          </div>
+          <p>Lerne später JOINs, mehrere Tabellen, GROUP BY und Beziehungen.</p>
+          <button class="secondary-button" type="button" disabled>Fortgeschrittene starten</button>
+        </article>
+
+        <article class="path-card disabled-path" aria-disabled="true">
+          <div class="path-card-header">
+            <h3>Meister</h3>
+            <span class="coming-soon-badge">Kommt bald</span>
+          </div>
+          <p>Für komplexe Abfragen, Optimierung, Datenmodellierung und echte SQL-Herausforderungen.</p>
+          <button class="secondary-button" type="button" disabled>Meister starten</button>
+        </article>
+      </div>
+    </section>
+
+    <section id="beginnerIntro" class="card beginner-intro" aria-labelledby="beginnerIntroTitle" hidden>
+      <p class="eyebrow">Schritt 3</p>
+      <h2 id="beginnerIntroTitle">Einweisung: Deine erste SQL-Abfrage</h2>
+      <p>SQL ist eine Sprache, mit der du Daten aus Datenbanken abfragen kannst.</p>
+      <p>Eine Datenbank besteht aus Tabellen.<br>Eine Tabelle besteht aus Spalten und Zeilen.</p>
+      <p>In SQL Quest arbeiten wir zuerst mit der Tabelle <code>kunden</code>.</p>
+      <p>Mit <code>SELECT</code> sagst du, welche Daten du sehen möchtest.<br>Mit <code>FROM</code> sagst du, aus welcher Tabelle die Daten kommen.<br>Das Sternchen <code>*</code> bedeutet: Zeige alle Spalten.</p>
+      <p>Die erste Abfrage lautet:</p>
+      <pre class="sql-example"><code>SELECT * FROM kunden;</code></pre>
+      <p>Das bedeutet:<br>Zeige alle Spalten aus der Tabelle <code>kunden</code>.</p>
+      <div class="button-row">
+        <button id="startLevelOneButton" class="primary-button" type="button">Level 1 starten</button>
+      </div>
+    </section>
+
     <main id="gameLayout" class="game-layout" hidden>
       <aside class="card level-panel" aria-label="Level-Auswahl">
         <div class="panel-heading">
@@ -159,7 +208,7 @@ produkte 1 ─── n bestellpositionen</pre>
           <p id="editorHelp" class="muted small">Erlaubt sind nur lesende Abfragen, zum Beispiel SELECT.</p>
           <div class="button-row">
             <button id="runButton" class="primary-button" type="button">Ausführen</button>
-            <button id="hintButton" class="secondary-button" type="button">Hinweis</button>
+            <button id="hintButton" class="hint-button" type="button" aria-label="Tipp anzeigen">💡 Tipp</button>
             <button id="nextButton" class="secondary-button" type="button">Nächstes Level</button>
           </div>
           <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
