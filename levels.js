@@ -8,9 +8,8 @@ const LEVELS = [
     topic: 'SELECT',
     explanation: 'Mit SELECT liest man Daten aus einer Tabelle. Das Sternchen * bedeutet, dass alle Spalten angezeigt werden.',
     task: 'Zeige alle Kunden aus der Tabelle kunden an.',
-    starterSql: 'SELECT * FROM kunden;',
     expectedSql: 'SELECT * FROM kunden;',
-    hint: 'Verwende SELECT * FROM kunden;',
+    hint: 'Du brauchst SELECT, das Sternchen * und FROM kunden.',
     points: 10
   },
   {
@@ -20,9 +19,8 @@ const LEVELS = [
     topic: 'Spalten auswählen',
     explanation: 'Man kann gezielt auswählen, welche Spalten angezeigt werden sollen.',
     task: 'Zeige nur die Namen aller Kunden an.',
-    starterSql: 'SELECT name FROM kunden;',
     expectedSql: 'SELECT name FROM kunden;',
-    hint: 'Schreibe die Spalte name direkt nach SELECT.',
+    hint: 'Wenn du nur eine Spalte sehen möchtest, schreibe ihren Namen nach SELECT.',
     points: 10
   },
   {
@@ -32,9 +30,8 @@ const LEVELS = [
     topic: 'WHERE',
     explanation: 'Mit WHERE filtert man Datensätze.',
     task: 'Zeige alle Kunden an, die aus Berlin kommen.',
-    starterSql: "SELECT * FROM kunden WHERE stadt = 'Berlin';",
     expectedSql: "SELECT * FROM kunden WHERE stadt = 'Berlin';",
-    hint: 'Filtere nach der Spalte stadt.',
+    hint: 'Mit WHERE filterst du Zeilen. Textwerte stehen in einfachen Anführungszeichen.',
     points: 10
   },
   {
@@ -44,9 +41,8 @@ const LEVELS = [
     topic: 'ORDER BY',
     explanation: 'Mit ORDER BY sortiert man Ergebnisse. Mit DESC wird absteigend sortiert.',
     task: 'Zeige alle Kunden an, sortiert nach Punkten. Die meisten Punkte sollen oben stehen.',
-    starterSql: 'SELECT * FROM kunden ORDER BY punkte DESC;',
     expectedSql: 'SELECT * FROM kunden ORDER BY punkte DESC;',
-    hint: 'Verwende ORDER BY punkte DESC.',
+    hint: 'Mit ORDER BY sortierst du. DESC bedeutet absteigend, also die höchsten Werte zuerst.',
     points: 10
   },
   {
@@ -56,9 +52,8 @@ const LEVELS = [
     topic: 'COUNT',
     explanation: 'Mit COUNT(*) zählt man Zeilen.',
     task: 'Zähle, wie viele Kunden in der Tabelle gespeichert sind.',
-    starterSql: 'SELECT COUNT(*) FROM kunden;',
     expectedSql: 'SELECT COUNT(*) FROM kunden;',
-    hint: 'Verwende COUNT(*).',
+    hint: 'COUNT(*) zählt, wie viele Zeilen eine Abfrage zurückgibt.',
     points: 10
   }
 ];

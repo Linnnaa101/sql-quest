@@ -274,9 +274,10 @@ function loadLevel(index) {
   elements.levelTitle.textContent = `Level ${level.id}: ${level.title}`;
   elements.explanation.textContent = level.explanation;
   elements.task.textContent = level.task;
-  elements.hintText.textContent = `Hinweis: ${level.hint}`;
+  elements.hintText.textContent = `💡 Tipp: ${level.hint}`;
   elements.hintText.hidden = true;
-  elements.sqlInput.value = level.starterSql;
+  elements.sqlInput.value = '';
+  elements.sqlInput.placeholder = 'Schreibe hier deine SQL-Abfrage …';
   elements.resultTable.className = 'table-wrap empty-state';
   elements.resultTable.textContent = 'Noch keine Abfrage ausgeführt.';
   elements.rowCount.textContent = '';
