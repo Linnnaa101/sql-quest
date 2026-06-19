@@ -53,11 +53,11 @@ function seedDatabase() {
       id INTEGER PRIMARY KEY,
       name TEXT NOT NULL,
       stadt TEXT NOT NULL,
-      alter INTEGER NOT NULL,
+      alter_jahre INTEGER NOT NULL,
       punkte INTEGER NOT NULL
     );
 
-    INSERT INTO kunden (id, name, stadt, alter, punkte) VALUES
+    INSERT INTO kunden (id, name, stadt, alter_jahre, punkte) VALUES
     (1, 'Anna', 'Berlin', 24, 120),
     (2, 'Ben', 'Hamburg', 31, 80),
     (3, 'Clara', 'Berlin', 29, 200),
