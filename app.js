@@ -22,11 +22,15 @@ const elements = {
   gameLayout: document.querySelector('#gameLayout'),
   createDatabaseButton: document.querySelector('#createDatabaseButton'),
   startLevelsButton: document.querySelector('#startLevelsButton'),
+  backToLevelsButton: document.querySelector('#backToLevelsButton'),
+  showDatabaseInfoButton: document.querySelector('#showDatabaseInfoButton'),
   introFeedback: document.querySelector('#introFeedback')
 };
 
 let SQL;
 let db;
+let isDatabaseReady = false;
+let hasLevelSessionStarted = false;
 let currentLevelIndex = 0;
 let progress = loadProgress();
 
@@ -37,22 +41,31 @@ elements.nextButton.addEventListener('click', goToNextLevel);
 elements.resetProgressButton.addEventListener('click', resetProgress);
 elements.createDatabaseButton.addEventListener('click', createPracticeDatabase);
 elements.startLevelsButton.addEventListener('click', startLevels);
+elements.backToLevelsButton.addEventListener('click', showLevels);
+elements.showDatabaseInfoButton.addEventListener('click', showDatabaseInfo);
 
 async function init() {
   setIntroFeedback('sql.js wird geladen …', 'info');
-  elements.gameLayout.hidden = true;
+  showDatabaseInfo();
   try {
     SQL = await initSqlJs({
       locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}`
     });
+    updateDatabaseIntroActions();
     setIntroFeedback('Bereit zum Erstellen der Übungsdatenbank.', 'info');
   } catch (error) {
-    elements.createDatabaseButton.disabled = true;
+    updateDatabaseIntroActions();
     setIntroFeedback(`sql.js konnte nicht geladen werden: ${error.message}`, 'error');
   }
 }
 
 function createPracticeDatabase() {
+  if (isDatabaseReady) {
+    setIntroFeedback('Die Übungsdatenbank ist bereits erstellt.', 'info');
+    updateDatabaseIntroActions();
+    return;
+  }
+
   if (!SQL) {
     setIntroFeedback('sql.js ist noch nicht bereit. Bitte warte einen Moment.', 'error');
     return;
@@ -60,18 +73,42 @@ function createPracticeDatabase() {
 
   db = new SQL.Database();
   seedDatabase();
-  elements.createDatabaseButton.disabled = true;
-  elements.startLevelsButton.hidden = false;
+  isDatabaseReady = true;
+  updateDatabaseIntroActions();
   setIntroFeedback('Die Übungsdatenbank wurde erfolgreich erstellt.', 'success');
 }
 
 function startLevels() {
   currentLevelIndex = Math.min(progress.currentLevelIndex || 0, LEVELS.length - 1);
+  hasLevelSessionStarted = true;
+  showLevels();
+  setFeedback('Bereit für deine erste Quest!', 'info');
+}
+
+function showLevels() {
+  if (!isDatabaseReady) {
+    setIntroFeedback('Bitte erstelle zuerst die Übungsdatenbank.', 'error');
+    showDatabaseInfo();
+    return;
+  }
+
   elements.databaseIntro.hidden = true;
   elements.gameLayout.hidden = false;
   renderLevelList();
   loadLevel(currentLevelIndex);
-  setFeedback('Bereit für deine erste Quest!', 'info');
+}
+
+function showDatabaseInfo() {
+  elements.databaseIntro.hidden = false;
+  elements.gameLayout.hidden = true;
+  updateDatabaseIntroActions();
+}
+
+function updateDatabaseIntroActions() {
+  elements.createDatabaseButton.hidden = isDatabaseReady;
+  elements.createDatabaseButton.disabled = !SQL || isDatabaseReady;
+  elements.startLevelsButton.hidden = !isDatabaseReady || hasLevelSessionStarted;
+  elements.backToLevelsButton.hidden = !isDatabaseReady || !hasLevelSessionStarted;
 }
 
 function seedDatabase() {

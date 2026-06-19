@@ -121,6 +121,7 @@ produkte 1 ─── n bestellpositionen</pre>
       <div class="button-row intro-actions">
         <button id="createDatabaseButton" class="primary-button" type="button">Übungsdatenbank erstellen</button>
         <button id="startLevelsButton" class="secondary-button" type="button" hidden>Mit den Leveln starten</button>
+        <button id="backToLevelsButton" class="secondary-button" type="button" hidden>Zurück zu den Leveln</button>
       </div>
       <div id="introFeedback" class="feedback info" role="status" aria-live="polite">Bereit zum Erstellen der Übungsdatenbank.</div>
     </section>
@@ -129,7 +130,10 @@ produkte 1 ─── n bestellpositionen</pre>
       <aside class="card level-panel" aria-label="Level-Auswahl">
         <div class="panel-heading">
           <h2>Level</h2>
-          <button id="resetProgressButton" class="ghost-button" type="button">Zurücksetzen</button>
+          <div class="panel-actions">
+            <button id="showDatabaseInfoButton" class="ghost-button" type="button">Datenbank-Info</button>
+            <button id="resetProgressButton" class="ghost-button" type="button">Zurücksetzen</button>
+          </div>
         </div>
         <nav id="levelList" class="level-list"></nav>
       </aside>
