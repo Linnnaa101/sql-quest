@@ -2,6 +2,12 @@
 
 SQL Quest ist ein browserbasiertes Lernspiel zum Erlernen von SQL und grundlegenden Datenbankkonzepten. Die aktuelle MVP-Version läuft vollständig im Browser, nutzt SQLite über `sql.js` und benötigt kein Backend, keine Frameworks und keine Build-Tools.
 
+## Live-Demo
+
+Die aktuelle Version von SQL Quest ist hier online verfügbar:
+
+[SQL Quest öffnen](https://linnnaa101.github.io/sql-quest/)
+
 ## Ziel des Spiels
 
 Anfängerinnen und Anfänger sollen SQL-Abfragen Schritt für Schritt üben können. Jede Quest erklärt ein kleines SQL-Konzept, stellt eine Aufgabe und prüft die Lösung anhand des tatsächlichen Abfrageergebnisses.
