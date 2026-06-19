@@ -217,6 +217,71 @@ code {
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
+.key-relationship-section {
+  display: grid;
+  gap: 16px;
+  margin: 24px 0;
+  padding: 20px;
+  border: 1px solid rgba(255, 209, 102, 0.28);
+  border-radius: 20px;
+  background: rgba(255, 209, 102, 0.08);
+}
+
+.key-relationship-section > .muted {
+  margin-bottom: 0;
+}
+
+.key-card-grid,
+.relationship-card-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.key-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.relationship-card-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.info-card {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(9, 12, 24, 0.42);
+}
+
+.info-card h4 {
+  margin: 0 0 10px;
+  color: var(--text);
+}
+
+.info-card p {
+  margin-bottom: 8px;
+  color: var(--muted);
+}
+
+.info-card p:last-child {
+  margin-bottom: 0;
+}
+
+.key-card {
+  border-color: rgba(57, 217, 138, 0.32);
+}
+
+.key-card h4 {
+  color: var(--success);
+}
+
+.relationship-card {
+  border-color: rgba(124, 92, 255, 0.35);
+}
+
+.relationship-card h4 {
+  color: var(--warning);
+}
+
 .relationship-box {
   padding: 20px;
   border-radius: 20px;
@@ -255,5 +320,7 @@ button:disabled {
 
 @media (max-width: 840px) {
   .database-intro { padding: 24px; }
-  .schema-grid { grid-template-columns: 1fr; }
+  .schema-grid,
+  .key-card-grid,
+  .relationship-card-grid { grid-template-columns: 1fr; }
 }

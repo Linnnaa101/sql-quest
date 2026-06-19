@@ -68,11 +68,51 @@
         </article>
       </div>
 
+      <section class="key-relationship-section" aria-labelledby="keyRelationshipTitle">
+        <h3 id="keyRelationshipTitle">Schlüssel und Beziehungen</h3>
+        <p class="muted">Schlüssel helfen dir zu erkennen, welche Zeilen eindeutig sind und wie Tabellen zusammengehören.</p>
+
+        <div class="key-card-grid">
+          <article class="info-card key-card">
+            <h4>Primärschlüssel</h4>
+            <p>Ein Primärschlüssel erkennt jede Zeile einer Tabelle eindeutig.</p>
+            <p>In SQL Quest ist das meistens die Spalte <code>id</code>.</p>
+            <p>Beispiel: <code>kunden.id</code> erkennt jeden Kunden eindeutig.</p>
+          </article>
+          <article class="info-card key-card">
+            <h4>Fremdschlüssel</h4>
+            <p>Ein Fremdschlüssel verweist auf den Primärschlüssel einer anderen Tabelle.</p>
+            <p>So entstehen Beziehungen zwischen Tabellen.</p>
+            <p>Beispiel: <code>bestellungen.kunden_id</code> verweist auf <code>kunden.id</code>.</p>
+          </article>
+        </div>
+
+        <div class="relationship-card-grid" aria-label="1 zu n Beziehungen der Shop-Datenbank">
+          <article class="info-card relationship-card">
+            <h4><code>kunden</code> 1 → n <code>bestellungen</code></h4>
+            <p>Ein Kunde kann mehrere Bestellungen haben.</p>
+            <p>Eine Bestellung gehört aber genau zu einem Kunden.</p>
+            <p>Deshalb steht in der Tabelle <code>bestellungen</code> die Spalte <code>kunden_id</code>.</p>
+          </article>
+          <article class="info-card relationship-card">
+            <h4><code>bestellungen</code> 1 → n <code>bestellpositionen</code></h4>
+            <p>Eine Bestellung kann mehrere Bestellpositionen haben.</p>
+            <p>Eine Bestellposition gehört aber genau zu einer Bestellung.</p>
+            <p>Deshalb steht in der Tabelle <code>bestellpositionen</code> die Spalte <code>bestellung_id</code>.</p>
+          </article>
+          <article class="info-card relationship-card">
+            <h4><code>produkte</code> 1 → n <code>bestellpositionen</code></h4>
+            <p>Ein Produkt kann in mehreren Bestellpositionen vorkommen.</p>
+            <p>Eine Bestellposition bezieht sich aber genau auf ein Produkt.</p>
+            <p>Deshalb steht in der Tabelle <code>bestellpositionen</code> die Spalte <code>produkt_id</code>.</p>
+          </article>
+        </div>
+      </section>
+
       <div class="relationship-box">
         <h3>Beziehungen</h3>
-        <p>Ein Kunde kann mehrere Bestellungen haben.</p>
-        <p>Eine Bestellung kann mehrere Bestellpositionen haben.</p>
-        <p>Ein Produkt kann in mehreren Bestellpositionen vorkommen.</p>
+        <p>Die Beziehungskarten zeigen immer beide Blickrichtungen: links die 1:n-Seite und im Text die n:1-Seite.</p>
+        <p>Zum Beispiel kann ein Kunde mehrere Bestellungen haben; eine Bestellung gehört umgekehrt genau zu einem Kunden.</p>
         <pre aria-label="Beziehungsgrafik">kunden 1 ─── n bestellungen
 bestellungen 1 ─── n bestellpositionen
 produkte 1 ─── n bestellpositionen</pre>
