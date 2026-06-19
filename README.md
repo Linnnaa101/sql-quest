@@ -6,11 +6,17 @@ SQL Quest ist ein browserbasiertes Lernspiel zum Erlernen von SQL und grundlegen
 
 Anfängerinnen und Anfänger sollen SQL-Abfragen Schritt für Schritt üben können. Jede Quest erklärt ein kleines SQL-Konzept, stellt eine Aufgabe und prüft die Lösung anhand des tatsächlichen Abfrageergebnisses.
 
+## Lernfluss
+
+SQL Quest startet mit dem Aufbau einer kleinen Shop-Datenbank.
+Erst nachdem die Übungsdatenbank erstellt wurde, starten die SQL-Level.
+So lernen Nutzer zuerst, woraus eine Datenbank besteht, bevor sie Abfragen schreiben.
+
 ## Aktueller MVP-Funktionsumfang
 
 - Moderne Start- und Spieloberfläche mit dem Titel **SQL Quest**
 - Fünf Anfänger-Level zu `SELECT`, Spaltenauswahl, `WHERE`, `ORDER BY` und `COUNT(*)`
-- SQLite-Datenbank im Browser mit einer Beispiel-Tabelle `kunden`
+- SQLite-Datenbank im Browser mit den Shop-Tabellen `kunden`, `produkte`, `bestellungen` und `bestellpositionen`
 - SQL-Eingabefeld mit Starter-Abfragen
 - Ausführen von lesenden SQL-Abfragen über `sql.js`
 - Ergebnisanzeige als Tabelle

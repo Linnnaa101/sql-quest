@@ -20,7 +20,72 @@
       </div>
     </header>
 
-    <main class="game-layout">
+    <section id="databaseIntro" class="card database-intro" aria-labelledby="databaseIntroTitle">
+      <p class="eyebrow">Schritt 1</p>
+      <h2 id="databaseIntroTitle">Datenbank erstellen</h2>
+      <p>Bevor du SQL-Abfragen schreibst, brauchst du eine Datenbank.</p>
+      <p class="muted">In SQL Quest arbeitest du mit einer kleinen Shop-Datenbank.</p>
+
+      <div class="schema-grid" aria-label="Tabellen der Shop-Datenbank">
+        <article class="schema-card">
+          <h3>kunden</h3>
+          <ul>
+            <li><code>id</code> Primärschlüssel</li>
+            <li><code>name</code> Name</li>
+            <li><code>stadt</code> Wohnort</li>
+            <li><code>alter_jahre</code> Alter</li>
+            <li><code>punkte</code> Lernpunkte</li>
+          </ul>
+        </article>
+        <article class="schema-card">
+          <h3>produkte</h3>
+          <ul>
+            <li><code>id</code> Primärschlüssel</li>
+            <li><code>name</code> Produktname</li>
+            <li><code>kategorie</code> Warengruppe</li>
+            <li><code>preis</code> Verkaufspreis</li>
+            <li><code>lagerbestand</code> Vorrat</li>
+          </ul>
+        </article>
+        <article class="schema-card">
+          <h3>bestellungen</h3>
+          <ul>
+            <li><code>id</code> Primärschlüssel</li>
+            <li><code>kunden_id</code> verweist auf <code>kunden.id</code></li>
+            <li><code>bestelldatum</code> Datum</li>
+            <li><code>status</code> Bestellstatus</li>
+          </ul>
+        </article>
+        <article class="schema-card">
+          <h3>bestellpositionen</h3>
+          <ul>
+            <li><code>id</code> Primärschlüssel</li>
+            <li><code>bestellung_id</code> verweist auf <code>bestellungen.id</code></li>
+            <li><code>produkt_id</code> verweist auf <code>produkte.id</code></li>
+            <li><code>menge</code> Anzahl</li>
+            <li><code>einzelpreis</code> Preis pro Stück</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="relationship-box">
+        <h3>Beziehungen</h3>
+        <p>Ein Kunde kann mehrere Bestellungen haben.</p>
+        <p>Eine Bestellung kann mehrere Bestellpositionen haben.</p>
+        <p>Ein Produkt kann in mehreren Bestellpositionen vorkommen.</p>
+        <pre aria-label="Beziehungsgrafik">kunden 1 ─── n bestellungen
+bestellungen 1 ─── n bestellpositionen
+produkte 1 ─── n bestellpositionen</pre>
+      </div>
+
+      <div class="button-row intro-actions">
+        <button id="createDatabaseButton" class="primary-button" type="button">Übungsdatenbank erstellen</button>
+        <button id="startLevelsButton" class="secondary-button" type="button" hidden>Mit den Leveln starten</button>
+      </div>
+      <div id="introFeedback" class="feedback info" role="status" aria-live="polite">Bereit zum Erstellen der Übungsdatenbank.</div>
+    </section>
+
+    <main id="gameLayout" class="game-layout" hidden>
       <aside class="card level-panel" aria-label="Level-Auswahl">
         <div class="panel-heading">
           <h2>Level</h2>
