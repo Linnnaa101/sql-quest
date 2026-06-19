@@ -127,6 +127,16 @@ h3 { margin-bottom: 8px; color: var(--warning); }
   font-weight: 800;
 }
 
+.editor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.editor-heading label { margin-bottom: 0; }
+
 label { display: block; margin-bottom: 10px; font-weight: 800; }
 textarea {
   width: 100%;
@@ -415,13 +425,19 @@ button:disabled {
 }
 
 .hint-button {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
   border: 1px solid rgba(255, 209, 102, 0.45);
-  border-radius: 999px;
-  padding: 12px 16px;
+  border-radius: 50%;
+  padding: 0;
   color: var(--warning);
   background: rgba(255, 209, 102, 0.12);
   cursor: pointer;
   font-weight: 800;
+  line-height: 1;
 }
 
 .hint-button:hover {

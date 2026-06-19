@@ -203,12 +203,14 @@ produkte 1 ─── n bestellpositionen</pre>
         </article>
 
         <article class="card editor-card">
-          <label for="sqlInput">Deine SQL-Abfrage</label>
+          <div class="editor-heading">
+            <label for="sqlInput">Deine SQL-Abfrage</label>
+            <button id="hintButton" class="hint-button" type="button" aria-label="Tipp anzeigen">💡</button>
+          </div>
           <textarea id="sqlInput" spellcheck="false" rows="7" aria-describedby="editorHelp"></textarea>
           <p id="editorHelp" class="muted small">Erlaubt sind nur lesende Abfragen, zum Beispiel SELECT.</p>
           <div class="button-row">
             <button id="runButton" class="primary-button" type="button">Ausführen</button>
-            <button id="hintButton" class="hint-button" type="button" aria-label="Tipp anzeigen">💡 Tipp</button>
             <button id="solutionButton" class="secondary-button" type="button">Lösung anzeigen</button>
             <button id="nextButton" class="secondary-button" type="button">Nächstes Level</button>
           </div>
