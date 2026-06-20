@@ -19,7 +19,10 @@ const elements = {
   runButton: document.querySelector('#runButton'),
   hintButton: document.querySelector('#hintButton'),
   solutionButton: document.querySelector('#solutionButton'),
-  nextButton: document.querySelector('#nextButton'),
+  overviewButton: document.querySelector('#overviewButton'),
+  backToOverviewButton: document.querySelector('#backToOverviewButton'),
+  levelOverview: document.querySelector('#levelOverview'),
+  showDatabaseInfoInGameButton: document.querySelector('#showDatabaseInfoInGameButton'),
   feedback: document.querySelector('#feedback'),
   resultTable: document.querySelector('#resultTable'),
   rowCount: document.querySelector('#rowCount'),
@@ -34,7 +37,8 @@ const elements = {
   startLevelOneButton: document.querySelector('#startLevelOneButton'),
   backToLevelsButton: document.querySelector('#backToLevelsButton'),
   showDatabaseInfoButton: document.querySelector('#showDatabaseInfoButton'),
-  introFeedback: document.querySelector('#introFeedback')
+  introFeedback: document.querySelector('#introFeedback'),
+  overviewFeedback: document.querySelector('#overviewFeedback')
 };
 
 let SQL;
@@ -45,12 +49,14 @@ let selectedPath = null;
 let hasBeginnerIntroCompleted = false;
 let currentLevelIndex = 0;
 let progress = loadProgress();
+let autoAdvanceTimer = null;
 
 window.addEventListener('DOMContentLoaded', init);
 elements.runButton.addEventListener('click', runPlayerQuery);
 elements.hintButton.addEventListener('click', showHint);
 elements.solutionButton.addEventListener('click', showSolution);
-elements.nextButton.addEventListener('click', goToNextLevel);
+elements.overviewButton.addEventListener('click', showLevelOverview);
+elements.backToOverviewButton.addEventListener('click', showLevelOverview);
 elements.resetProgressButton.addEventListener('click', resetProgress);
 elements.createDatabaseButton.addEventListener('click', createPracticeDatabase);
 elements.startLevelsButton.addEventListener('click', startLevels);
@@ -58,6 +64,7 @@ elements.startBeginnerPathButton.addEventListener('click', startBeginnerPath);
 elements.startLevelOneButton.addEventListener('click', completeBeginnerIntro);
 elements.backToLevelsButton.addEventListener('click', showLearningFlow);
 elements.showDatabaseInfoButton.addEventListener('click', showDatabaseInfo);
+elements.showDatabaseInfoInGameButton.addEventListener('click', showDatabaseInfo);
 
 async function init() {
   updateProgressBar();
@@ -111,8 +118,7 @@ function completeBeginnerIntro() {
   if (!isLevelUnlocked(currentLevelIndex)) {
     currentLevelIndex = 0;
   }
-  showLevels();
-  setFeedback('Bereit für deine erste Quest!', 'info');
+  showLevelOverview();
 }
 
 function showLearningFlow() {
@@ -132,7 +138,7 @@ function showLearningFlow() {
     return;
   }
 
-  showLevels();
+  showLevelOverview();
 }
 
 function hideLearningViews() {
@@ -140,6 +146,7 @@ function hideLearningViews() {
   elements.pathSelection.hidden = true;
   elements.beginnerIntro.hidden = true;
   elements.gameLayout.hidden = true;
+  elements.levelOverview.hidden = true;
 }
 
 function showPathSelection() {
@@ -152,18 +159,18 @@ function showBeginnerIntro() {
   elements.beginnerIntro.hidden = false;
 }
 
-function showLevels() {
+function showLevelOverview() {
   if (!isDatabaseReady) {
     setIntroFeedback('Bitte erstelle zuerst die Übungsdatenbank.', 'error');
     showDatabaseInfo();
     return;
   }
 
+  clearAutoAdvanceTimer();
   hideLearningViews();
-  elements.gameLayout.hidden = false;
+  elements.levelOverview.hidden = false;
   renderLevelList();
   updateProgressBar();
-  loadLevel(currentLevelIndex);
 }
 
 function showDatabaseInfo() {
@@ -231,14 +238,14 @@ function renderLevelList() {
     button.setAttribute('aria-label', getLevelButtonLabel(level, index, unlocked, stars));
     button.innerHTML = `
       <span class="level-button-topline">
-        <span>Level ${level.id}</span>
+        <span data-level-number="${level.id}">Level ${level.id}</span>
         <span class="level-stars" aria-hidden="true">${unlocked ? renderStars(stars) : '🔒'}</span>
       </span>
       <strong>${level.title}</strong>
     `;
     button.addEventListener('click', () => {
       if (!isLevelUnlocked(index)) {
-        setFeedback('Erreiche mindestens 4 Sterne im vorherigen Level, um dieses Level freizuschalten.', 'info');
+        setOverviewFeedback('Erreiche mindestens 4 Sterne im vorherigen Level, um dieses Level freizuschalten.', 'info');
         return;
       }
       loadLevel(index);
@@ -294,12 +301,15 @@ function updateProgressBar() {
 }
 
 function loadLevel(index) {
+  clearAutoAdvanceTimer();
   if (!isLevelUnlocked(index)) {
     setFeedback('Erreiche mindestens 4 Sterne im vorherigen Level, um dieses Level freizuschalten.', 'info');
     renderLevelList();
     return;
   }
 
+  hideLearningViews();
+  elements.gameLayout.hidden = false;
   currentLevelIndex = index;
   const level = LEVELS[currentLevelIndex];
   elements.difficulty.textContent = level.difficulty;
@@ -450,6 +460,35 @@ function markLevelSolved() {
 
   const bestMessage = isNewBest ? ` Neue Bestleistung: ${bestStars} von 5 Sternen!` : '';
   setFeedback(`Richtig gelöst! Du hast ${earnedStars} von 5 Sternen erreicht.${bestMessage}`, 'success');
+  scheduleNextLevelAfterSuccess(earnedStars);
+}
+
+function scheduleNextLevelAfterSuccess(starsForUnlock) {
+  clearAutoAdvanceTimer();
+  autoAdvanceTimer = window.setTimeout(() => {
+    autoAdvanceTimer = null;
+    const nextIndex = currentLevelIndex + 1;
+
+    if (nextIndex >= LEVELS.length) {
+      setFeedback('Glückwunsch! Du hast alle Anfänger-Level abgeschlossen.', 'success');
+      return;
+    }
+
+    if (starsForUnlock >= 4 && isLevelUnlocked(nextIndex)) {
+      loadLevel(nextIndex);
+      setFeedback('Das nächste Level wurde freigeschaltet und automatisch geöffnet.', 'success');
+      return;
+    }
+
+    setFeedback('Du hast dieses Level bestanden, aber für das nächste Level brauchst du mindestens 4 Sterne. Wiederhole dieses Level, um deine Sternzahl zu verbessern.', 'info');
+  }, 1700);
+}
+
+function clearAutoAdvanceTimer() {
+  if (autoAdvanceTimer) {
+    window.clearTimeout(autoAdvanceTimer);
+    autoAdvanceTimer = null;
+  }
 }
 
 function showHint() {
@@ -467,20 +506,22 @@ function showSolution() {
   setFeedback('Die Musterlösung ist jetzt sichtbar. Führe sie aus, wenn du das Level lösen möchtest.', 'info');
 }
 
-function goToNextLevel() {
-  const nextIndex = (currentLevelIndex + 1) % LEVELS.length;
-  loadLevel(nextIndex);
-}
-
 function resetProgress() {
   progress = createEmptyProgress();
   saveProgress();
-  loadLevel(0);
+  currentLevelIndex = 0;
+  elements.score.textContent = progress.score;
+  showLevelOverview();
 }
 
 function setFeedback(message, type) {
   elements.feedback.textContent = message;
   elements.feedback.className = `feedback ${type}`;
+}
+
+function setOverviewFeedback(message, type) {
+  elements.overviewFeedback.textContent = message;
+  elements.overviewFeedback.className = `feedback ${type}`;
 }
 
 function setIntroFeedback(message, type) {
