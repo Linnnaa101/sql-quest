@@ -184,6 +184,24 @@ produkte 1 ─── n bestellpositionen</pre>
             <button id="resetProgressButton" class="ghost-button" type="button">Zurücksetzen</button>
           </div>
         </div>
+        <section class="progress-card" aria-labelledby="progressTitle">
+          <div class="progress-header">
+            <span id="progressTitle">Fortschritt</span>
+            <span id="progressText">0 von 0 Leveln gelöst</span>
+          </div>
+          <div
+            id="progressTrack"
+            class="progress-track"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="0"
+            aria-valuenow="0"
+            aria-label="Fortschritt im Anfängerpfad"
+          >
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+          <p id="progressPercent" class="progress-percent">0 %</p>
+        </section>
         <nav id="levelList" class="level-list"></nav>
       </aside>
 
