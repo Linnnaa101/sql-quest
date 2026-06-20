@@ -469,18 +469,20 @@ function scheduleNextLevelAfterSuccess(starsForUnlock) {
     autoAdvanceTimer = null;
     const nextIndex = currentLevelIndex + 1;
 
+    if (starsForUnlock < 4) {
+      setFeedback('Du hast dieses Level bestanden, aber für das nächste Level brauchst du mindestens 4 Sterne. Wiederhole dieses Level, um deine Sternzahl zu verbessern.', 'info');
+      return;
+    }
+
     if (nextIndex >= LEVELS.length) {
       setFeedback('Glückwunsch! Du hast alle Anfänger-Level abgeschlossen.', 'success');
       return;
     }
 
-    if (starsForUnlock >= 4 && isLevelUnlocked(nextIndex)) {
+    if (isLevelUnlocked(nextIndex)) {
       loadLevel(nextIndex);
       setFeedback('Das nächste Level wurde freigeschaltet und automatisch geöffnet.', 'success');
-      return;
     }
-
-    setFeedback('Du hast dieses Level bestanden, aber für das nächste Level brauchst du mindestens 4 Sterne. Wiederhole dieses Level, um deine Sternzahl zu verbessern.', 'info');
   }, 1700);
 }
 
