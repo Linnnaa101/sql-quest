@@ -110,5 +110,60 @@ const LEVELS = [
     expectedSql: 'SELECT AVG(alter_jahre) FROM kunden;',
     hint: 'AVG(alter_jahre) berechnet den Durchschnitt der Spalte alter_jahre.',
     points: 10
+  },
+  {
+    id: 11,
+    title: 'Bedingungen mit OR',
+    difficulty: 'Anfänger',
+    topic: 'OR',
+    explanation: 'Mit OR genügt es, wenn mindestens eine von mehreren Bedingungen erfüllt ist.',
+    task: 'Zeige alle Kunden aus Berlin oder Hamburg an.',
+    expectedSql: "SELECT * FROM kunden WHERE stadt = 'Berlin' OR stadt = 'Hamburg';",
+    hint: 'Verbinde beide Stadt-Bedingungen mit OR.',
+    points: 10
+  },
+  {
+    id: 12,
+    title: 'Jünger als 30',
+    difficulty: 'Anfänger',
+    topic: '<',
+    explanation: 'Mit < findest du Werte, die kleiner als ein bestimmter Wert sind.',
+    task: 'Zeige alle Kunden an, die jünger als 30 Jahre sind.',
+    expectedSql: 'SELECT * FROM kunden WHERE alter_jahre < 30;',
+    hint: 'Filtere die Spalte alter_jahre mit dem Vergleich < 30.',
+    points: 10
+  },
+  {
+    id: 13,
+    title: 'Mindestens 120 Punkte',
+    difficulty: 'Anfänger',
+    topic: '>=',
+    explanation: 'Mit >= findest du Werte, die größer oder gleich einem bestimmten Wert sind.',
+    task: 'Zeige alle Kunden an, die mindestens 120 Punkte haben.',
+    expectedSql: 'SELECT * FROM kunden WHERE punkte >= 120;',
+    hint: '„Mindestens“ bedeutet: größer oder gleich. Nutze >=.',
+    points: 10
+  },
+  {
+    id: 14,
+    title: 'Höchstens 100 Punkte',
+    difficulty: 'Anfänger',
+    topic: '<=',
+    explanation: 'Mit <= findest du Werte, die kleiner oder gleich einem bestimmten Wert sind.',
+    task: 'Zeige alle Kunden an, die höchstens 100 Punkte haben.',
+    expectedSql: 'SELECT * FROM kunden WHERE punkte <= 100;',
+    hint: '„Höchstens“ bedeutet: kleiner oder gleich. Nutze <=.',
+    points: 10
+  },
+  {
+    id: 15,
+    title: 'Ausschließen mit NOT',
+    difficulty: 'Anfänger',
+    topic: 'NOT',
+    explanation: 'Mit NOT kannst du Bedingungen ausschließen.',
+    task: 'Zeige alle Kunden an, die nicht aus Berlin kommen.',
+    expectedSql: "SELECT * FROM kunden WHERE NOT stadt = 'Berlin';",
+    hint: "Setze NOT vor die Bedingung stadt = 'Berlin'.",
+    points: 10
   }
 ];
