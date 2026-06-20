@@ -165,5 +165,60 @@ const LEVELS = [
     expectedSql: "SELECT * FROM kunden WHERE NOT stadt = 'Berlin';",
     hint: "Setze NOT vor die Bedingung stadt = 'Berlin'.",
     points: 10
+  },
+  {
+    id: 16,
+    title: 'Punkte zusammenzählen',
+    difficulty: 'Anfänger',
+    topic: 'SUM',
+    explanation: 'Mit SUM kannst du Zahlenwerte einer Spalte zusammenzählen.',
+    task: 'Berechne die Summe aller Punkte aller Kunden.',
+    expectedSql: 'SELECT SUM(punkte) FROM kunden;',
+    hint: 'Nutze SUM mit der Spalte punkte.',
+    points: 10
+  },
+  {
+    id: 17,
+    title: 'Jüngster Kunde',
+    difficulty: 'Anfänger',
+    topic: 'MIN',
+    explanation: 'Mit MIN findest du den kleinsten Wert einer Spalte.',
+    task: 'Finde das niedrigste Alter aller Kunden.',
+    expectedSql: 'SELECT MIN(alter_jahre) FROM kunden;',
+    hint: 'Nutze MIN mit der Spalte alter_jahre.',
+    points: 10
+  },
+  {
+    id: 18,
+    title: 'Höchste Punktzahl',
+    difficulty: 'Anfänger',
+    topic: 'MAX',
+    explanation: 'Mit MAX findest du den größten Wert einer Spalte.',
+    task: 'Finde die höchste Punktzahl aller Kunden.',
+    expectedSql: 'SELECT MAX(punkte) FROM kunden;',
+    hint: 'Nutze MAX mit der Spalte punkte.',
+    points: 10
+  },
+  {
+    id: 19,
+    title: 'Städte ohne Wiederholungen',
+    difficulty: 'Anfänger',
+    topic: 'DISTINCT',
+    explanation: 'Mit DISTINCT werden doppelte Werte nur einmal angezeigt.',
+    task: 'Zeige alle Städte an, in denen Kunden wohnen. Jede Stadt soll nur einmal erscheinen.',
+    expectedSql: 'SELECT DISTINCT stadt FROM kunden;',
+    hint: 'Setze DISTINCT direkt nach SELECT vor die Spalte stadt.',
+    points: 10
+  },
+  {
+    id: 20,
+    title: 'Top-Kunden',
+    difficulty: 'Anfänger',
+    topic: 'WHERE + ORDER BY + LIMIT',
+    explanation: 'Du kannst Filtern, Sortieren und Begrenzen in einer Abfrage kombinieren.',
+    task: 'Zeige die drei Kunden mit mindestens 100 Punkten an. Sortiere sie absteigend nach Punkten.',
+    expectedSql: 'SELECT * FROM kunden WHERE punkte >= 100 ORDER BY punkte DESC LIMIT 3;',
+    hint: 'Nutze zuerst WHERE, danach ORDER BY punkte DESC und am Ende LIMIT 3.',
+    points: 10
   }
 ];
