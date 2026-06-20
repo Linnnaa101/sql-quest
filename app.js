@@ -108,6 +108,9 @@ function startBeginnerPath() {
 function completeBeginnerIntro() {
   hasBeginnerIntroCompleted = true;
   currentLevelIndex = Math.min(progress.currentLevelIndex || 0, LEVELS.length - 1);
+  if (!isLevelUnlocked(currentLevelIndex)) {
+    currentLevelIndex = 0;
+  }
   showLevels();
   setFeedback('Bereit für deine erste Quest!', 'info');
 }
@@ -176,15 +179,32 @@ function updateDatabaseIntroActions() {
   elements.backToLevelsButton.hidden = !isDatabaseReady || !hasLevelSessionStarted;
 }
 
+function createEmptyProgress() {
+  return {
+    score: 0,
+    solvedLevelIds: [],
+    currentLevelIndex: 0,
+    savedQueries: {},
+    levelStars: {},
+    levelAttempts: {},
+    solutionViewedLevelIds: []
+  };
+}
+
 function loadProgress() {
-  const fallback = { score: 0, solvedLevelIds: [], currentLevelIndex: 0, savedQueries: {} };
+  const fallback = createEmptyProgress();
   try {
     const storedProgress = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
     return {
       ...fallback,
       ...storedProgress,
+      score: Number.isFinite(storedProgress.score) ? storedProgress.score : fallback.score,
+      currentLevelIndex: Number.isInteger(storedProgress.currentLevelIndex) ? storedProgress.currentLevelIndex : fallback.currentLevelIndex,
       solvedLevelIds: Array.isArray(storedProgress.solvedLevelIds) ? storedProgress.solvedLevelIds : [],
-      savedQueries: storedProgress.savedQueries || {}
+      savedQueries: storedProgress.savedQueries && typeof storedProgress.savedQueries === 'object' ? storedProgress.savedQueries : {},
+      levelStars: storedProgress.levelStars && typeof storedProgress.levelStars === 'object' ? storedProgress.levelStars : {},
+      levelAttempts: storedProgress.levelAttempts && typeof storedProgress.levelAttempts === 'object' ? storedProgress.levelAttempts : {},
+      solutionViewedLevelIds: Array.isArray(storedProgress.solutionViewedLevelIds) ? storedProgress.solutionViewedLevelIds : []
     };
   } catch {
     return fallback;
@@ -199,17 +219,56 @@ function saveProgress() {
 function renderLevelList() {
   elements.levelList.innerHTML = '';
   LEVELS.forEach((level, index) => {
+    const unlocked = isLevelUnlocked(index);
+    const stars = getLevelStars(level.id);
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'level-button';
     button.classList.toggle('active', index === currentLevelIndex);
     button.classList.toggle('solved', progress.solvedLevelIds.includes(level.id));
-    button.innerHTML = `<span>Level ${level.id}</span><strong>${level.title}</strong>`;
-    button.addEventListener('click', () => loadLevel(index));
+    button.classList.toggle('locked', !unlocked);
+    button.setAttribute('aria-disabled', String(!unlocked));
+    button.setAttribute('aria-label', getLevelButtonLabel(level, index, unlocked, stars));
+    button.innerHTML = `
+      <span class="level-button-topline">
+        <span>Level ${level.id}</span>
+        <span class="level-stars" aria-hidden="true">${unlocked ? renderStars(stars) : '🔒'}</span>
+      </span>
+      <strong>${level.title}</strong>
+    `;
+    button.addEventListener('click', () => {
+      if (!isLevelUnlocked(index)) {
+        setFeedback('Erreiche mindestens 4 Sterne im vorherigen Level, um dieses Level freizuschalten.', 'info');
+        return;
+      }
+      loadLevel(index);
+    });
     elements.levelList.append(button);
   });
   elements.score.textContent = progress.score;
   updateProgressBar();
+}
+
+function getLevelButtonLabel(level, index, unlocked, stars) {
+  const status = unlocked ? 'freigeschaltet' : 'gesperrt';
+  const starText = unlocked ? `${stars} von 5 Sternen` : 'Freischaltung benötigt mindestens 4 Sterne im vorherigen Level';
+  return `Level ${level.id}: ${level.title}, ${status}, ${starText}`;
+}
+
+function renderStars(stars) {
+  return `${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}`;
+}
+
+function getLevelStars(levelId) {
+  return Math.max(0, Math.min(5, Number(progress.levelStars[levelId]) || 0));
+}
+
+function isLevelUnlocked(levelIndex) {
+  if (levelIndex === 0) {
+    return true;
+  }
+  const previousLevel = LEVELS[levelIndex - 1];
+  return getLevelStars(previousLevel.id) >= 4;
 }
 
 function updateProgressBar() {
@@ -218,19 +277,29 @@ function updateProgressBar() {
   const solvedBeginnerLevelCount = new Set(
     progress.solvedLevelIds.filter(levelId => beginnerLevelIds.has(levelId))
   ).size;
+  const unlockedBeginnerLevelCount = beginnerLevels.filter(level => isLevelUnlocked(LEVELS.indexOf(level))).length;
+  const consideredBeginnerLevelCount = Math.max(unlockedBeginnerLevelCount, solvedBeginnerLevelCount);
   const totalBeginnerLevelCount = beginnerLevels.length;
   const progressPercent = totalBeginnerLevelCount === 0
     ? 0
-    : Math.round((solvedBeginnerLevelCount / totalBeginnerLevelCount) * 100);
+    : Math.round((consideredBeginnerLevelCount / totalBeginnerLevelCount) * 100);
+  const collectedStars = beginnerLevels.reduce((sum, level) => sum + getLevelStars(level.id), 0);
+  const maxStars = beginnerLevels.length * 5;
 
   elements.progressText.textContent = `${solvedBeginnerLevelCount} von ${totalBeginnerLevelCount} Leveln gelöst`;
-  elements.progressPercent.textContent = `${progressPercent} %`;
+  elements.progressPercent.textContent = `${progressPercent} % · ${collectedStars} von ${maxStars} Sternen gesammelt`;
   elements.progressFill.style.width = `${progressPercent}%`;
   elements.progressTrack.setAttribute('aria-valuemax', totalBeginnerLevelCount);
-  elements.progressTrack.setAttribute('aria-valuenow', solvedBeginnerLevelCount);
+  elements.progressTrack.setAttribute('aria-valuenow', consideredBeginnerLevelCount);
 }
 
 function loadLevel(index) {
+  if (!isLevelUnlocked(index)) {
+    setFeedback('Erreiche mindestens 4 Sterne im vorherigen Level, um dieses Level freizuschalten.', 'info');
+    renderLevelList();
+    return;
+  }
+
   currentLevelIndex = index;
   const level = LEVELS[currentLevelIndex];
   elements.difficulty.textContent = level.difficulty;
@@ -242,6 +311,7 @@ function loadLevel(index) {
   elements.hintText.hidden = true;
   elements.solutionBox.textContent = `Lösung: ${level.expectedSql}`;
   elements.solutionBox.hidden = true;
+  progress.levelAttempts[level.id] = 0;
   elements.sqlInput.value = progress.savedQueries[level.id] || '';
   elements.sqlInput.placeholder = 'Schreibe hier deine SQL-Abfrage …';
   elements.resultTable.className = 'table-wrap empty-state';
@@ -278,6 +348,7 @@ function runPlayerQuery() {
     if (resultsEqual(playerResult, expectedResult)) {
       markLevelSolved();
     } else {
+      countFailedAttempt(LEVELS[currentLevelIndex].id);
       setFeedback('Noch nicht richtig. Vergleiche deine Spalten und Zeilen mit der Aufgabe.', 'error');
     }
   } catch (error) {
@@ -340,17 +411,44 @@ function renderResult(result) {
   elements.resultTable.append(table);
 }
 
+function countFailedAttempt(levelId) {
+  progress.levelAttempts[levelId] = (Number(progress.levelAttempts[levelId]) || 0) + 1;
+  saveProgress();
+}
+
+function calculateStars(levelId) {
+  const failedAttempts = Number(progress.levelAttempts[levelId]) || 0;
+  const solutionViewed = progress.solutionViewedLevelIds.includes(levelId);
+
+  if (solutionViewed || failedAttempts >= 3) {
+    return 3;
+  }
+  if (failedAttempts >= 1) {
+    return 4;
+  }
+  return 5;
+}
+
 function markLevelSolved() {
   const level = LEVELS[currentLevelIndex];
   const sql = elements.sqlInput.value.trim();
+  const earnedStars = calculateStars(level.id);
+  const previousStars = getLevelStars(level.id);
+  const bestStars = Math.max(previousStars, earnedStars);
+  const isNewBest = bestStars > previousStars;
+
   progress.savedQueries[level.id] = sql;
+  progress.levelStars[level.id] = bestStars;
+  progress.solutionViewedLevelIds = progress.solutionViewedLevelIds.filter(levelId => levelId !== level.id);
   if (!progress.solvedLevelIds.includes(level.id)) {
     progress.solvedLevelIds.push(level.id);
     progress.score += level.points;
   }
   saveProgress();
   renderLevelList();
-  setFeedback(`Richtig! Level gelöst und ${level.points} Punkte gesammelt.`, 'success');
+
+  const bestMessage = isNewBest ? ` Neue Bestleistung: ${bestStars} von 5 Sternen!` : '';
+  setFeedback(`Richtig gelöst! Du hast ${earnedStars} von 5 Sternen erreicht.${bestMessage}`, 'success');
 }
 
 function showHint() {
@@ -359,7 +457,12 @@ function showHint() {
 }
 
 function showSolution() {
+  const level = LEVELS[currentLevelIndex];
   elements.solutionBox.hidden = false;
+  if (!progress.solutionViewedLevelIds.includes(level.id)) {
+    progress.solutionViewedLevelIds.push(level.id);
+    saveProgress();
+  }
   setFeedback('Die Musterlösung ist jetzt sichtbar. Führe sie aus, wenn du das Level lösen möchtest.', 'info');
 }
 
@@ -369,7 +472,7 @@ function goToNextLevel() {
 }
 
 function resetProgress() {
-  progress = { score: 0, solvedLevelIds: [], currentLevelIndex: 0, savedQueries: {} };
+  progress = createEmptyProgress();
   saveProgress();
   loadLevel(0);
 }

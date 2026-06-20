@@ -152,8 +152,28 @@ h3 { margin-bottom: 8px; color: var(--warning); }
   text-align: left;
   cursor: pointer;
 }
-.level-button span { display: block; color: var(--muted); font-size: 0.82rem; margin-bottom: 4px; }
+.level-button span { display: block; color: var(--muted); font-size: 0.82rem; }
+.level-button-topline {
+  align-items: center;
+  display: flex !important;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.level-stars {
+  color: var(--warning) !important;
+  flex-shrink: 0;
+  font-size: 0.95rem !important;
+  letter-spacing: 1px;
+}
 .level-button.active { border-color: var(--primary-strong); box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.18); }
+.level-button.locked {
+  cursor: not-allowed;
+  opacity: 0.58;
+  border-style: dashed;
+  background: rgba(255, 255, 255, 0.035);
+}
+.level-button.locked strong { color: var(--muted); }
 .level-button.solved strong::after { content: ' ✓'; color: var(--success); }
 
 .level-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
