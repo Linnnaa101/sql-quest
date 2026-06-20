@@ -4,6 +4,10 @@ const BLOCKED_COMMANDS = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE
 const elements = {
   score: document.querySelector('#score'),
   levelList: document.querySelector('#levelList'),
+  progressText: document.querySelector('#progressText'),
+  progressTrack: document.querySelector('#progressTrack'),
+  progressFill: document.querySelector('#progressFill'),
+  progressPercent: document.querySelector('#progressPercent'),
   difficulty: document.querySelector('#difficulty'),
   topic: document.querySelector('#topic'),
   levelTitle: document.querySelector('#levelTitle'),
@@ -56,6 +60,7 @@ elements.backToLevelsButton.addEventListener('click', showLearningFlow);
 elements.showDatabaseInfoButton.addEventListener('click', showDatabaseInfo);
 
 async function init() {
+  updateProgressBar();
   setIntroFeedback('sql.js wird geladen …', 'info');
   showDatabaseInfo();
   try {
@@ -154,6 +159,7 @@ function showLevels() {
   hideLearningViews();
   elements.gameLayout.hidden = false;
   renderLevelList();
+  updateProgressBar();
   loadLevel(currentLevelIndex);
 }
 
@@ -174,7 +180,12 @@ function loadProgress() {
   const fallback = { score: 0, solvedLevelIds: [], currentLevelIndex: 0, savedQueries: {} };
   try {
     const storedProgress = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-    return { ...fallback, ...storedProgress, savedQueries: storedProgress.savedQueries || {} };
+    return {
+      ...fallback,
+      ...storedProgress,
+      solvedLevelIds: Array.isArray(storedProgress.solvedLevelIds) ? storedProgress.solvedLevelIds : [],
+      savedQueries: storedProgress.savedQueries || {}
+    };
   } catch {
     return fallback;
   }
@@ -198,6 +209,25 @@ function renderLevelList() {
     elements.levelList.append(button);
   });
   elements.score.textContent = progress.score;
+  updateProgressBar();
+}
+
+function updateProgressBar() {
+  const beginnerLevels = LEVELS.filter(level => level.difficulty === 'Anfänger');
+  const beginnerLevelIds = new Set(beginnerLevels.map(level => level.id));
+  const solvedBeginnerLevelCount = new Set(
+    progress.solvedLevelIds.filter(levelId => beginnerLevelIds.has(levelId))
+  ).size;
+  const totalBeginnerLevelCount = beginnerLevels.length;
+  const progressPercent = totalBeginnerLevelCount === 0
+    ? 0
+    : Math.round((solvedBeginnerLevelCount / totalBeginnerLevelCount) * 100);
+
+  elements.progressText.textContent = `${solvedBeginnerLevelCount} von ${totalBeginnerLevelCount} Leveln gelöst`;
+  elements.progressPercent.textContent = `${progressPercent} %`;
+  elements.progressFill.style.width = `${progressPercent}%`;
+  elements.progressTrack.setAttribute('aria-valuemax', totalBeginnerLevelCount);
+  elements.progressTrack.setAttribute('aria-valuenow', solvedBeginnerLevelCount);
 }
 
 function loadLevel(index) {
