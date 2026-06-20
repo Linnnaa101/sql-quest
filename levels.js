@@ -220,5 +220,60 @@ const LEVELS = [
     expectedSql: 'SELECT * FROM kunden WHERE punkte >= 100 ORDER BY punkte DESC LIMIT 3;',
     hint: 'Nutze zuerst WHERE, danach ORDER BY punkte DESC und am Ende LIMIT 3.',
     points: 10
+  },
+  {
+    id: 21,
+    title: 'Berliner Kunden mit Punkten',
+    difficulty: 'Anfänger',
+    topic: 'WHERE + AND',
+    explanation: 'Mit AND kannst du mehrere Bedingungen gleichzeitig prüfen.',
+    task: 'Zeige alle Kunden aus Berlin an, die mindestens 100 Punkte haben.',
+    expectedSql: "SELECT * FROM kunden WHERE stadt = 'Berlin' AND punkte >= 100;",
+    hint: 'Verbinde die Stadt-Bedingung und die Punkte-Bedingung mit AND.',
+    points: 10
+  },
+  {
+    id: 22,
+    title: 'Namen und Punkte sortieren',
+    difficulty: 'Anfänger',
+    topic: 'SELECT + ORDER BY',
+    explanation: 'Du kannst bestimmte Spalten auswählen und die Ergebnisse sortieren.',
+    task: 'Zeige den Namen und die Punkte aller Kunden an. Sortiere absteigend nach Punkten.',
+    expectedSql: 'SELECT name, punkte FROM kunden ORDER BY punkte DESC;',
+    hint: 'Wähle zuerst name und punkte aus. Sortiere danach mit ORDER BY punkte DESC.',
+    points: 10
+  },
+  {
+    id: 23,
+    title: 'Städte alphabetisch anzeigen',
+    difficulty: 'Anfänger',
+    topic: 'DISTINCT + ORDER BY',
+    explanation: 'DISTINCT entfernt Wiederholungen und ORDER BY sortiert das Ergebnis.',
+    task: 'Zeige alle Städte ohne Wiederholungen alphabetisch an.',
+    expectedSql: 'SELECT DISTINCT stadt FROM kunden ORDER BY stadt ASC;',
+    hint: 'Nutze DISTINCT für stadt und sortiere danach mit ORDER BY stadt ASC.',
+    points: 10
+  },
+  {
+    id: 24,
+    title: 'Durchschnittliche Punkte',
+    difficulty: 'Anfänger',
+    topic: 'AVG',
+    explanation: 'Mit AVG kannst du den Durchschnitt einer Zahlenspalte berechnen.',
+    task: 'Berechne die durchschnittliche Punktzahl aller Kunden.',
+    expectedSql: 'SELECT AVG(punkte) FROM kunden;',
+    hint: 'Nutze AVG mit der Spalte punkte.',
+    points: 10
+  },
+  {
+    id: 25,
+    title: 'Abschluss-Challenge Top-Kunden',
+    difficulty: 'Anfänger',
+    topic: 'WHERE + ORDER BY + LIMIT',
+    explanation: 'In einer SQL-Abfrage kannst du filtern, sortieren und die Anzahl der Ergebnisse begrenzen.',
+    task: 'Zeige die zwei Kunden mit mindestens 80 Punkten an. Sortiere sie absteigend nach Punkten.',
+    expectedSql: 'SELECT * FROM kunden WHERE punkte >= 80 ORDER BY punkte DESC LIMIT 2;',
+    hint: 'Nutze zuerst WHERE, danach ORDER BY punkte DESC und am Ende LIMIT 2.',
+    points: 10
   }
 ];
