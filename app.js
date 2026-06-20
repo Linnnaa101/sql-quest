@@ -1,4 +1,7 @@
 const STORAGE_KEY = 'sqlQuestProgress';
+const STAR_SYSTEM_VERSION = 3;
+const MAX_STARS = 3;
+const MIN_STARS_TO_UNLOCK_NEXT_LEVEL = 2;
 const BLOCKED_COMMANDS = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'REPLACE', 'TRUNCATE', 'PRAGMA', 'ATTACH', 'DETACH'];
 
 const elements = {
@@ -194,32 +197,82 @@ function createEmptyProgress() {
     savedQueries: {},
     levelStars: {},
     levelAttempts: {},
-    solutionViewedLevelIds: []
+    solutionViewedLevelIds: [],
+    starSystemVersion: STAR_SYSTEM_VERSION
   };
 }
 
 function loadProgress() {
   const fallback = createEmptyProgress();
   try {
-    const storedProgress = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-    return {
+    const rawProgress = localStorage.getItem(STORAGE_KEY);
+    if (!rawProgress) {
+      return fallback;
+    }
+
+    const storedProgress = JSON.parse(rawProgress) || {};
+    const migratedProgress = migrateProgressToCurrentStarSystem(storedProgress);
+    const normalizedProgress = {
       ...fallback,
-      ...storedProgress,
-      score: Number.isFinite(storedProgress.score) ? storedProgress.score : fallback.score,
-      currentLevelIndex: Number.isInteger(storedProgress.currentLevelIndex) ? storedProgress.currentLevelIndex : fallback.currentLevelIndex,
-      solvedLevelIds: Array.isArray(storedProgress.solvedLevelIds) ? storedProgress.solvedLevelIds : [],
-      savedQueries: storedProgress.savedQueries && typeof storedProgress.savedQueries === 'object' ? storedProgress.savedQueries : {},
-      levelStars: storedProgress.levelStars && typeof storedProgress.levelStars === 'object' ? storedProgress.levelStars : {},
-      levelAttempts: storedProgress.levelAttempts && typeof storedProgress.levelAttempts === 'object' ? storedProgress.levelAttempts : {},
-      solutionViewedLevelIds: Array.isArray(storedProgress.solutionViewedLevelIds) ? storedProgress.solutionViewedLevelIds : []
+      ...migratedProgress,
+      score: Number.isFinite(migratedProgress.score) ? migratedProgress.score : fallback.score,
+      currentLevelIndex: Number.isInteger(migratedProgress.currentLevelIndex) ? migratedProgress.currentLevelIndex : fallback.currentLevelIndex,
+      solvedLevelIds: Array.isArray(migratedProgress.solvedLevelIds) ? migratedProgress.solvedLevelIds : [],
+      savedQueries: migratedProgress.savedQueries && typeof migratedProgress.savedQueries === 'object' ? migratedProgress.savedQueries : {},
+      levelStars: migratedProgress.levelStars && typeof migratedProgress.levelStars === 'object' ? migratedProgress.levelStars : {},
+      levelAttempts: migratedProgress.levelAttempts && typeof migratedProgress.levelAttempts === 'object' ? migratedProgress.levelAttempts : {},
+      solutionViewedLevelIds: Array.isArray(migratedProgress.solutionViewedLevelIds) ? migratedProgress.solutionViewedLevelIds : [],
+      starSystemVersion: STAR_SYSTEM_VERSION
     };
+
+    if (storedProgress.starSystemVersion !== STAR_SYSTEM_VERSION) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizedProgress));
+    }
+
+    return normalizedProgress;
   } catch {
     return fallback;
   }
 }
 
+function migrateProgressToCurrentStarSystem(storedProgress) {
+  if (storedProgress.starSystemVersion === STAR_SYSTEM_VERSION) {
+    return storedProgress;
+  }
+
+  const migratedLevelStars = {};
+  const oldLevelStars = storedProgress.levelStars && typeof storedProgress.levelStars === 'object'
+    ? storedProgress.levelStars
+    : {};
+
+  Object.entries(oldLevelStars).forEach(([levelId, oldStars]) => {
+    migratedLevelStars[levelId] = migrateLegacyStars(oldStars);
+  });
+
+  return {
+    ...storedProgress,
+    levelStars: migratedLevelStars,
+    starSystemVersion: STAR_SYSTEM_VERSION
+  };
+}
+
+function migrateLegacyStars(oldStars) {
+  const stars = Number(oldStars) || 0;
+  if (stars >= 5) {
+    return 3;
+  }
+  if (stars === 4) {
+    return 2;
+  }
+  if (stars === 3) {
+    return 1;
+  }
+  return 0;
+}
+
 function saveProgress() {
   progress.currentLevelIndex = currentLevelIndex;
+  progress.starSystemVersion = STAR_SYSTEM_VERSION;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
 }
 
@@ -245,7 +298,7 @@ function renderLevelList() {
     `;
     button.addEventListener('click', () => {
       if (!isLevelUnlocked(index)) {
-        setOverviewFeedback('Erreiche mindestens 4 Sterne im vorherigen Level, um dieses Level freizuschalten.', 'info');
+        setOverviewFeedback('Erreiche mindestens 2 Sterne im vorherigen Level, um dieses Level freizuschalten.', 'info');
         return;
       }
       loadLevel(index);
@@ -258,16 +311,16 @@ function renderLevelList() {
 
 function getLevelButtonLabel(level, index, unlocked, stars) {
   const status = unlocked ? 'freigeschaltet' : 'gesperrt';
-  const starText = unlocked ? `${stars} von 5 Sternen` : 'Freischaltung benötigt mindestens 4 Sterne im vorherigen Level';
+  const starText = unlocked ? `${stars} von ${MAX_STARS} Sternen` : 'Freischaltung benötigt mindestens 2 Sterne im vorherigen Level';
   return `Level ${level.id}: ${level.title}, ${status}, ${starText}`;
 }
 
 function renderStars(stars) {
-  return `${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}`;
+  return `${'★'.repeat(stars)}${'☆'.repeat(MAX_STARS - stars)}`;
 }
 
 function getLevelStars(levelId) {
-  return Math.max(0, Math.min(5, Number(progress.levelStars[levelId]) || 0));
+  return Math.max(0, Math.min(MAX_STARS, Number(progress.levelStars[levelId]) || 0));
 }
 
 function isLevelUnlocked(levelIndex) {
@@ -275,7 +328,7 @@ function isLevelUnlocked(levelIndex) {
     return true;
   }
   const previousLevel = LEVELS[levelIndex - 1];
-  return getLevelStars(previousLevel.id) >= 4;
+  return getLevelStars(previousLevel.id) >= MIN_STARS_TO_UNLOCK_NEXT_LEVEL;
 }
 
 function updateProgressBar() {
@@ -291,7 +344,7 @@ function updateProgressBar() {
     ? 0
     : Math.round((consideredBeginnerLevelCount / totalBeginnerLevelCount) * 100);
   const collectedStars = beginnerLevels.reduce((sum, level) => sum + getLevelStars(level.id), 0);
-  const maxStars = beginnerLevels.length * 5;
+  const maxStars = beginnerLevels.length * MAX_STARS;
 
   elements.progressText.textContent = `${solvedBeginnerLevelCount} von ${totalBeginnerLevelCount} Leveln gelöst`;
   elements.progressPercent.textContent = `${progressPercent} % · ${collectedStars} von ${maxStars} Sternen gesammelt`;
@@ -303,7 +356,7 @@ function updateProgressBar() {
 function loadLevel(index) {
   clearAutoAdvanceTimer();
   if (!isLevelUnlocked(index)) {
-    setFeedback('Erreiche mindestens 4 Sterne im vorherigen Level, um dieses Level freizuschalten.', 'info');
+    setFeedback('Erreiche mindestens 2 Sterne im vorherigen Level, um dieses Level freizuschalten.', 'info');
     renderLevelList();
     return;
   }
@@ -432,12 +485,12 @@ function calculateStars(levelId) {
   const solutionViewed = progress.solutionViewedLevelIds.includes(levelId);
 
   if (solutionViewed || failedAttempts >= 3) {
-    return 3;
+    return 1;
   }
   if (failedAttempts >= 1) {
-    return 4;
+    return 2;
   }
-  return 5;
+  return 3;
 }
 
 function markLevelSolved() {
@@ -458,8 +511,8 @@ function markLevelSolved() {
   saveProgress();
   renderLevelList();
 
-  const bestMessage = isNewBest ? ` Neue Bestleistung: ${bestStars} von 5 Sternen!` : '';
-  setFeedback(`Richtig gelöst! Du hast ${earnedStars} von 5 Sternen erreicht.${bestMessage}`, 'success');
+  const bestMessage = isNewBest ? ` Neue Bestleistung: ${bestStars} von ${MAX_STARS} Sternen!` : '';
+  setFeedback(`Richtig gelöst! Du hast ${earnedStars} von ${MAX_STARS} Sternen erreicht.${bestMessage}`, 'success');
   scheduleNextLevelAfterSuccess(earnedStars);
 }
 
@@ -469,8 +522,8 @@ function scheduleNextLevelAfterSuccess(starsForUnlock) {
     autoAdvanceTimer = null;
     const nextIndex = currentLevelIndex + 1;
 
-    if (starsForUnlock < 4) {
-      setFeedback('Du hast dieses Level bestanden, aber für das nächste Level brauchst du mindestens 4 Sterne. Wiederhole dieses Level, um deine Sternzahl zu verbessern.', 'info');
+    if (starsForUnlock < MIN_STARS_TO_UNLOCK_NEXT_LEVEL) {
+      setFeedback('Du hast dieses Level bestanden, aber für das nächste Level brauchst du mindestens 2 Sterne. Wiederhole dieses Level, um deine Sternzahl zu verbessern.', 'info');
       return;
     }
 
