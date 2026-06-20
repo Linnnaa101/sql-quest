@@ -540,3 +540,83 @@ button:disabled {
   font: 1rem/1.5 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   white-space: pre-wrap;
 }
+
+.level-overview {
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.level-overview .level-list {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.game-layout {
+  grid-template-columns: 1fr;
+}
+
+.game-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .level-overview {
+    padding: 16px;
+  }
+
+  .level-overview .panel-heading {
+    gap: 16px;
+  }
+
+  .level-overview .level-list {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .level-overview .level-button {
+    min-height: 74px;
+    padding: 8px 6px;
+    text-align: center;
+    border-radius: 14px;
+  }
+
+  .level-overview .level-button-topline {
+    justify-content: center;
+    margin-bottom: 3px;
+  }
+
+  .level-overview .level-button-topline span:first-child {
+    font-size: 0;
+  }
+
+  .level-overview .level-button-topline span:first-child::after {
+    content: attr(data-level-number);
+    font-size: 1.05rem;
+    color: var(--text);
+    font-weight: 900;
+  }
+
+  .level-overview .level-stars {
+    font-size: 0.72rem !important;
+    letter-spacing: 0;
+  }
+
+  .level-overview .level-button strong {
+    display: none;
+  }
+
+  .level-overview .level-button.locked .level-button-topline span:first-child::after {
+    color: var(--muted);
+  }
+
+  .level-overview .progress-card {
+    margin: 12px 0 14px;
+    padding: 12px;
+  }
+
+  .game-toolbar {
+    justify-content: flex-start;
+  }
+}

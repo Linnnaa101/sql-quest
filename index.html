@@ -175,37 +175,45 @@ produkte 1 ─── n bestellpositionen</pre>
       </div>
     </section>
 
-    <main id="gameLayout" class="game-layout" hidden>
-      <aside class="card level-panel" aria-label="Level-Auswahl">
-        <div class="panel-heading">
-          <h2>Level</h2>
-          <div class="panel-actions">
-            <button id="showDatabaseInfoButton" class="ghost-button" type="button">Datenbank-Info</button>
-            <button id="resetProgressButton" class="ghost-button" type="button">Zurücksetzen</button>
-          </div>
+    <section id="levelOverview" class="card level-panel level-overview" aria-label="Levelübersicht" hidden>
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Anfängerpfad</p>
+          <h2>Levelübersicht</h2>
         </div>
-        <section class="progress-card" aria-labelledby="progressTitle">
-          <div class="progress-header">
-            <span id="progressTitle">Fortschritt</span>
-            <span id="progressText">0 von 0 Leveln gelöst</span>
-          </div>
-          <div
-            id="progressTrack"
-            class="progress-track"
-            role="progressbar"
-            aria-valuemin="0"
-            aria-valuemax="0"
-            aria-valuenow="0"
-            aria-label="Fortschritt im Anfängerpfad"
-          >
-            <div id="progressFill" class="progress-fill"></div>
-          </div>
-          <p id="progressPercent" class="progress-percent">0 %</p>
-        </section>
-        <nav id="levelList" class="level-list"></nav>
-      </aside>
+        <div class="panel-actions">
+          <button id="showDatabaseInfoButton" class="ghost-button" type="button">Datenbank-Info</button>
+          <button id="resetProgressButton" class="ghost-button" type="button">Zurücksetzen</button>
+        </div>
+      </div>
+      <section class="progress-card" aria-labelledby="progressTitle">
+        <div class="progress-header">
+          <span id="progressTitle">Fortschritt</span>
+          <span id="progressText">0 von 0 Leveln gelöst</span>
+        </div>
+        <div
+          id="progressTrack"
+          class="progress-track"
+          role="progressbar"
+          aria-valuemin="0"
+          aria-valuemax="0"
+          aria-valuenow="0"
+          aria-label="Fortschritt im Anfängerpfad"
+        >
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+        <p id="progressPercent" class="progress-percent">0 %</p>
+      </section>
+      <nav id="levelList" class="level-list compact-level-grid"></nav>
+      <div id="overviewFeedback" class="feedback info" role="status" aria-live="polite">Wähle ein freigeschaltetes Level aus.</div>
+    </section>
 
+    <main id="gameLayout" class="game-layout" hidden>
       <section class="play-area">
+        <div class="game-toolbar">
+          <button id="backToOverviewButton" class="secondary-button" type="button">← Zur Levelübersicht</button>
+          <button id="showDatabaseInfoInGameButton" class="ghost-button" type="button">Datenbank-Info</button>
+        </div>
         <article class="card level-card">
           <div class="level-meta">
             <span id="difficulty" class="pill">Anfänger</span>
@@ -230,7 +238,7 @@ produkte 1 ─── n bestellpositionen</pre>
           <div class="button-row">
             <button id="runButton" class="primary-button" type="button">Ausführen</button>
             <button id="solutionButton" class="secondary-button" type="button">Lösung anzeigen</button>
-            <button id="nextButton" class="secondary-button" type="button">Nächstes Level</button>
+            <button id="overviewButton" class="secondary-button" type="button">Zur Levelübersicht</button>
           </div>
           <div id="solutionBox" class="solution-box" hidden></div>
           <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
