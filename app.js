@@ -41,7 +41,16 @@ const elements = {
   backToLevelsButton: document.querySelector('#backToLevelsButton'),
   showDatabaseInfoButton: document.querySelector('#showDatabaseInfoButton'),
   introFeedback: document.querySelector('#introFeedback'),
-  overviewFeedback: document.querySelector('#overviewFeedback')
+  overviewFeedback: document.querySelector('#overviewFeedback'),
+  successModalOverlay: document.querySelector('#successModalOverlay'),
+  successModal: document.querySelector('#successModal'),
+  successModalCloseButton: document.querySelector('#successModalCloseButton'),
+  successModalStars: document.querySelector('#successModalStars'),
+  successModalStarText: document.querySelector('#successModalStarText'),
+  successModalBest: document.querySelector('#successModalBest'),
+  successModalMessage: document.querySelector('#successModalMessage'),
+  successModalCompletion: document.querySelector('#successModalCompletion'),
+  successModalActions: document.querySelector('#successModalActions')
 };
 
 let SQL;
@@ -52,7 +61,6 @@ let selectedPath = null;
 let hasBeginnerIntroCompleted = false;
 let currentLevelIndex = 0;
 let progress = loadProgress();
-let autoAdvanceTimer = null;
 
 window.addEventListener('DOMContentLoaded', init);
 elements.runButton.addEventListener('click', runPlayerQuery);
@@ -68,6 +76,8 @@ elements.startLevelOneButton.addEventListener('click', completeBeginnerIntro);
 elements.backToLevelsButton.addEventListener('click', showLearningFlow);
 elements.showDatabaseInfoButton.addEventListener('click', showDatabaseInfo);
 elements.showDatabaseInfoInGameButton.addEventListener('click', showDatabaseInfo);
+elements.successModalCloseButton.addEventListener('click', closeSuccessModalToOverview);
+elements.successModal.addEventListener('keydown', handleSuccessModalKeydown);
 
 async function init() {
   updateProgressBar();
@@ -169,7 +179,7 @@ function showLevelOverview() {
     return;
   }
 
-  clearAutoAdvanceTimer();
+  hideSuccessModal();
   hideLearningViews();
   elements.levelOverview.hidden = false;
   renderLevelList();
@@ -177,6 +187,7 @@ function showLevelOverview() {
 }
 
 function showDatabaseInfo() {
+  hideSuccessModal();
   hideLearningViews();
   elements.databaseIntro.hidden = false;
   updateDatabaseIntroActions();
@@ -354,7 +365,7 @@ function updateProgressBar() {
 }
 
 function loadLevel(index) {
-  clearAutoAdvanceTimer();
+  hideSuccessModal();
   if (!isLevelUnlocked(index)) {
     setFeedback('Erreiche mindestens 2 Sterne im vorherigen Level, um dieses Level freizuschalten.', 'info');
     renderLevelList();
@@ -513,36 +524,99 @@ function markLevelSolved() {
 
   const bestMessage = isNewBest ? ` Neue Bestleistung: ${bestStars} von ${MAX_STARS} Sternen!` : '';
   setFeedback(`Richtig gelöst! Du hast ${earnedStars} von ${MAX_STARS} Sternen erreicht.${bestMessage}`, 'success');
-  scheduleNextLevelAfterSuccess(earnedStars);
+  showSuccessModal({ earnedStars, bestStars, isNewBest });
 }
 
-function scheduleNextLevelAfterSuccess(starsForUnlock) {
-  clearAutoAdvanceTimer();
-  autoAdvanceTimer = window.setTimeout(() => {
-    autoAdvanceTimer = null;
-    const nextIndex = currentLevelIndex + 1;
+function showSuccessModal({ earnedStars, bestStars, isNewBest }) {
+  const level = LEVELS[currentLevelIndex];
+  const isFinalLevel = currentLevelIndex === LEVELS.length - 1;
+  const canOfferNextLevel = earnedStars >= MIN_STARS_TO_UNLOCK_NEXT_LEVEL && !isFinalLevel;
+  const nextLevelIsUnlocked = canOfferNextLevel && bestStars >= MIN_STARS_TO_UNLOCK_NEXT_LEVEL && isLevelUnlocked(currentLevelIndex + 1);
 
-    if (starsForUnlock < MIN_STARS_TO_UNLOCK_NEXT_LEVEL) {
-      setFeedback('Du hast dieses Level bestanden, aber für das nächste Level brauchst du mindestens 2 Sterne. Wiederhole dieses Level, um deine Sternzahl zu verbessern.', 'info');
-      return;
-    }
+  elements.successModalStars.textContent = '★'.repeat(earnedStars) + '☆'.repeat(MAX_STARS - earnedStars);
+  elements.successModalStarText.textContent = `${earnedStars} von ${MAX_STARS} Sternen`;
+  elements.successModalBest.hidden = !isNewBest;
+  elements.successModalMessage.textContent = getSuccessMessage(earnedStars);
+  elements.successModalCompletion.hidden = !(isFinalLevel && earnedStars >= MIN_STARS_TO_UNLOCK_NEXT_LEVEL);
+  elements.successModalActions.innerHTML = '';
 
-    if (nextIndex >= LEVELS.length) {
-      setFeedback('Glückwunsch! Du hast alle Anfänger-Level abgeschlossen.', 'success');
-      return;
+  if (earnedStars >= MIN_STARS_TO_UNLOCK_NEXT_LEVEL) {
+    if (isFinalLevel) {
+      addSuccessModalButton('Zur Levelübersicht', 'primary-button', showLevelOverview);
+      addSuccessModalButton(`Level ${level.id} wiederholen`, 'secondary-button', () => loadLevel(currentLevelIndex));
+    } else {
+      addSuccessModalButton('Nächstes Level', 'primary-button', () => {
+        if (nextLevelIsUnlocked) {
+          loadLevel(currentLevelIndex + 1);
+        } else {
+          showLevelOverview();
+          setOverviewFeedback('Das nächste Level ist noch nicht freigeschaltet. Erreiche mindestens 2 Sterne im vorherigen Level.', 'info');
+        }
+      });
+      addSuccessModalButton('Zur Levelübersicht', 'secondary-button', showLevelOverview);
     }
+  } else {
+    addSuccessModalButton('Level wiederholen', 'primary-button', () => loadLevel(currentLevelIndex));
+    addSuccessModalButton('Zur Levelübersicht', 'secondary-button', showLevelOverview);
+  }
 
-    if (isLevelUnlocked(nextIndex)) {
-      loadLevel(nextIndex);
-      setFeedback('Das nächste Level wurde freigeschaltet und automatisch geöffnet.', 'success');
-    }
-  }, 1700);
+  elements.successModalOverlay.hidden = false;
+  document.body.classList.add('modal-open');
+  const firstActionButton = elements.successModalActions.querySelector('button');
+  (firstActionButton || elements.successModalCloseButton).focus();
 }
 
-function clearAutoAdvanceTimer() {
-  if (autoAdvanceTimer) {
-    window.clearTimeout(autoAdvanceTimer);
-    autoAdvanceTimer = null;
+function getSuccessMessage(earnedStars) {
+  if (earnedStars === MAX_STARS) {
+    return 'Perfekt gelöst – ohne Fehlversuch.';
+  }
+  if (earnedStars === MIN_STARS_TO_UNLOCK_NEXT_LEVEL) {
+    return 'Gut geschafft! Das nächste Level ist freigeschaltet.';
+  }
+  return 'Du hast das Level bestanden. Wiederhole es später, um mehr Sterne zu erreichen.';
+}
+
+function addSuccessModalButton(label, className, onClick) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = className;
+  button.textContent = label;
+  button.addEventListener('click', onClick);
+  elements.successModalActions.append(button);
+}
+
+function closeSuccessModalToOverview() {
+  showLevelOverview();
+}
+
+function hideSuccessModal() {
+  if (elements.successModalOverlay.hidden) {
+    return;
+  }
+  elements.successModalOverlay.hidden = true;
+  document.body.classList.remove('modal-open');
+}
+
+function handleSuccessModalKeydown(event) {
+  if (event.key !== 'Tab') {
+    return;
+  }
+
+  const focusableElements = Array.from(elements.successModal.querySelectorAll('button:not([disabled])'));
+  if (focusableElements.length === 0) {
+    event.preventDefault();
+    return;
+  }
+
+  const firstFocusableElement = focusableElements[0];
+  const lastFocusableElement = focusableElements[focusableElements.length - 1];
+
+  if (event.shiftKey && document.activeElement === firstFocusableElement) {
+    event.preventDefault();
+    lastFocusableElement.focus();
+  } else if (!event.shiftKey && document.activeElement === lastFocusableElement) {
+    event.preventDefault();
+    firstFocusableElement.focus();
   }
 }
 

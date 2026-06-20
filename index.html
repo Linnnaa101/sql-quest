@@ -255,6 +255,28 @@ produkte 1 ─── n bestellpositionen</pre>
     </main>
   </div>
 
+
+  <div id="successModalOverlay" class="modal-overlay" hidden>
+    <section
+      id="successModal"
+      class="success-modal card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="successModalTitle"
+      aria-describedby="successModalMessage"
+    >
+      <button id="successModalCloseButton" class="modal-close-button" type="button" aria-label="Zur Levelübersicht">×</button>
+      <p class="eyebrow">Levelabschluss</p>
+      <h2 id="successModalTitle">Level geschafft! 🎉</h2>
+      <div id="successModalStars" class="success-modal-stars" aria-hidden="true">★★★</div>
+      <p id="successModalStarText" class="success-modal-star-text">3 von 3 Sternen</p>
+      <p id="successModalBest" class="success-modal-best" hidden>Neue Bestleistung!</p>
+      <p id="successModalMessage" class="success-modal-message">Perfekt gelöst – ohne Fehlversuch.</p>
+      <p id="successModalCompletion" class="success-modal-completion" hidden>Glückwunsch! Du hast alle Anfänger-Level abgeschlossen.</p>
+      <div id="successModalActions" class="success-modal-actions button-row"></div>
+    </section>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
   <script src="levels.js"></script>
   <script src="database.js"></script>

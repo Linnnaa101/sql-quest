@@ -620,3 +620,125 @@ button:disabled {
     justify-content: flex-start;
   }
 }
+
+.modal-open {
+  overflow: hidden;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(4, 7, 18, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.success-modal {
+  position: relative;
+  width: min(100%, 480px);
+  max-height: min(92vh, 720px);
+  overflow-y: auto;
+  padding: 30px;
+  text-align: center;
+}
+
+.modal-close-button {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1.45rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.modal-close-button:focus-visible,
+.success-modal button:focus-visible {
+  outline: 3px solid var(--warning);
+  outline-offset: 3px;
+}
+
+.success-modal h2 {
+  margin-bottom: 12px;
+  padding: 0 36px;
+}
+
+.success-modal-stars {
+  margin: 14px 0 4px;
+  color: var(--warning);
+  font-size: clamp(3.4rem, 16vw, 5.6rem);
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  text-shadow: 0 8px 28px rgba(255, 209, 102, 0.25);
+}
+
+.success-modal-star-text {
+  margin-bottom: 10px;
+  color: #fff2c2;
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.success-modal-best {
+  display: inline-flex;
+  margin-bottom: 14px;
+  padding: 8px 14px;
+  border: 1px solid rgba(57, 217, 138, 0.45);
+  border-radius: 999px;
+  background: rgba(57, 217, 138, 0.14);
+  color: var(--success);
+  font-weight: 900;
+}
+
+.success-modal-message,
+.success-modal-completion {
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.success-modal-completion {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 209, 102, 0.35);
+  border-radius: 16px;
+  background: rgba(255, 209, 102, 0.1);
+  color: #ffe6a3;
+  font-weight: 800;
+}
+
+.success-modal-actions {
+  justify-content: center;
+  margin-top: 22px;
+}
+
+@media (max-width: 480px) {
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .success-modal {
+    padding: 26px 18px 20px;
+    border-radius: 20px;
+  }
+
+  .success-modal h2 {
+    padding: 0 30px;
+  }
+
+  .success-modal-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
