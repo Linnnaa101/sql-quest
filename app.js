@@ -352,6 +352,7 @@ function runPlayerQuery() {
       setFeedback('Noch nicht richtig. Vergleiche deine Spalten und Zeilen mit der Aufgabe.', 'error');
     }
   } catch (error) {
+    countFailedAttempt(LEVELS[currentLevelIndex].id);
     setFeedback(`SQL-Fehler: ${error.message}`, 'error');
   }
 }
