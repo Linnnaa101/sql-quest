@@ -530,17 +530,18 @@ function markLevelSolved() {
 function showSuccessModal({ earnedStars, bestStars, isNewBest }) {
   const level = LEVELS[currentLevelIndex];
   const isFinalLevel = currentLevelIndex === LEVELS.length - 1;
-  const canOfferNextLevel = earnedStars >= MIN_STARS_TO_UNLOCK_NEXT_LEVEL && !isFinalLevel;
-  const nextLevelIsUnlocked = canOfferNextLevel && bestStars >= MIN_STARS_TO_UNLOCK_NEXT_LEVEL && isLevelUnlocked(currentLevelIndex + 1);
+  const hasBestStarsForUnlock = bestStars >= MIN_STARS_TO_UNLOCK_NEXT_LEVEL;
+  const canOfferNextLevel = hasBestStarsForUnlock && !isFinalLevel;
+  const nextLevelIsUnlocked = canOfferNextLevel && isLevelUnlocked(currentLevelIndex + 1);
 
   elements.successModalStars.textContent = '★'.repeat(earnedStars) + '☆'.repeat(MAX_STARS - earnedStars);
   elements.successModalStarText.textContent = `${earnedStars} von ${MAX_STARS} Sternen`;
   elements.successModalBest.hidden = !isNewBest;
   elements.successModalMessage.textContent = getSuccessMessage(earnedStars);
-  elements.successModalCompletion.hidden = !(isFinalLevel && earnedStars >= MIN_STARS_TO_UNLOCK_NEXT_LEVEL);
+  elements.successModalCompletion.hidden = !(isFinalLevel && hasBestStarsForUnlock);
   elements.successModalActions.innerHTML = '';
 
-  if (earnedStars >= MIN_STARS_TO_UNLOCK_NEXT_LEVEL) {
+  if (hasBestStarsForUnlock) {
     if (isFinalLevel) {
       addSuccessModalButton('Zur Levelübersicht', 'primary-button', showLevelOverview);
       addSuccessModalButton(`Level ${level.id} wiederholen`, 'secondary-button', () => loadLevel(currentLevelIndex));
