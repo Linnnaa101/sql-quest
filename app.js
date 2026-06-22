@@ -358,7 +358,9 @@ const elements = {
   successModalBest: document.querySelector('#successModalBest'),
   successModalMessage: document.querySelector('#successModalMessage'),
   successModalCompletion: document.querySelector('#successModalCompletion'),
-  successModalActions: document.querySelector('#successModalActions')
+  successModalActions: document.querySelector('#successModalActions'),
+  scrollTopButton: document.querySelector('#scrollTopButton'),
+  globalBackButton: document.querySelector('#globalBackButton')
 };
 
 let SQL;
@@ -369,6 +371,9 @@ let selectedPath = null;
 let hasBeginnerIntroCompleted = false;
 let currentLevelIndex = 0;
 let progress = loadProgress();
+let currentView = null;
+let viewHistory = [];
+let isNavigatingBack = false;
 
 window.addEventListener('DOMContentLoaded', init);
 elements.runButton.addEventListener('click', runPlayerQuery);
@@ -389,9 +394,13 @@ elements.showDatabaseInfoButton.addEventListener('click', showDatabaseInfo);
 elements.showDatabaseInfoInGameButton.addEventListener('click', showDatabaseInfo);
 elements.successModalCloseButton.addEventListener('click', closeSuccessModalToOverview);
 elements.successModal.addEventListener('keydown', handleSuccessModalKeydown);
+elements.scrollTopButton.addEventListener('click', scrollToPageTop);
+elements.globalBackButton.addEventListener('click', navigateBack);
+window.addEventListener('scroll', updateScrollTopButton);
 
 async function init() {
   updateProgressBar();
+  updateScrollTopButton();
   setIntroFeedback('sql.js wird geladen …', 'info');
   showDatabaseInfo();
   try {
@@ -482,6 +491,63 @@ function showLearningFlow() {
   showLevelOverview();
 }
 
+function navigateToView(viewName, renderView) {
+  if (currentView && currentView !== viewName && !isNavigatingBack) {
+    const previousView = viewHistory[viewHistory.length - 1];
+    if (previousView !== currentView) {
+      viewHistory.push(currentView);
+    }
+  }
+
+  currentView = viewName;
+  renderView();
+  updateGlobalBackButton();
+}
+
+function navigateBack() {
+  let previousView = viewHistory.pop();
+  while (previousView && previousView === currentView) {
+    previousView = viewHistory.pop();
+  }
+
+  if (!previousView) {
+    updateGlobalBackButton();
+    return;
+  }
+
+  isNavigatingBack = true;
+  renderViewByName(previousView);
+  isNavigatingBack = false;
+}
+
+function renderViewByName(viewName) {
+  if (viewName === 'databaseInfo') {
+    showDatabaseInfo();
+  } else if (viewName === 'pathSelection') {
+    showPathSelection();
+  } else if (viewName === 'beginnerIntro') {
+    showBeginnerIntro();
+  } else if (viewName === 'levelOverview') {
+    showLevelOverview();
+  } else if (viewName === 'game') {
+    loadLevel(currentLevelIndex);
+  }
+}
+
+function updateGlobalBackButton() {
+  const hasPreviousView = viewHistory.some(viewName => viewName !== currentView);
+  elements.globalBackButton.hidden = !hasPreviousView;
+  elements.globalBackButton.disabled = !hasPreviousView;
+}
+
+function scrollToPageTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateScrollTopButton() {
+  elements.scrollTopButton.hidden = window.scrollY < 160;
+}
+
 function hideLearningViews() {
   elements.databaseIntro.hidden = true;
   elements.pathSelection.hidden = true;
@@ -491,9 +557,11 @@ function hideLearningViews() {
 }
 
 function showPathSelection() {
-  hideLearningViews();
-  elements.pathSelection.hidden = false;
-  updatePathSelection();
+  navigateToView('pathSelection', () => {
+    hideLearningViews();
+    elements.pathSelection.hidden = false;
+    updatePathSelection();
+  });
 }
 
 function updatePathSelection() {
@@ -508,8 +576,10 @@ function updatePathSelection() {
 
 
 function showBeginnerIntro() {
-  hideLearningViews();
-  elements.beginnerIntro.hidden = false;
+  navigateToView('beginnerIntro', () => {
+    hideLearningViews();
+    elements.beginnerIntro.hidden = false;
+  });
 }
 
 function showLevelOverview() {
@@ -519,14 +589,16 @@ function showLevelOverview() {
     return;
   }
 
-  hideSuccessModal();
-  hideLearningViews();
-  elements.levelOverview.hidden = false;
-  renderLevelList();
-  renderSqlBasicsChapters();
-  renderLearnedOverview();
-  showOverviewTab('levels');
-  updateProgressBar();
+  navigateToView('levelOverview', () => {
+    hideSuccessModal();
+    hideLearningViews();
+    elements.levelOverview.hidden = false;
+    renderLevelList();
+    renderSqlBasicsChapters();
+    renderLearnedOverview();
+    showOverviewTab('levels');
+    updateProgressBar();
+  });
 }
 
 
@@ -544,10 +616,12 @@ function showOverviewTab(tabName) {
 }
 
 function showDatabaseInfo() {
-  hideSuccessModal();
-  hideLearningViews();
-  elements.databaseIntro.hidden = false;
-  updateDatabaseIntroActions();
+  navigateToView('databaseInfo', () => {
+    hideSuccessModal();
+    hideLearningViews();
+    elements.databaseIntro.hidden = false;
+    updateDatabaseIntroActions();
+  });
 }
 
 function updateDatabaseIntroActions() {
@@ -1031,29 +1105,31 @@ function loadLevel(index) {
     return;
   }
 
-  hideLearningViews();
-  elements.gameLayout.hidden = false;
-  currentLevelIndex = index;
-  const level = LEVELS[currentLevelIndex];
-  elements.difficulty.textContent = level.difficulty;
-  elements.topic.textContent = level.topic;
-  elements.levelTitle.textContent = `Level ${level.id}: ${level.title}`;
-  elements.explanation.textContent = level.explanation;
-  elements.task.textContent = level.task;
-  elements.hintText.textContent = `💡 Tipp: ${level.hint}`;
-  elements.hintText.hidden = true;
-  elements.solutionBox.textContent = `Lösung: ${level.expectedSql}`;
-  elements.solutionBox.hidden = true;
-  progress.levelAttempts[level.id] = 0;
-  elements.sqlInput.value = progress.savedQueries[level.id] || '';
-  elements.sqlInput.placeholder = 'Schreibe hier deine SQL-Abfrage …';
-  elements.resultTable.className = 'table-wrap empty-state';
-  elements.resultTable.textContent = 'Noch keine Abfrage ausgeführt.';
-  elements.rowCount.textContent = '';
-  setFeedback('Führe deine Abfrage aus, um das Level zu lösen.', 'info');
-  saveProgress();
-  renderLevelList();
-  renderLearnedSqlBlocks();
+  navigateToView('game', () => {
+    hideLearningViews();
+    elements.gameLayout.hidden = false;
+    currentLevelIndex = index;
+    const level = LEVELS[currentLevelIndex];
+    elements.difficulty.textContent = level.difficulty;
+    elements.topic.textContent = level.topic;
+    elements.levelTitle.textContent = `Level ${level.id}: ${level.title}`;
+    elements.explanation.textContent = level.explanation;
+    elements.task.textContent = level.task;
+    elements.hintText.textContent = `💡 Tipp: ${level.hint}`;
+    elements.hintText.hidden = true;
+    elements.solutionBox.textContent = `Lösung: ${level.expectedSql}`;
+    elements.solutionBox.hidden = true;
+    progress.levelAttempts[level.id] = 0;
+    elements.sqlInput.value = progress.savedQueries[level.id] || '';
+    elements.sqlInput.placeholder = 'Schreibe hier deine SQL-Abfrage …';
+    elements.resultTable.className = 'table-wrap empty-state';
+    elements.resultTable.textContent = 'Noch keine Abfrage ausgeführt.';
+    elements.rowCount.textContent = '';
+    setFeedback('Führe deine Abfrage aus, um das Level zu lösen.', 'info');
+    saveProgress();
+    renderLevelList();
+    renderLearnedSqlBlocks();
+  });
 }
 
 function runPlayerQuery() {
