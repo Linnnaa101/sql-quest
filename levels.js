@@ -441,6 +441,116 @@ const LEVELS = [
     expectedSql: 'SELECT kunden.name, bestellungen.id, produkte.name, bestellpositionen.menge, bestellpositionen.menge * bestellpositionen.einzelpreis FROM kunden INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id INNER JOIN produkte ON bestellpositionen.produkt_id = produkte.id ORDER BY bestellungen.id ASC, produkte.name ASC;',
     hint: 'Verbinde kunden → bestellungen → bestellpositionen → produkte und berechne menge * einzelpreis.',
     points: 15
+  },
+  {
+    id: 41,
+    title: 'Bestellungen pro Kunde zählen',
+    difficulty: 'Fortgeschritten',
+    topic: 'COUNT() mit JOIN',
+    explanation: 'Mit COUNT() und LEFT JOIN kannst du auch Kunden ohne Bestellung mitzählen, weil alle Kunden aus der linken Tabelle erhalten bleiben.',
+    task: 'Zeige jeden Kundennamen und die Anzahl seiner Bestellungen.',
+    expectedSql: 'SELECT kunden.name, COUNT(bestellungen.id) FROM kunden LEFT JOIN bestellungen ON kunden.id = bestellungen.kunden_id GROUP BY kunden.name;',
+    hint: 'Nutze LEFT JOIN von kunden zu bestellungen und gruppiere nach kunden.name.',
+    points: 15
+  },
+  {
+    id: 42,
+    title: 'Positionen pro Bestellung zählen',
+    difficulty: 'Fortgeschritten',
+    topic: 'COUNT() mit JOIN',
+    explanation: 'COUNT(bestellpositionen.id) zählt pro gruppierter Bestellung, wie viele Positionen über den JOIN gefunden wurden.',
+    task: 'Zeige jede Bestell-ID und die Anzahl ihrer Bestellpositionen.',
+    expectedSql: 'SELECT bestellungen.id, COUNT(bestellpositionen.id) FROM bestellungen LEFT JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id GROUP BY bestellungen.id;',
+    hint: 'Verbinde bestellungen per LEFT JOIN mit bestellpositionen und gruppiere nach bestellungen.id.',
+    points: 15
+  },
+  {
+    id: 43,
+    title: 'Bestellwert pro Bestellung berechnen',
+    difficulty: 'Fortgeschritten',
+    topic: 'SUM() mit JOIN',
+    explanation: 'SUM() addiert berechnete Positionswerte. Der Bestellwert entsteht aus menge * einzelpreis je Position.',
+    task: 'Zeige jede Bestell-ID und ihren Bestellwert.',
+    expectedSql: 'SELECT bestellungen.id, SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) FROM bestellungen INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id GROUP BY bestellungen.id;',
+    hint: 'Berechne SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) je bestellungen.id.',
+    points: 15
+  },
+  {
+    id: 44,
+    title: 'Gesamtumsatz pro Kunde',
+    difficulty: 'Fortgeschritten',
+    topic: 'SUM() mit JOIN',
+    explanation: 'Für Umsätze pro Kunde verbindest du kunden, bestellungen und bestellpositionen und summierst die Positionswerte je Kunde.',
+    task: 'Zeige jeden Kundennamen mit seinem Gesamtumsatz aus allen Bestellpositionen.',
+    expectedSql: 'SELECT kunden.name, SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) FROM kunden INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id GROUP BY kunden.name;',
+    hint: 'Verbinde kunden → bestellungen → bestellpositionen und gruppiere nach kunden.name.',
+    points: 15
+  },
+  {
+    id: 45,
+    title: 'Verkaufte Menge pro Produkt',
+    difficulty: 'Fortgeschritten',
+    topic: 'SUM() mit JOIN',
+    explanation: 'Mit GROUP BY über Produktnamen und SUM(menge) ermittelst du, wie oft jedes Produkt verkauft wurde.',
+    task: 'Zeige jeden Produktnamen und die insgesamt verkaufte Menge.',
+    expectedSql: 'SELECT produkte.name, SUM(bestellpositionen.menge) FROM produkte INNER JOIN bestellpositionen ON produkte.id = bestellpositionen.produkt_id GROUP BY produkte.name;',
+    hint: 'Verbinde produkte mit bestellpositionen und summiere bestellpositionen.menge pro Produkt.',
+    points: 15
+  },
+  {
+    id: 46,
+    title: 'Kunden nach Umsatz sortieren',
+    difficulty: 'Fortgeschritten',
+    topic: 'GROUP BY + ORDER BY mit JOIN',
+    explanation: 'ORDER BY kann gruppierte JOIN-Ergebnisse nach einem Aggregat wie SUM() sortieren.',
+    task: 'Zeige Kundennamen und Gesamtumsatz, sortiert nach Gesamtumsatz absteigend.',
+    expectedSql: 'SELECT kunden.name, SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) FROM kunden INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id GROUP BY kunden.name ORDER BY SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) DESC;',
+    hint: 'Gruppiere nach kunden.name und sortiere mit ORDER BY SUM(...) DESC.',
+    points: 15
+  },
+  {
+    id: 47,
+    title: 'Produkte nach verkaufter Menge sortieren',
+    difficulty: 'Fortgeschritten',
+    topic: 'GROUP BY + ORDER BY mit JOIN',
+    explanation: 'Du kannst Produktgruppen nach ihrer verkauften Gesamtmenge sortieren.',
+    task: 'Zeige Produktnamen und verkaufte Gesamtmenge, sortiert nach Menge absteigend.',
+    expectedSql: 'SELECT produkte.name, SUM(bestellpositionen.menge) FROM produkte INNER JOIN bestellpositionen ON produkte.id = bestellpositionen.produkt_id GROUP BY produkte.name ORDER BY SUM(bestellpositionen.menge) DESC;',
+    hint: 'Sortiere nach SUM(bestellpositionen.menge) DESC.',
+    points: 15
+  },
+  {
+    id: 48,
+    title: 'Bestellungen nach Bestellwert sortieren',
+    difficulty: 'Fortgeschritten',
+    topic: 'GROUP BY + ORDER BY mit JOIN',
+    explanation: 'Wenn du je Bestellung summierst, kannst du die Bestellungen anschließend nach ihrem Bestellwert sortieren.',
+    task: 'Zeige Bestell-ID und Bestellwert, sortiert nach Bestellwert absteigend.',
+    expectedSql: 'SELECT bestellungen.id, SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) FROM bestellungen INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id GROUP BY bestellungen.id ORDER BY SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) DESC;',
+    hint: 'Gruppiere nach bestellungen.id und sortiere nach dem berechneten SUM-Ausdruck absteigend.',
+    points: 15
+  },
+  {
+    id: 49,
+    title: 'Kunden mit mehreren Bestellungen',
+    difficulty: 'Fortgeschritten',
+    topic: 'HAVING mit JOIN',
+    explanation: 'HAVING filtert nach dem Gruppieren. Nutze es hier für die Bedingung auf COUNT(bestellungen.id).',
+    task: 'Zeige Kundennamen und Bestellanzahl für Kunden mit mehr als einer Bestellung.',
+    expectedSql: 'SELECT kunden.name, COUNT(bestellungen.id) FROM kunden INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id GROUP BY kunden.name HAVING COUNT(bestellungen.id) > 1;',
+    hint: 'Gruppiere nach kunden.name und filtere mit HAVING COUNT(bestellungen.id) > 1.',
+    points: 15
+  },
+  {
+    id: 50,
+    title: 'Produkte mit hoher Verkaufsmenge',
+    difficulty: 'Fortgeschritten',
+    topic: 'HAVING mit JOIN',
+    explanation: 'HAVING ist richtig, wenn die Bedingung eine gruppierte Summe wie SUM(menge) betrifft.',
+    task: 'Zeige Produktnamen und verkaufte Gesamtmenge für Produkte, die insgesamt mehr als 2 Stück verkauft wurden.',
+    expectedSql: 'SELECT produkte.name, SUM(bestellpositionen.menge) FROM produkte INNER JOIN bestellpositionen ON produkte.id = bestellpositionen.produkt_id GROUP BY produkte.name HAVING SUM(bestellpositionen.menge) > 2;',
+    hint: 'Nutze HAVING SUM(bestellpositionen.menge) > 2 nach GROUP BY.',
+    points: 15
   }
 
 ];
