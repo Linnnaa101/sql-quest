@@ -1,75 +1,106 @@
 # SQL Quest
 
-SQL Quest ist ein browserbasiertes Lernspiel zum Erlernen von SQL und grundlegenden Datenbankkonzepten. Die aktuelle MVP-Version läuft vollständig im Browser, nutzt SQLite über `sql.js` und benötigt kein Backend, keine Frameworks und keine Build-Tools.
+SQL Quest ist eine interaktive Lernanwendung, mit der Nutzer SQL Schritt für Schritt anhand eines Shop-Datenmodells üben können. Die Anwendung läuft direkt im Browser und führt SQL-Abfragen gegen eine vorbereitete SQLite-Datenbank aus.
 
-## Live-Demo
+## Funktionen
 
-Die aktuelle Version von SQL Quest ist hier online verfügbar:
+- Interaktive SQL-Level mit direkter Abfrageausführung im Browser
+- Hinweise und Lösungen je Level
+- Sternesystem zur Freischaltung weiterer Level
+- Gespeicherter Fortschritt im Browser
+- Lernhilfen zu bereits freigeschalteten SQL-Bausteinen
+- Tab „Was habe ich gelernt?“ mit Überblick über den Lernfortschritt
+- Schwebender Zurück-Button und Nach-oben-Button
+- Responsive Darstellung für Desktop und Mobilgeräte
 
-[SQL Quest öffnen](https://linnnaa101.github.io/sql-quest/)
+## Lernpfade
 
-## Ziel des Spiels
+### Anfänger
 
-Anfängerinnen und Anfänger sollen SQL-Abfragen Schritt für Schritt üben können. Jede Quest erklärt ein kleines SQL-Konzept, stellt eine Aufgabe und prüft die Lösung anhand des tatsächlichen Abfrageergebnisses.
+- Level 1–30
+- Themen:
+  - `SELECT` und `FROM`
+  - Spalten auswählen
+  - `WHERE`
+  - `ORDER BY`
+  - `LIMIT`
+  - `LIKE`
+  - `AND`, `OR` und `NOT`
+  - `COUNT`, `AVG`, `SUM`, `MIN` und `MAX`
+  - `DISTINCT`
+  - `GROUP BY` und `HAVING`
 
-## Lernfluss
+### Fortgeschritten
 
-SQL Quest startet mit dem Aufbau einer kleinen Shop-Datenbank.
-Erst nachdem die Übungsdatenbank erstellt wurde, starten die SQL-Level.
-So lernen Nutzer zuerst, woraus eine Datenbank besteht, bevor sie Abfragen schreiben.
+- Wird nach Abschluss von Level 30 freigeschaltet
+- Level 31–50
+- Themen:
+  - `INNER JOIN`
+  - `LEFT JOIN`
+  - `ON`-Bedingungen
+  - JOINs über mehrere Tabellen
+  - `COUNT` und `SUM` mit JOIN
+  - `GROUP BY`, `ORDER BY` und `HAVING` mit JOIN
+  - Bestellwerte und Shop-Auswertungen
 
-## Aktueller MVP-Funktionsumfang
+## Fortschritt und Freischaltung
 
-- Moderne Start- und Spieloberfläche mit dem Titel **SQL Quest**
-- Fünf Anfänger-Level zu `SELECT`, Spaltenauswahl, `WHERE`, `ORDER BY` und `COUNT(*)`
-- SQLite-Datenbank im Browser mit den Shop-Tabellen `kunden`, `produkte`, `bestellungen` und `bestellpositionen`
-- SQL-Eingabefeld mit Starter-Abfragen
-- Ausführen von lesenden SQL-Abfragen über `sql.js`
-- Ergebnisanzeige als Tabelle
-- Bewertungslogik über Ergebnisvergleich statt reinem Textvergleich
-- Verständliches Feedback für richtige und falsche Lösungen
-- Hinweise pro Level
-- Punktestand und gelöste Level mit Speicherung im `localStorage`
-- Sicherheitsblockade für schreibende oder strukturelle SQL-Befehle wie `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER` und weitere
-- Responsives Kartenlayout für Desktop und mobile Geräte
+- Neue Level werden normalerweise mit mindestens zwei Sternen im vorherigen Level freigeschaltet.
+- Level 31 wird direkt nach dem Lösen von Level 30 freigeschaltet.
+- Level 41 wird direkt nach dem Lösen von Level 40 freigeschaltet.
+- Der aktuelle Fortschritt wird lokal im Browser gespeichert.
 
-## Starten im Browser
+## Datenmodell
 
-1. Repository klonen oder herunterladen.
-2. Die Datei `index.html` direkt in einem modernen Browser öffnen.
-3. Falls der Browser lokale CDN-Anfragen blockiert, das Projekt optional mit einem einfachen statischen Server starten, zum Beispiel:
+SQL Quest verwendet eine kleine Shop-Datenbank mit vier Tabellen:
 
-   ```bash
-   python3 -m http.server 8000
-   ```
+- `kunden`: Kundendaten wie Name, Stadt, Alter und Punkte
+- `produkte`: Produktdaten wie Name, Kategorie, Preis und Lagerbestand
+- `bestellungen`: Bestellungen mit Kundenzuordnung, Datum und Status
+- `bestellpositionen`: Einzelne Positionen einer Bestellung mit Produkt, Menge und Einzelpreis
 
-4. Danach `http://localhost:8000` öffnen.
+Diese Tabellen werden für realistische Shop-Abfragen und JOIN-Übungen verwendet.
 
-> Hinweis: Für `sql.js` wird eine Internetverbindung benötigt, weil die Bibliothek im MVP über ein CDN geladen wird.
+## Projekt starten
 
-## Online-Demo
+SQL Quest ist eine statische HTML/CSS/JavaScript-Anwendung. Es werden keine Paketmanager-Befehle und kein Build-Schritt benötigt.
 
-Die App kann über GitHub Pages veröffentlicht werden. Nach Aktivierung von GitHub Pages unter den Repository-Einstellungen ist SQL Quest online erreichbar.
-
-## Entwicklung
-
-Für lokale Entwicklung kann ein einfacher statischer Server genutzt werden:
+Repository klonen und einen einfachen lokalen Webserver starten:
 
 ```bash
-python3 -m http.server 8000
+git clone <repository-url>
+cd sql-quest
+python3 -m http.server
 ```
 
-Dann im Browser öffnen:
+Danach im Browser öffnen:
 
 ```text
 http://localhost:8000
 ```
 
-## Geplante nächste Schritte
+Alternativ kann `index.html` direkt in einem modernen Browser geöffnet werden. Für `sql.js` wird eine Internetverbindung benötigt, weil die Bibliothek über ein CDN geladen wird.
 
-- Weitere Level und Themen wie `LIMIT`, Aggregationen, `GROUP BY` und Joins ergänzen
-- Level-Gruppen und Schwierigkeitsstufen ausbauen
-- Bessere SQL-Editor-Funktionen wie Syntax-Highlighting oder Autoformatierung hinzufügen
-- Ausführlichere Erklärungen und Lernkarten integrieren
-- Optional Import/Export des Lernfortschritts ergänzen
-- Automatisierte Browser-Tests für die wichtigsten Spielabläufe einführen
+## Technologien
+
+- HTML
+- CSS
+- JavaScript
+- sql.js / SQLite im Browser
+
+## Projektstruktur
+
+```text
+index.html
+style.css
+app.js
+levels.js
+database.js
+README.md
+```
+
+## Live-Demo
+
+Die Anwendung ist über GitHub Pages erreichbar:
+
+[SQL Quest öffnen](https://linnnaa101.github.io/sql-quest/)
