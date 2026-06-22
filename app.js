@@ -8,48 +8,176 @@ const BLOCKED_COMMANDS = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE
 const LEARNED_SQL_STAGES = [
   {
     unlockLevelId: 5,
+    title: 'Nach Level 5',
+    lockedPreview: 'SELECT, FROM und * werden nach Level 5 freigeschaltet.',
     items: [
-      { term: 'SELECT', description: 'legt fest, welche Daten angezeigt werden' },
-      { term: 'FROM', description: 'legt fest, aus welcher Tabelle Daten kommen' },
-      { term: '*', description: 'zeigt alle Spalten einer Tabelle' }
+      {
+        term: 'SELECT',
+        description: 'Legt fest, welche Daten angezeigt werden.',
+        example: `SELECT name
+FROM kunden;`,
+        exampleExplanation: 'Zeigt die Namen aller Kunden aus der Tabelle kunden.'
+      },
+      {
+        term: 'FROM',
+        description: 'Legt fest, aus welcher Tabelle Daten gelesen werden.',
+        example: `SELECT *
+FROM kunden;`,
+        exampleExplanation: 'Liest Daten aus der Tabelle kunden.'
+      },
+      {
+        term: '*',
+        description: 'Das Sternchen steht für alle Spalten.',
+        example: `SELECT *
+FROM kunden;`,
+        exampleExplanation: 'Zeigt alle Spalten und alle Kunden an.'
+      }
     ]
   },
   {
     unlockLevelId: 10,
+    title: 'Nach Level 10',
+    lockedPreview: 'Einzelne Spalten und WHERE werden nach Level 10 freigeschaltet.',
     items: [
-      { term: 'Spaltennamen nach SELECT', description: 'nur bestimmte Spalten anzeigen' },
-      { term: 'WHERE', description: 'Ergebnisse nach Bedingungen filtern' }
+      {
+        term: 'Einzelne Spalten auswählen',
+        description: 'Legt fest, dass nur bestimmte Spalten angezeigt werden.',
+        example: `SELECT name, stadt
+FROM kunden;`,
+        exampleExplanation: 'Zeigt nur die Spalten name und stadt.'
+      },
+      {
+        term: 'WHERE',
+        description: 'Filtert Datensätze mit einer Bedingung.',
+        example: `SELECT *
+FROM kunden
+WHERE stadt = 'Berlin';`,
+        exampleExplanation: 'Zeigt nur Kunden aus Berlin.'
+      }
     ]
   },
   {
     unlockLevelId: 15,
+    title: 'Nach Level 15',
+    lockedPreview: 'ORDER BY und LIMIT werden nach Level 15 freigeschaltet.',
     items: [
-      { term: 'ORDER BY', description: 'Ergebnisse sortieren' },
-      { term: 'LIMIT', description: 'Anzahl der angezeigten Zeilen begrenzen' }
+      {
+        term: 'ORDER BY',
+        description: 'Sortiert Ergebnisse nach einer oder mehreren Spalten.',
+        example: `SELECT *
+FROM kunden
+ORDER BY punkte DESC;`,
+        exampleExplanation: 'Sortiert Kunden nach Punkten, mit den höchsten Punkten zuerst.'
+      },
+      {
+        term: 'LIMIT',
+        description: 'Begrenzt, wie viele Ergebnisse angezeigt werden.',
+        example: `SELECT *
+FROM kunden
+LIMIT 3;`,
+        exampleExplanation: 'Zeigt nur die ersten drei Ergebnisse.'
+      }
     ]
   },
   {
     unlockLevelId: 20,
+    title: 'Nach Level 20',
+    lockedPreview: 'Vergleichsoperatoren, AND und OR werden nach Level 20 freigeschaltet.',
     items: [
-      { term: '> / < / >= / <=', description: 'Werte vergleichen' },
-      { term: 'AND', description: 'beide Bedingungen müssen stimmen' },
-      { term: 'OR', description: 'mindestens eine Bedingung muss stimmen' }
+      {
+        term: 'Vergleichsoperatoren',
+        description: 'Vergleichen Werte in einer Bedingung.',
+        example: `SELECT *
+FROM kunden
+WHERE punkte >= 100;`,
+        exampleExplanation: 'Zeigt Kunden mit mindestens 100 Punkten.',
+        details: ['= gleich', '> größer als', '< kleiner als', '>= größer oder gleich', '<= kleiner oder gleich']
+      },
+      {
+        term: 'AND',
+        description: 'Verknüpft Bedingungen, bei denen alle Bedingungen erfüllt sein müssen.',
+        example: `SELECT *
+FROM kunden
+WHERE stadt = 'Berlin' AND punkte > 100;`,
+        exampleExplanation: 'Beide Bedingungen müssen erfüllt sein.'
+      },
+      {
+        term: 'OR',
+        description: 'Verknüpft Bedingungen, bei denen mindestens eine Bedingung erfüllt sein muss.',
+        example: `SELECT *
+FROM kunden
+WHERE stadt = 'Berlin' OR stadt = 'Hamburg';`,
+        exampleExplanation: 'Mindestens eine Bedingung muss erfüllt sein.'
+      }
     ]
   },
   {
     unlockLevelId: 25,
+    title: 'Nach Level 25',
+    lockedPreview: 'COUNT, SUM, AVG sowie MIN und MAX werden nach Level 25 freigeschaltet.',
     items: [
-      { term: 'COUNT()', description: 'Zeilen zählen' },
-      { term: 'SUM()', description: 'Werte addieren' },
-      { term: 'AVG()', description: 'Durchschnitt berechnen' },
-      { term: 'MIN() / MAX()', description: 'kleinsten oder größten Wert finden' }
+      {
+        term: 'COUNT',
+        description: 'Zählt Datensätze oder Werte.',
+        example: `SELECT COUNT(*)
+FROM kunden;`,
+        exampleExplanation: 'Zählt alle Kunden.'
+      },
+      {
+        term: 'SUM',
+        description: 'Addiert Zahlenwerte einer Spalte.',
+        example: `SELECT SUM(punkte)
+FROM kunden;`,
+        exampleExplanation: 'Addiert alle Punkte.'
+      },
+      {
+        term: 'AVG',
+        description: 'Berechnet den Durchschnitt einer Zahlenspalte.',
+        example: `SELECT AVG(punkte)
+FROM kunden;`,
+        exampleExplanation: 'Berechnet den durchschnittlichen Punktestand.'
+      },
+      {
+        term: 'MIN und MAX',
+        description: 'Ermitteln den kleinsten und den größten Wert einer Spalte.',
+        example: `SELECT MIN(punkte), MAX(punkte)
+FROM kunden;`,
+        exampleExplanation: 'Ermittelt den kleinsten und größten Punktestand.'
+      }
     ]
   },
   {
     unlockLevelId: 30,
+    title: 'Nach Level 30',
+    lockedPreview: 'GROUP BY, HAVING und Gruppenauswertungen werden nach Level 30 freigeschaltet.',
     items: [
-      { term: 'GROUP BY', description: 'gleiche Werte gruppieren' },
-      { term: 'HAVING', description: 'Gruppen filtern' }
+      {
+        term: 'GROUP BY',
+        description: 'Fasst Zeilen mit gleichen Werten zu Gruppen zusammen.',
+        example: `SELECT stadt, COUNT(*)
+FROM kunden
+GROUP BY stadt;`,
+        exampleExplanation: 'Gruppiert Kunden nach Stadt und zählt die Kunden je Stadt.'
+      },
+      {
+        term: 'HAVING',
+        description: 'Filtert Gruppen nach dem Gruppieren.',
+        example: `SELECT stadt, COUNT(*)
+FROM kunden
+GROUP BY stadt
+HAVING COUNT(*) > 1;`,
+        exampleExplanation: 'Zeigt nur Städte mit mehr als einem Kunden.'
+      },
+      {
+        term: 'Gruppen sortieren und begrenzen',
+        description: 'Kombiniert Gruppieren, Sortieren und Begrenzen für gezielte Auswertungen.',
+        example: `SELECT stadt, SUM(punkte)
+FROM kunden
+GROUP BY stadt
+ORDER BY SUM(punkte) DESC
+LIMIT 1;`,
+        exampleExplanation: 'Zeigt die Stadt mit der höchsten Gesamtpunktzahl.'
+      }
     ]
   }
 ];
@@ -450,11 +578,52 @@ function getHighestSolvedLevelId() {
   }, 0);
 }
 
-function getUnlockedLearnedSqlItems() {
+function getUnlockedLearnedSqlStages() {
   const highestSolvedLevelId = getHighestSolvedLevelId();
-  return LEARNED_SQL_STAGES
-    .filter(stage => highestSolvedLevelId >= stage.unlockLevelId)
-    .flatMap(stage => stage.items);
+  return LEARNED_SQL_STAGES.filter(stage => highestSolvedLevelId >= stage.unlockLevelId);
+}
+
+function createLearnedSqlCard(item) {
+  const card = document.createElement('article');
+  card.className = 'learned-sql-item';
+
+  const title = document.createElement('h4');
+  title.textContent = item.term;
+  card.append(title);
+
+  const description = document.createElement('p');
+  description.textContent = item.description;
+  card.append(description);
+
+  if (item.details?.length) {
+    const details = document.createElement('ul');
+    details.className = 'learned-sql-details';
+    item.details.forEach(detail => {
+      const detailItem = document.createElement('li');
+      detailItem.textContent = detail;
+      details.append(detailItem);
+    });
+    card.append(details);
+  }
+
+  const exampleLabel = document.createElement('p');
+  exampleLabel.className = 'learned-sql-example-label';
+  exampleLabel.textContent = 'Beispielabfrage';
+  card.append(exampleLabel);
+
+  const example = document.createElement('pre');
+  example.className = 'sql-example learned-sql-example';
+  const code = document.createElement('code');
+  code.textContent = item.example;
+  example.append(code);
+  card.append(example);
+
+  const exampleExplanation = document.createElement('p');
+  exampleExplanation.className = 'muted small';
+  exampleExplanation.textContent = item.exampleExplanation;
+  card.append(exampleExplanation);
+
+  return card;
 }
 
 function renderLearnedSqlBlocks() {
@@ -462,29 +631,43 @@ function renderLearnedSqlBlocks() {
     return;
   }
 
-  const highestSolvedLevelId = getHighestSolvedLevelId();
-  const unlockedStageCount = LEARNED_SQL_STAGES.filter(stage => highestSolvedLevelId >= stage.unlockLevelId).length;
-  const learnedItems = getUnlockedLearnedSqlItems();
+  const unlockedStages = getUnlockedLearnedSqlStages();
+  const unlockedStageCount = unlockedStages.length;
 
   elements.learnedSqlProgress.textContent = `Stufe ${unlockedStageCount} von ${LEARNED_SQL_STAGES.length}`;
   elements.learnedSqlList.innerHTML = '';
 
-  if (learnedItems.length === 0) {
+  if (unlockedStageCount === 0) {
     const emptyMessage = document.createElement('p');
     emptyMessage.className = 'muted small';
     emptyMessage.textContent = 'Löse Level 5, um deine ersten SQL-Bausteine freizuschalten.';
     elements.learnedSqlList.append(emptyMessage);
-    return;
   }
 
-  learnedItems.forEach(item => {
-    const definition = document.createElement('div');
-    definition.className = 'learned-sql-item';
-    definition.innerHTML = `<code>${item.term}</code><span>${item.description}</span>`;
-    elements.learnedSqlList.append(definition);
+  LEARNED_SQL_STAGES.forEach(stage => {
+    const isUnlocked = unlockedStages.includes(stage);
+    const stageSection = document.createElement('section');
+    stageSection.className = `learned-sql-stage${isUnlocked ? '' : ' locked'}`;
+
+    const stageTitle = document.createElement('h3');
+    stageTitle.textContent = stage.title;
+    stageSection.append(stageTitle);
+
+    if (isUnlocked) {
+      const itemGrid = document.createElement('div');
+      itemGrid.className = 'learned-sql-stage-grid';
+      stage.items.forEach(item => itemGrid.append(createLearnedSqlCard(item)));
+      stageSection.append(itemGrid);
+    } else {
+      const lockedMessage = document.createElement('p');
+      lockedMessage.className = 'muted small';
+      lockedMessage.textContent = stage.lockedPreview;
+      stageSection.append(lockedMessage);
+    }
+
+    elements.learnedSqlList.append(stageSection);
   });
 }
-
 
 function renderSqlBasicsChapters() {
   if (!elements.sqlBasicsList || !elements.sqlBasicsProgress) {
