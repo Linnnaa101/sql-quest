@@ -231,6 +231,49 @@ GROUP BY stadt
 ORDER BY SUM(punkte) DESC
 LIMIT 1;`,
     exampleExplanation: 'Zeigt die Stadt mit der höchsten Gesamtpunktzahl.'
+  },
+  innerJoin: {
+    term: 'INNER JOIN',
+    description: 'Verbindet Tabellen und zeigt nur Zeilen, bei denen die ON-Bedingung in beiden Tabellen einen Treffer findet.',
+    example: `SELECT kunden.name, bestellungen.bestelldatum
+FROM kunden
+INNER JOIN bestellungen
+  ON kunden.id = bestellungen.kunden_id;`,
+    exampleExplanation: 'Verbindet kunden mit bestellungen: bestellungen.kunden_id verweist auf kunden.id.',
+    details: ['Gut für Bestellungen mit vorhandenem Kunden.', 'Kunden ohne Bestellung erscheinen bei INNER JOIN nicht.']
+  },
+  leftJoin: {
+    term: 'LEFT JOIN',
+    description: 'Zeigt alle Zeilen der linken Tabelle und ergänzt passende Daten der rechten Tabelle.',
+    example: `SELECT kunden.name, bestellungen.bestelldatum
+FROM kunden
+LEFT JOIN bestellungen
+  ON kunden.id = bestellungen.kunden_id;`,
+    exampleExplanation: 'Zeigt alle Kunden; bei Kunden ohne Bestellung bleibt das Bestelldatum leer.',
+    details: ['Gut, wenn auch fehlende rechte Datensätze sichtbar bleiben sollen.', 'Mit WHERE bestellungen.id IS NULL findest du Kunden ohne Bestellung.']
+  },
+  joinOn: {
+    term: 'ON',
+    description: 'Legt bei einem JOIN fest, welche Spalten aus den Tabellen zusammenpassen.',
+    example: `SELECT produkte.name, bestellpositionen.menge
+FROM bestellpositionen
+INNER JOIN produkte
+  ON bestellpositionen.produkt_id = produkte.id;`,
+    exampleExplanation: 'Verbindet jede Bestellposition mit ihrem Produkt über produkt_id und id.',
+    details: ['kunden.id passt zu bestellungen.kunden_id.', 'bestellungen.id passt zu bestellpositionen.bestellung_id.', 'produkte.id passt zu bestellpositionen.produkt_id.']
+  },
+  multiTableJoins: {
+    term: 'JOINs über mehrere Tabellen',
+    description: 'Mehrere JOINs verbinden eine Beziehungskette, zum Beispiel vom Kunden über Bestellungen und Positionen zum Produkt.',
+    example: `SELECT kunden.name, bestellungen.id, produkte.name, bestellpositionen.menge
+FROM kunden
+INNER JOIN bestellungen
+  ON kunden.id = bestellungen.kunden_id
+INNER JOIN bestellpositionen
+  ON bestellungen.id = bestellpositionen.bestellung_id
+INNER JOIN produkte
+  ON bestellpositionen.produkt_id = produkte.id;`,
+    exampleExplanation: 'Erstellt eine Shop-Auswertung mit Kunde, Bestellung, Position und Produkt.'
   }
 };
 
@@ -240,16 +283,9 @@ const SQL_LEARNING_STAGES = [
   { unlockLevelId: 15, title: 'Bedingungen', levelRange: 'Level 11–15', levelStart: 11, levelEnd: 15, summary: 'Du formulierst flexiblere Bedingungen mit OR, NOT und weiteren Vergleichsoperatoren.', lockedPreview: 'OR, <, >=, <= und NOT werden nach Level 15 freigeschaltet.', termKeys: ['or', 'lessThan', 'greaterEqual', 'lessEqual', 'not'] },
   { unlockLevelId: 20, title: 'Funktionen und Auswertungen', levelRange: 'Level 16–20', levelStart: 16, levelEnd: 20, summary: 'Du wertest Zahlen mit SUM, MIN und MAX aus, entfernst Duplikate und kombinierst Filter, Sortierung und Begrenzung.', lockedPreview: 'SUM(), MIN(), MAX(), DISTINCT und Kombinationen aus WHERE, ORDER BY und LIMIT werden nach Level 20 freigeschaltet.', termKeys: ['sum', 'min', 'max', 'distinct', 'whereOrderLimit'] },
   { unlockLevelId: 25, title: 'Kombinierte Abfragen', levelRange: 'Level 21–25', levelStart: 21, levelEnd: 25, summary: 'Du festigst die typische Reihenfolge von SELECT-Abfragen und kombinierst mehrere SQL-Bausteine sicher.', lockedPreview: 'Eine Wiederholungs- und Kombinationsstufe wird nach Level 25 freigeschaltet.', termKeys: ['where', 'and', 'columns', 'orderBy', 'limit', 'queryOrder'] },
-  { unlockLevelId: 30, title: 'Gruppieren und Auswerten', levelRange: 'Level 26–30', levelStart: 26, levelEnd: 30, summary: 'Du gruppierst Daten, filterst Gruppen und sortierst oder begrenzt Auswertungen pro Gruppe.', lockedPreview: 'GROUP BY, HAVING und Gruppenauswertungen werden nach Level 30 freigeschaltet.', termKeys: ['groupBy', 'having', 'groupAggregates', 'groupOrder', 'groupLimit'] }
+  { unlockLevelId: 30, title: 'Gruppieren und Auswerten', levelRange: 'Level 26–30', levelStart: 26, levelEnd: 30, summary: 'Du gruppierst Daten, filterst Gruppen und sortierst oder begrenzt Auswertungen pro Gruppe.', lockedPreview: 'GROUP BY, HAVING und Gruppenauswertungen werden nach Level 30 freigeschaltet.', termKeys: ['groupBy', 'having', 'groupAggregates', 'groupOrder', 'groupLimit'] },
+  { unlockLevelId: 30, title: 'Fortgeschritten – JOINs', levelRange: 'Level 31–40', levelStart: 31, levelEnd: 40, summary: 'Du verbindest Shop-Tabellen mit INNER JOIN und LEFT JOIN, nutzt ON-Bedingungen und wertest Bestellungen mit Produkten aus.', lockedPreview: 'Fortgeschritten – JOINs wird nach Abschluss von Level 30 freigeschaltet.', termKeys: ['innerJoin', 'leftJoin', 'joinOn', 'multiTableJoins'] }
 ];
-
-const ADVANCED_LEARNING_PREVIEW = {
-  title: 'Fortgeschritten',
-  levelRange: 'Nach Level 30',
-  unlockLevelId: 30,
-  lockedSummary: 'Wird nach Abschluss von Level 30 freigeschaltet. Hier lernst du später JOINs und Abfragen mit mehreren Tabellen.',
-  unlockedSummary: 'Inhalte folgen. Hier lernst du später JOINs und Abfragen mit mehreren Tabellen.'
-};
 
 const SQL_BASICS_CHAPTERS = SQL_LEARNING_STAGES.map(stage => ({
   title: stage.title,
@@ -306,6 +342,9 @@ const elements = {
   createDatabaseButton: document.querySelector('#createDatabaseButton'),
   startLevelsButton: document.querySelector('#startLevelsButton'),
   startBeginnerPathButton: document.querySelector('#startBeginnerPathButton'),
+  advancedPathCard: document.querySelector('#advancedPathCard'),
+  advancedPathBadge: document.querySelector('#advancedPathBadge'),
+  startAdvancedPathButton: document.querySelector('#startAdvancedPathButton'),
   startLevelOneButton: document.querySelector('#startLevelOneButton'),
   backToLevelsButton: document.querySelector('#backToLevelsButton'),
   showDatabaseInfoButton: document.querySelector('#showDatabaseInfoButton'),
@@ -343,6 +382,7 @@ elements.learnedOverviewTabButton.addEventListener('click', () => showOverviewTa
 elements.createDatabaseButton.addEventListener('click', createPracticeDatabase);
 elements.startLevelsButton.addEventListener('click', startLevels);
 elements.startBeginnerPathButton.addEventListener('click', startBeginnerPath);
+elements.startAdvancedPathButton.addEventListener('click', startAdvancedPath);
 elements.startLevelOneButton.addEventListener('click', completeBeginnerIntro);
 elements.backToLevelsButton.addEventListener('click', showLearningFlow);
 elements.showDatabaseInfoButton.addEventListener('click', showDatabaseInfo);
@@ -396,6 +436,18 @@ function startBeginnerPath() {
   showLearningFlow();
 }
 
+function startAdvancedPath() {
+  if (getHighestSolvedLevelId() < 30) {
+    setIntroFeedback('Der Fortgeschrittenenpfad wird nach Abschluss von Level 30 freigeschaltet.', 'info');
+    return;
+  }
+  selectedPath = 'advanced';
+  hasLevelSessionStarted = true;
+  hasBeginnerIntroCompleted = true;
+  currentLevelIndex = LEVELS.findIndex(level => level.id === 31);
+  showLevelOverview();
+}
+
 function completeBeginnerIntro() {
   hasBeginnerIntroCompleted = true;
   currentLevelIndex = Math.min(progress.currentLevelIndex || 0, LEVELS.length - 1);
@@ -414,6 +466,11 @@ function showLearningFlow() {
 
   if (!selectedPath) {
     showPathSelection();
+    return;
+  }
+
+  if (selectedPath === 'advanced') {
+    showLevelOverview();
     return;
   }
 
@@ -436,7 +493,19 @@ function hideLearningViews() {
 function showPathSelection() {
   hideLearningViews();
   elements.pathSelection.hidden = false;
+  updatePathSelection();
 }
+
+function updatePathSelection() {
+  const advancedUnlocked = getHighestSolvedLevelId() >= 30;
+  elements.advancedPathCard.classList.toggle('active-path', advancedUnlocked);
+  elements.advancedPathCard.classList.toggle('disabled-path', !advancedUnlocked);
+  elements.advancedPathCard.setAttribute('aria-disabled', String(!advancedUnlocked));
+  elements.advancedPathBadge.textContent = advancedUnlocked ? 'Freigeschaltet' : 'Gesperrt';
+  elements.startAdvancedPathButton.disabled = !advancedUnlocked;
+  elements.startAdvancedPathButton.textContent = advancedUnlocked ? 'Fortgeschrittene starten' : 'Nach Level 30 verfügbar';
+}
+
 
 function showBeginnerIntro() {
   hideLearningViews();
@@ -577,36 +646,51 @@ function saveProgress() {
 
 function renderLevelList() {
   elements.levelList.innerHTML = '';
-  LEVELS.forEach((level, index) => {
-    const unlocked = isLevelUnlocked(index);
-    const stars = getLevelStars(level.id);
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'level-button';
-    button.classList.toggle('active', index === currentLevelIndex);
-    button.classList.toggle('solved', progress.solvedLevelIds.includes(level.id));
-    button.classList.toggle('locked', !unlocked);
-    button.setAttribute('aria-disabled', String(!unlocked));
-    button.setAttribute('aria-label', getLevelButtonLabel(level, index, unlocked, stars));
-    button.innerHTML = `
-      <span class="level-button-topline">
-        <span data-level-number="${level.id}">Level ${level.id}</span>
-        <span class="level-stars" aria-hidden="true">${unlocked ? renderStars(stars) : '🔒'}</span>
-      </span>
-      <strong>${level.title}</strong>
-    `;
-    button.addEventListener('click', () => {
-      if (!isLevelUnlocked(index)) {
-        setOverviewFeedback('Erreiche mindestens 2 Sterne im vorherigen Level, um dieses Level freizuschalten.', 'info');
-        return;
-      }
-      loadLevel(index);
-    });
-    elements.levelList.append(button);
+  [
+    { title: 'Anfänger', levels: LEVELS.filter(level => level.difficulty === 'Anfänger') },
+    { title: 'Fortgeschritten – JOINs', levels: LEVELS.filter(level => level.difficulty === 'Fortgeschritten') }
+  ].forEach(section => {
+    const solved = section.levels.filter(level => progress.solvedLevelIds.includes(level.id)).length;
+    const sectionElement = document.createElement('section');
+    sectionElement.className = `level-section ${solved === section.levels.length ? 'completed' : ''}`;
+    sectionElement.innerHTML = `<div class="level-section-heading"><h3>${section.title}</h3><span>${solved === section.levels.length ? 'Abgeschlossen' : `${solved} von ${section.levels.length} gelöst`}</span></div>`;
+    const grid = document.createElement('div');
+    grid.className = 'level-list compact-level-grid';
+    section.levels.forEach(level => grid.append(createLevelButton(level, LEVELS.indexOf(level))));
+    sectionElement.append(grid);
+    elements.levelList.append(sectionElement);
   });
   elements.score.textContent = progress.score;
   renderSqlBasicsChapters();
   updateProgressBar();
+}
+
+function createLevelButton(level, index) {
+  const unlocked = isLevelUnlocked(index);
+  const stars = getLevelStars(level.id);
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'level-button';
+  button.classList.toggle('active', index === currentLevelIndex);
+  button.classList.toggle('solved', progress.solvedLevelIds.includes(level.id));
+  button.classList.toggle('locked', !unlocked);
+  button.setAttribute('aria-disabled', String(!unlocked));
+  button.setAttribute('aria-label', getLevelButtonLabel(level, index, unlocked, stars));
+  button.innerHTML = `
+    <span class="level-button-topline">
+      <span data-level-number="${level.id}">Level ${level.id}</span>
+      <span class="level-stars" aria-hidden="true">${unlocked ? renderStars(stars) : '🔒'}</span>
+    </span>
+    <strong>${level.title}</strong>
+  `;
+  button.addEventListener('click', () => {
+    if (!isLevelUnlocked(index)) {
+      setOverviewFeedback('Erreiche mindestens 2 Sterne im vorherigen Level, um dieses Level freizuschalten.', 'info');
+      return;
+    }
+    loadLevel(index);
+  });
+  return button;
 }
 
 
@@ -728,16 +812,15 @@ function renderLearnedOverview() {
 
   const highestSolvedLevelId = getHighestSolvedLevelId();
   const unlockedStageCount = SQL_LEARNING_STAGES.filter(stage => isLearningStageUnlocked(stage, highestSolvedLevelId)).length;
-  const beginnerCompleted = highestSolvedLevelId >= ADVANCED_LEARNING_PREVIEW.unlockLevelId;
+  const beginnerCompleted = highestSolvedLevelId >= 30;
   elements.learnedOverviewSummary.textContent = beginnerCompleted
-    ? 'Anfängerbereich abgeschlossen'
+    ? `Anfängerbereich abgeschlossen · ${unlockedStageCount} von ${SQL_LEARNING_STAGES.length} Stufen aktiv`
     : `${unlockedStageCount} von ${SQL_LEARNING_STAGES.length} Stufen aktiv`;
   elements.learnedOverviewList.innerHTML = '';
 
   SQL_LEARNING_STAGES.forEach(stage => {
     elements.learnedOverviewList.append(createLearningOverviewStageCard(stage, highestSolvedLevelId));
   });
-  elements.learnedOverviewList.append(createAdvancedPreviewCard(beginnerCompleted));
 }
 
 function createLearningOverviewStageCard(stage, highestSolvedLevelId) {
@@ -782,6 +865,9 @@ function getLearningOverviewStatus(solvedCount, totalCount, isAccessible) {
   if (!isAccessible) {
     return { label: 'noch gesperrt', className: 'locked' };
   }
+  if (totalCount > 0 && solvedCount === totalCount) {
+    return { label: 'abgeschlossen', className: 'completed' };
+  }
   if (solvedCount > 0 && solvedCount < totalCount) {
     return { label: 'in Bearbeitung', className: 'in-progress' };
   }
@@ -809,24 +895,6 @@ function createMiniProgressBar(value, max, label) {
   fill.style.width = max === 0 ? '0%' : `${Math.round((value / max) * 100)}%`;
   track.append(fill);
   return track;
-}
-
-function createAdvancedPreviewCard(isUnlocked) {
-  const article = document.createElement('article');
-  article.className = `learning-overview-card advanced-preview ${isUnlocked ? 'unlocked' : 'locked'}`;
-  article.setAttribute('aria-label', `${ADVANCED_LEARNING_PREVIEW.title}: ${isUnlocked ? 'freigeschaltet' : 'noch gesperrt'}`);
-  const statusLabel = isUnlocked ? 'freigeschaltet' : 'noch gesperrt';
-  article.innerHTML = `
-    <div class="learning-overview-card-header">
-      <h4>${ADVANCED_LEARNING_PREVIEW.title}</h4>
-      <span class="status-badge ${isUnlocked ? 'unlocked' : 'locked'}">${statusLabel}</span>
-    </div>
-    <p class="learning-overview-range">${ADVANCED_LEARNING_PREVIEW.levelRange}</p>
-    <p class="learning-overview-terms"><strong>SQL-Begriffe:</strong> JOINs, mehrere Tabellen</p>
-    <p class="muted">${isUnlocked ? ADVANCED_LEARNING_PREVIEW.unlockedSummary : ADVANCED_LEARNING_PREVIEW.lockedSummary}</p>
-    <p class="learning-overview-progress">${isUnlocked ? 'Startkarte freigeschaltet · Inhalte folgen' : '0 von 0 Fortgeschrittenen-Leveln gelöst'}</p>
-  `;
-  return article;
 }
 
 function renderSqlBasicsChapters() {
@@ -915,24 +983,24 @@ function isLevelUnlocked(levelIndex) {
 
 function updateProgressBar() {
   const beginnerLevels = LEVELS.filter(level => level.difficulty === 'Anfänger');
-  const beginnerLevelIds = new Set(beginnerLevels.map(level => level.id));
-  const solvedBeginnerLevelCount = new Set(
-    progress.solvedLevelIds.filter(levelId => beginnerLevelIds.has(levelId))
-  ).size;
-  const unlockedBeginnerLevelCount = beginnerLevels.filter(level => isLevelUnlocked(LEVELS.indexOf(level))).length;
-  const consideredBeginnerLevelCount = Math.max(unlockedBeginnerLevelCount, solvedBeginnerLevelCount);
-  const totalBeginnerLevelCount = beginnerLevels.length;
-  const progressPercent = totalBeginnerLevelCount === 0
-    ? 0
-    : Math.round((consideredBeginnerLevelCount / totalBeginnerLevelCount) * 100);
-  const collectedStars = beginnerLevels.reduce((sum, level) => sum + getLevelStars(level.id), 0);
-  const maxStars = beginnerLevels.length * MAX_STARS;
+  const advancedLevels = LEVELS.filter(level => level.difficulty === 'Fortgeschritten');
+  const solvedBeginnerLevelCount = beginnerLevels.filter(level => progress.solvedLevelIds.includes(level.id)).length;
+  const solvedAdvancedLevelCount = advancedLevels.filter(level => progress.solvedLevelIds.includes(level.id)).length;
+  const beginnerCompleted = solvedBeginnerLevelCount >= beginnerLevels.length;
+  const unlockedAdvancedLevelCount = advancedLevels.filter(level => isLevelUnlocked(LEVELS.indexOf(level))).length;
+  const consideredBeginnerLevelCount = Math.max(beginnerLevels.filter(level => isLevelUnlocked(LEVELS.indexOf(level))).length, solvedBeginnerLevelCount);
+  const totalLevelCount = LEVELS.length;
+  const consideredTotalLevelCount = consideredBeginnerLevelCount + Math.max(unlockedAdvancedLevelCount, solvedAdvancedLevelCount);
+  const progressPercent = totalLevelCount === 0 ? 0 : Math.round((consideredTotalLevelCount / totalLevelCount) * 100);
+  const collectedStars = LEVELS.reduce((sum, level) => sum + getLevelStars(level.id), 0);
+  const maxStars = LEVELS.length * MAX_STARS;
 
-  elements.progressText.textContent = `${solvedBeginnerLevelCount} von ${totalBeginnerLevelCount} Leveln gelöst`;
-  elements.progressPercent.textContent = `${progressPercent} % · ${collectedStars} von ${maxStars} Sternen gesammelt`;
+  elements.progressText.textContent = `Anfänger: ${solvedBeginnerLevelCount}/${beginnerLevels.length}${beginnerCompleted ? ' abgeschlossen' : ''} · Fortgeschritten: ${solvedAdvancedLevelCount}/${advancedLevels.length}`;
+  elements.progressPercent.textContent = `${progressPercent} % gesamt · ${collectedStars} von ${maxStars} Sternen gesammelt`;
   elements.progressFill.style.width = `${progressPercent}%`;
-  elements.progressTrack.setAttribute('aria-valuemax', totalBeginnerLevelCount);
-  elements.progressTrack.setAttribute('aria-valuenow', consideredBeginnerLevelCount);
+  elements.progressTrack.setAttribute('aria-valuemax', totalLevelCount);
+  elements.progressTrack.setAttribute('aria-valuenow', consideredTotalLevelCount);
+  elements.progressTrack.setAttribute('aria-label', 'Gesamtfortschritt über Anfänger und Fortgeschritten');
 }
 
 function loadLevel(index) {

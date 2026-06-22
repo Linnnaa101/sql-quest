@@ -129,7 +129,7 @@ produkte 1 ─── n bestellpositionen</pre>
     <section id="pathSelection" class="card path-selection" aria-labelledby="pathSelectionTitle" hidden>
       <p class="eyebrow">Schritt 2</p>
       <h2 id="pathSelectionTitle">Wähle deinen Lernpfad</h2>
-      <p class="muted">Starte passend zu deinem Wissen. Weitere Lernpfade werden später freigeschaltet.</p>
+      <p class="muted">Starte passend zu deinem Wissen. Der Fortgeschrittenenpfad wird nach dem Abschluss von Level 30 freigeschaltet.</p>
 
       <div class="path-grid">
         <article class="path-card active-path">
@@ -140,13 +140,13 @@ produkte 1 ─── n bestellpositionen</pre>
           <button id="startBeginnerPathButton" class="primary-button" type="button">Anfänger starten</button>
         </article>
 
-        <article class="path-card disabled-path" aria-disabled="true">
+        <article id="advancedPathCard" class="path-card disabled-path" aria-disabled="true">
           <div class="path-card-header">
             <h3>Fortgeschrittene</h3>
-            <span class="coming-soon-badge">Kommt bald</span>
+            <span id="advancedPathBadge" class="coming-soon-badge">Gesperrt</span>
           </div>
-          <p>Lerne später JOINs, mehrere Tabellen, GROUP BY und Beziehungen.</p>
-          <button class="secondary-button" type="button" disabled>Fortgeschrittene starten</button>
+          <p>Lerne JOINs, mehrere Tabellen und Shop-Auswertungen mit Beziehungen.</p>
+          <button id="startAdvancedPathButton" class="secondary-button" type="button" disabled>Nach Level 30 verfügbar</button>
         </article>
 
         <article class="path-card disabled-path" aria-disabled="true">
@@ -178,7 +178,7 @@ produkte 1 ─── n bestellpositionen</pre>
     <section id="levelOverview" class="card level-panel level-overview" aria-label="Levelübersicht" hidden>
       <div class="panel-heading">
         <div>
-          <p class="eyebrow">Anfängerpfad</p>
+          <p class="eyebrow">Lernpfade</p>
           <h2>Levelübersicht</h2>
         </div>
         <div class="panel-actions">
@@ -204,7 +204,7 @@ produkte 1 ─── n bestellpositionen</pre>
           aria-valuemin="0"
           aria-valuemax="0"
           aria-valuenow="0"
-          aria-label="Fortschritt im Anfängerpfad"
+          aria-label="Gesamtfortschritt über Anfänger und Fortgeschritten"
         >
           <div id="progressFill" class="progress-fill"></div>
         </div>
@@ -214,7 +214,7 @@ produkte 1 ─── n bestellpositionen</pre>
       <section class="progress-card sql-basics-card" aria-labelledby="sqlBasicsTitle">
         <div class="progress-header">
           <span id="sqlBasicsTitle">SQL-Grundlagen</span>
-          <span id="sqlBasicsProgress">Kapitel 0 von 6 freigeschaltet</span>
+          <span id="sqlBasicsProgress">Kapitel 0 von 7 freigeschaltet</span>
         </div>
         <div id="sqlBasicsList" class="sql-basics-list" aria-label="SQL-Grundlagen-Kapitel"></div>
       </section>
@@ -260,7 +260,7 @@ produkte 1 ─── n bestellpositionen</pre>
                 <p class="eyebrow">Neu gelernt</p>
                 <h2 id="learnedSqlTitle">SQL-Bausteine</h2>
               </div>
-              <span id="learnedSqlProgress" class="info-progress">Stufe 0 von 6</span>
+              <span id="learnedSqlProgress" class="info-progress">Stufe 0 von 7</span>
             </div>
             <div id="learnedSqlList" class="learned-sql-list" aria-live="polite"></div>
           </article>

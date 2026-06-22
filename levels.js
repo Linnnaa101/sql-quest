@@ -330,5 +330,117 @@ const LEVELS = [
     expectedSql: 'SELECT stadt, SUM(punkte) FROM kunden GROUP BY stadt ORDER BY SUM(punkte) DESC LIMIT 1;',
     hint: 'Gruppiere nach stadt, addiere SUM(punkte), sortiere absteigend und begrenze das Ergebnis mit LIMIT 1.',
     points: 10
+
+  },
+  {
+    id: 31,
+    title: 'Kunden und Bestellungen verbinden',
+    difficulty: 'Fortgeschritten',
+    topic: 'INNER JOIN',
+    explanation: 'Ein JOIN verbindet Zeilen aus zwei Tabellen. Mit INNER JOIN erscheinen nur passende Zeilen aus beiden Tabellen.',
+    task: 'Zeige Kundennamen und Bestelldatum, indem du kunden mit bestellungen verbindest.',
+    expectedSql: 'SELECT kunden.name, bestellungen.bestelldatum FROM kunden INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id;',
+    hint: 'Verbinde kunden.id mit bestellungen.kunden_id in der ON-Bedingung.',
+    points: 15
+  },
+  {
+    id: 32,
+    title: 'Bestellungen mit Status anzeigen',
+    difficulty: 'Fortgeschritten',
+    topic: 'INNER JOIN',
+    explanation: 'Die ON-Bedingung beschreibt, welche Schlüssel zusammengehören.',
+    task: 'Zeige Kundennamen, Bestelldatum und Status aller Bestellungen.',
+    expectedSql: 'SELECT kunden.name, bestellungen.bestelldatum, bestellungen.status FROM kunden INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id;',
+    hint: 'Wähle Spalten aus beiden Tabellen und verbinde über kunden.id = bestellungen.kunden_id.',
+    points: 15
+  },
+  {
+    id: 33,
+    title: 'Spalten aus zwei Tabellen auswählen',
+    difficulty: 'Fortgeschritten',
+    topic: 'JOIN + Spalten',
+    explanation: 'Bei verbundenen Tabellen kannst du gezielt Spalten aus jeder beteiligten Tabelle auswählen.',
+    task: 'Zeige Bestell-ID, Kundenname und Bestellstatus für alle Bestellungen.',
+    expectedSql: 'SELECT bestellungen.id, kunden.name, bestellungen.status FROM bestellungen INNER JOIN kunden ON bestellungen.kunden_id = kunden.id;',
+    hint: 'Starte bei bestellungen und verbinde kunden über bestellungen.kunden_id = kunden.id.',
+    points: 15
+  },
+  {
+    id: 34,
+    title: 'JOIN mit WHERE filtern',
+    difficulty: 'Fortgeschritten',
+    topic: 'JOIN + WHERE',
+    explanation: 'Nach einem JOIN kannst du das verbundene Ergebnis mit WHERE filtern.',
+    task: 'Zeige Kundennamen und Bestelldatum aller bezahlten Bestellungen.',
+    expectedSql: "SELECT kunden.name, bestellungen.bestelldatum FROM kunden INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id WHERE bestellungen.status = 'bezahlt';",
+    hint: "Filtere nach dem JOIN mit WHERE bestellungen.status = 'bezahlt'.",
+    points: 15
+  },
+  {
+    id: 35,
+    title: 'JOIN mit ORDER BY sortieren',
+    difficulty: 'Fortgeschritten',
+    topic: 'JOIN + ORDER BY',
+    explanation: 'ORDER BY sortiert auch Ergebnisse, die aus mehreren Tabellen zusammengesetzt wurden.',
+    task: 'Zeige Kundennamen und Bestelldatum aller Bestellungen, sortiert nach Bestelldatum absteigend.',
+    expectedSql: 'SELECT kunden.name, bestellungen.bestelldatum FROM kunden INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id ORDER BY bestellungen.bestelldatum DESC;',
+    hint: 'Setze ORDER BY bestellungen.bestelldatum DESC ans Ende.',
+    points: 15
+  },
+  {
+    id: 36,
+    title: 'Alle Kunden mit Bestellungen anzeigen',
+    difficulty: 'Fortgeschritten',
+    topic: 'LEFT JOIN',
+    explanation: 'LEFT JOIN zeigt alle Zeilen der linken Tabelle und ergänzt passende Zeilen der rechten Tabelle. Fehlt rechts ein Treffer, stehen dort leere Werte.',
+    task: 'Zeige alle Kundennamen und ihre Bestelldaten. Auch Kunden ohne Bestellung sollen erscheinen.',
+    expectedSql: 'SELECT kunden.name, bestellungen.bestelldatum FROM kunden LEFT JOIN bestellungen ON kunden.id = bestellungen.kunden_id;',
+    hint: 'Nutze kunden als linke Tabelle und LEFT JOIN bestellungen.',
+    points: 15
+  },
+  {
+    id: 37,
+    title: 'Kunden ohne Bestellung finden',
+    difficulty: 'Fortgeschritten',
+    topic: 'LEFT JOIN + WHERE',
+    explanation: 'Mit LEFT JOIN und einem NULL-Filter findest du Zeilen der linken Tabelle ohne passenden Eintrag rechts.',
+    task: 'Zeige die Namen aller Kunden, die keine Bestellung haben.',
+    expectedSql: 'SELECT kunden.name FROM kunden LEFT JOIN bestellungen ON kunden.id = bestellungen.kunden_id WHERE bestellungen.id IS NULL;',
+    hint: 'Nach dem LEFT JOIN prüfst du WHERE bestellungen.id IS NULL.',
+    points: 15
+  },
+  {
+    id: 38,
+    title: 'Bestellungen und Positionen verbinden',
+    difficulty: 'Fortgeschritten',
+    topic: 'Mehrere Tabellen',
+    explanation: 'Bestellungen und bestellpositionen hängen über bestellungen.id und bestellpositionen.bestellung_id zusammen.',
+    task: 'Zeige Bestell-ID, Positions-ID und Menge für alle Bestellpositionen.',
+    expectedSql: 'SELECT bestellungen.id, bestellpositionen.id, bestellpositionen.menge FROM bestellungen INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id;',
+    hint: 'Verbinde bestellungen.id mit bestellpositionen.bestellung_id.',
+    points: 15
+  },
+  {
+    id: 39,
+    title: 'Produkte über Bestellpositionen einbeziehen',
+    difficulty: 'Fortgeschritten',
+    topic: 'Drei Tabellen',
+    explanation: 'Über bestellpositionen.produkt_id erreichst du die Produktdaten einer Position.',
+    task: 'Zeige Bestell-ID, Produktname und Menge für alle Bestellpositionen.',
+    expectedSql: 'SELECT bestellungen.id, produkte.name, bestellpositionen.menge FROM bestellungen INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id INNER JOIN produkte ON bestellpositionen.produkt_id = produkte.id;',
+    hint: 'Verbinde erst Bestellungen mit Positionen und dann Positionen mit Produkten.',
+    points: 15
+  },
+  {
+    id: 40,
+    title: 'Shop-Auswertung über mehrere Tabellen',
+    difficulty: 'Fortgeschritten',
+    topic: 'JOIN + Berechnung',
+    explanation: 'Mit mehreren JOINs kannst du eine vollständige Shop-Auswertung erstellen und Werte aus verbundenen Tabellen berechnen.',
+    task: 'Zeige Kundenname, Bestell-ID, Produktname, Menge und Positionswert für jede Bestellposition. Sortiere nach Bestell-ID und Produktname.',
+    expectedSql: 'SELECT kunden.name, bestellungen.id, produkte.name, bestellpositionen.menge, bestellpositionen.menge * bestellpositionen.einzelpreis FROM kunden INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id INNER JOIN produkte ON bestellpositionen.produkt_id = produkte.id ORDER BY bestellungen.id ASC, produkte.name ASC;',
+    hint: 'Verbinde kunden → bestellungen → bestellpositionen → produkte und berechne menge * einzelpreis.',
+    points: 15
   }
+
 ];
