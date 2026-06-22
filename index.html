@@ -220,8 +220,32 @@ produkte 1 ─── n bestellpositionen</pre>
       <section class="play-area">
         <div class="game-toolbar">
           <button id="backToOverviewButton" class="secondary-button" type="button">← Zur Levelübersicht</button>
-          <button id="showDatabaseInfoInGameButton" class="ghost-button" type="button">Datenbank-Info</button>
         </div>
+
+        <section class="game-info-grid" aria-label="Hilfen zur Datenbank und zu SQL-Bausteinen">
+          <article class="card game-info-card database-summary-card" aria-labelledby="databaseSummaryTitle">
+            <div class="game-info-heading">
+              <div>
+                <p class="eyebrow">Datenbank-Info</p>
+                <h2 id="databaseSummaryTitle">Shop-Datenbank</h2>
+              </div>
+              <button id="showDatabaseInfoInGameButton" class="ghost-button" type="button">Details</button>
+            </div>
+            <p class="muted small">Du arbeitest mit den Tabellen <code>kunden</code>, <code>produkte</code>, <code>bestellungen</code> und <code>bestellpositionen</code>.</p>
+          </article>
+
+          <article class="card game-info-card learned-sql-card" aria-labelledby="learnedSqlTitle">
+            <div class="game-info-heading">
+              <div>
+                <p class="eyebrow">Neu gelernt</p>
+                <h2 id="learnedSqlTitle">SQL-Bausteine</h2>
+              </div>
+              <span id="learnedSqlProgress" class="info-progress">Stufe 0 von 6</span>
+            </div>
+            <div id="learnedSqlList" class="learned-sql-list" aria-live="polite"></div>
+          </article>
+        </section>
+
         <article class="card level-card">
           <div class="level-meta">
             <span id="difficulty" class="pill">Anfänger</span>
