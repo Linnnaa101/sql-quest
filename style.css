@@ -1152,7 +1152,9 @@ button:disabled {
 
 @media (max-width: 520px) {
   .overview-tabs,
-  .overview-tab {
+  .overview-tab,
+  .level-section-tabs,
+  .level-section-tab {
     width: 100%;
   }
 
@@ -1160,6 +1162,58 @@ button:disabled {
   .learning-overview-card-header {
     flex-direction: column;
   }
+}
+
+.level-section-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(9, 12, 24, 0.44);
+}
+
+.level-section-tab {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 10px 14px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.level-section-tab[aria-selected="true"] {
+  border-color: rgba(57, 217, 138, 0.42);
+  color: #d8fff0;
+  background: rgba(57, 217, 138, 0.14);
+}
+
+.level-section-tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.level-section-tab:focus-visible {
+  outline: 3px solid var(--warning);
+  outline-offset: 3px;
+}
+
+.level-section-locked-hint {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.level-section-subheading {
+  grid-column: 1 / -1;
+  margin: 10px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.95rem;
 }
 
 .level-section {
