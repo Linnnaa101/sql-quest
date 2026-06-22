@@ -994,3 +994,170 @@ button:disabled {
     flex-wrap: wrap;
   }
 }
+
+.overview-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 4px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(9, 12, 24, 0.44);
+}
+
+.overview-tab {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 10px 14px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.overview-tab.active,
+.overview-tab[aria-selected="true"] {
+  border-color: rgba(57, 217, 138, 0.42);
+  color: #d8fff0;
+  background: rgba(57, 217, 138, 0.14);
+}
+
+.overview-tab:focus-visible,
+.learning-overview-card:focus-within {
+  outline: 3px solid var(--warning);
+  outline-offset: 3px;
+}
+
+.learned-overview-panel {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.learned-overview-heading,
+.learning-overview-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.learned-overview-heading h3,
+.learning-overview-card-header h4 {
+  margin: 0;
+}
+
+.learned-overview-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.learning-overview-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid rgba(124, 92, 255, 0.28);
+  border-radius: 20px;
+  background: rgba(124, 92, 255, 0.1);
+}
+
+.learning-overview-card.in-progress {
+  border-color: rgba(255, 209, 102, 0.42);
+  background: rgba(255, 209, 102, 0.1);
+}
+
+.learning-overview-card.unlocked {
+  border-color: rgba(57, 217, 138, 0.38);
+  background: rgba(57, 217, 138, 0.1);
+}
+
+.learning-overview-card.locked {
+  opacity: 0.76;
+  border-style: dashed;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.learning-overview-card.advanced-preview {
+  border-color: rgba(0, 194, 255, 0.3);
+}
+
+.status-badge {
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.status-badge.unlocked {
+  border-color: rgba(57, 217, 138, 0.45);
+  color: #d8fff0;
+  background: rgba(57, 217, 138, 0.15);
+}
+
+.status-badge.in-progress {
+  border-color: rgba(255, 209, 102, 0.48);
+  color: #ffe6a3;
+  background: rgba(255, 209, 102, 0.14);
+}
+
+.status-badge.locked {
+  border-style: dashed;
+}
+
+.learning-overview-range,
+.learning-overview-progress,
+.learning-overview-terms {
+  margin: 0;
+}
+
+.learning-overview-range,
+.learning-overview-progress {
+  color: #d8fff0;
+  font-weight: 900;
+}
+
+.learning-overview-terms {
+  color: var(--muted);
+}
+
+.learning-overview-terms strong {
+  color: var(--text);
+}
+
+.mini-progress-track {
+  overflow: hidden;
+  min-height: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(9, 12, 24, 0.72);
+}
+
+.mini-progress-fill {
+  height: 12px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--success), #00c2ff);
+}
+
+@media (min-width: 780px) {
+  .learned-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .overview-tabs,
+  .overview-tab {
+    width: 100%;
+  }
+
+  .learned-overview-heading,
+  .learning-overview-card-header {
+    flex-direction: column;
+  }
+}

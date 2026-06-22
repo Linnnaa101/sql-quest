@@ -186,6 +186,12 @@ produkte 1 ─── n bestellpositionen</pre>
           <button id="resetProgressButton" class="ghost-button" type="button">Zurücksetzen</button>
         </div>
       </div>
+      <div class="overview-tabs" role="tablist" aria-label="Bereiche der Levelübersicht">
+        <button id="levelsTabButton" class="overview-tab active" type="button" role="tab" aria-selected="true" aria-controls="levelsOverviewPanel">Levelübersicht</button>
+        <button id="learnedOverviewTabButton" class="overview-tab" type="button" role="tab" aria-selected="false" aria-controls="learnedOverviewPanel">Was habe ich gelernt?</button>
+      </div>
+
+      <div id="levelsOverviewPanel" role="tabpanel" aria-labelledby="levelsTabButton">
       <section class="progress-card" aria-labelledby="progressTitle">
         <div class="progress-header">
           <span id="progressTitle">Fortschritt</span>
@@ -213,6 +219,20 @@ produkte 1 ─── n bestellpositionen</pre>
         <div id="sqlBasicsList" class="sql-basics-list" aria-label="SQL-Grundlagen-Kapitel"></div>
       </section>
       <nav id="levelList" class="level-list compact-level-grid"></nav>
+      </div>
+
+      <section id="learnedOverviewPanel" class="learned-overview-panel" role="tabpanel" aria-labelledby="learnedOverviewTabButton" hidden>
+        <div class="learned-overview-heading">
+          <div>
+            <p class="eyebrow">Persönlicher Überblick</p>
+            <h3>Was habe ich gelernt?</h3>
+          </div>
+          <span id="learnedOverviewSummary" class="info-progress">0 von 6 Stufen aktiv</span>
+        </div>
+        <p class="muted">Hier siehst du deine freigeschalteten SQL-Themen, deinen Fortschritt je Lernstufe und eine Vorschau auf den Fortgeschrittenen-Bereich.</p>
+        <div id="learnedOverviewList" class="learned-overview-grid" aria-live="polite"></div>
+      </section>
+
       <div id="overviewFeedback" class="feedback info" role="status" aria-live="polite">Wähle ein freigeschaltetes Level aus.</div>
     </section>
 
