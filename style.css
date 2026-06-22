@@ -1161,3 +1161,51 @@ button:disabled {
     flex-direction: column;
   }
 }
+
+.level-section {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.level-section + .level-section {
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.level-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.level-section-heading h3 {
+  margin: 0;
+}
+
+.level-section-heading span {
+  border: 1px solid rgba(57, 217, 138, 0.38);
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: #d8fff0;
+  background: rgba(57, 217, 138, 0.12);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.level-section.completed .level-section-heading h3::after {
+  content: ' ✓';
+  color: var(--success);
+}
+
+.learning-overview-card.completed {
+  border-color: rgba(57, 217, 138, 0.58);
+  background: rgba(57, 217, 138, 0.14);
+}
+
+.status-badge.completed {
+  border-color: rgba(57, 217, 138, 0.58);
+  color: #d8fff0;
+  background: rgba(57, 217, 138, 0.2);
+}
