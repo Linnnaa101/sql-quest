@@ -336,8 +336,7 @@ const SQL_LEARNING_STAGES = [
   { unlockLevelId: 20, title: 'Funktionen und Auswertungen', levelRange: 'Level 16–20', levelStart: 16, levelEnd: 20, summary: 'Du wertest Zahlen mit SUM, MIN und MAX aus, entfernst Duplikate und kombinierst Filter, Sortierung und Begrenzung.', lockedPreview: 'SUM(), MIN(), MAX(), DISTINCT und Kombinationen aus WHERE, ORDER BY und LIMIT werden nach Level 20 freigeschaltet.', termKeys: ['sum', 'min', 'max', 'distinct', 'whereOrderLimit'] },
   { unlockLevelId: 25, title: 'Kombinierte Abfragen', levelRange: 'Level 21–25', levelStart: 21, levelEnd: 25, summary: 'Du festigst die typische Reihenfolge von SELECT-Abfragen und kombinierst mehrere SQL-Bausteine sicher.', lockedPreview: 'Eine Wiederholungs- und Kombinationsstufe wird nach Level 25 freigeschaltet.', termKeys: ['where', 'and', 'columns', 'orderBy', 'limit', 'queryOrder'] },
   { unlockLevelId: 30, title: 'Gruppieren und Auswerten', levelRange: 'Level 26–30', levelStart: 26, levelEnd: 30, summary: 'Du gruppierst Daten, filterst Gruppen und sortierst oder begrenzt Auswertungen pro Gruppe.', lockedPreview: 'GROUP BY, HAVING und Gruppenauswertungen werden nach Level 30 freigeschaltet.', termKeys: ['groupBy', 'having', 'groupAggregates', 'groupOrder', 'groupLimit'] },
-  { unlockLevelId: 30, title: 'Fortgeschritten – JOINs', levelRange: 'Level 31–40', levelStart: 31, levelEnd: 40, summary: 'Du verbindest Shop-Tabellen mit INNER JOIN und LEFT JOIN, nutzt ON-Bedingungen und wertest Bestellungen mit Produkten aus.', lockedPreview: 'Fortgeschritten – JOINs wird nach Abschluss von Level 30 freigeschaltet.', termKeys: ['innerJoin', 'leftJoin', 'joinOn', 'multiTableJoins'] },
-  { unlockLevelId: 40, title: 'Fortgeschritten – JOINs mit Auswertungen', levelRange: 'Level 41–50', levelStart: 41, levelEnd: 50, summary: 'Du zählst, summierst, gruppierst, sortierst und filterst JOIN-Ergebnisse für Shop-Auswertungen.', lockedPreview: 'Fortgeschritten – JOINs mit Auswertungen wird nach Abschluss von Level 40 freigeschaltet.', termKeys: ['countJoin', 'sumJoin', 'multiTableGrouping', 'havingJoin', 'orderValueCalculation'] }
+  { unlockLevelId: 30, title: 'Fortgeschritten – JOINs', levelRange: 'Level 31–50', levelStart: 31, levelEnd: 50, summary: 'Du verbindest Shop-Tabellen mit INNER JOIN und LEFT JOIN, nutzt ON-Bedingungen und wertest Bestellungen mit Produkten aus. Anschließend zählst, summierst, gruppierst, sortierst und filterst du JOIN-Ergebnisse für Shop-Auswertungen.', lockedPreview: 'Fortgeschritten – JOINs wird nach Abschluss von Level 30 freigeschaltet.', termKeys: ['innerJoin', 'leftJoin', 'joinOn', 'multiTableJoins', 'countJoin', 'sumJoin', 'multiTableGrouping', 'havingJoin', 'orderValueCalculation'] }
 ];
 
 const SQL_BASICS_CHAPTERS = SQL_LEARNING_STAGES.map(stage => ({
@@ -423,6 +422,7 @@ let hasLevelSessionStarted = false;
 let selectedPath = null;
 let hasBeginnerIntroCompleted = false;
 let currentLevelIndex = 0;
+let activeLevelSection = 'beginner';
 let progress = loadProgress();
 let currentView = null;
 let viewHistory = [];
@@ -771,26 +771,131 @@ function saveProgress() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
 }
 
+const LEVEL_SECTIONS = [
+  {
+    id: 'beginner',
+    title: 'Anfänger',
+    levelStart: 1,
+    levelEnd: 30,
+    unlockLevelId: null,
+    lockedHint: ''
+  },
+  {
+    id: 'advancedJoins',
+    title: 'Fortgeschritten – JOINs',
+    levelStart: 31,
+    levelEnd: 50,
+    unlockLevelId: 30,
+    lockedHint: 'Wird nach dem Lösen von Level 30 freigeschaltet.'
+  }
+];
+
 function renderLevelList() {
+  if (!isLevelSectionAccessible(activeLevelSection)) {
+    activeLevelSection = 'beginner';
+  }
+
   elements.levelList.innerHTML = '';
-  [
-    { title: 'Anfänger', levels: LEVELS.filter(level => level.difficulty === 'Anfänger') },
-    { title: 'Fortgeschritten – JOINs', levels: LEVELS.filter(level => level.id >= 31 && level.id <= 40), completionLabel: 'JOIN-Grundlagen abgeschlossen' },
-    { title: 'Fortgeschritten – JOINs mit Auswertungen', levels: LEVELS.filter(level => level.id >= 41 && level.id <= 50) }
-  ].forEach(section => {
-    const solved = section.levels.filter(level => progress.solvedLevelIds.includes(level.id)).length;
-    const sectionElement = document.createElement('section');
-    sectionElement.className = `level-section ${solved === section.levels.length ? 'completed' : ''}`;
-    sectionElement.innerHTML = `<div class="level-section-heading"><h3>${section.title}</h3><span>${solved === section.levels.length ? (section.completionLabel || 'Abgeschlossen') : `${solved} von ${section.levels.length} gelöst`}</span></div>`;
-    const grid = document.createElement('div');
-    grid.className = 'level-list compact-level-grid';
-    section.levels.forEach(level => grid.append(createLevelButton(level, LEVELS.indexOf(level))));
-    sectionElement.append(grid);
-    elements.levelList.append(sectionElement);
-  });
+  elements.levelList.append(createLevelSectionTabs());
+  const lockedHint = createLockedAdvancedSectionHint();
+  if (lockedHint) {
+    elements.levelList.append(lockedHint);
+  }
+  elements.levelList.append(createActiveLevelSectionPanel());
   elements.score.textContent = progress.score;
   renderSqlBasicsChapters();
   updateProgressBar();
+}
+
+function createLevelSectionTabs() {
+  const tabList = document.createElement('div');
+  tabList.className = 'level-section-tabs';
+  tabList.setAttribute('role', 'tablist');
+  tabList.setAttribute('aria-label', 'Levelbereiche');
+
+  LEVEL_SECTIONS.forEach(section => {
+    const isAccessible = isLevelSectionAccessible(section.id);
+    const isSelected = activeLevelSection === section.id;
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.id = getLevelSectionTabId(section.id);
+    tab.className = 'level-section-tab';
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('aria-selected', String(isSelected));
+    tab.setAttribute('aria-controls', getLevelSectionPanelId(section.id));
+    tab.disabled = !isAccessible;
+    tab.innerHTML = `${!isAccessible ? '<span aria-hidden="true">🔒</span> ' : ''}${section.title}`;
+    if (!isAccessible) {
+      tab.setAttribute('aria-label', `${section.title} gesperrt. ${section.lockedHint}`);
+      tab.title = section.lockedHint;
+    }
+    tab.addEventListener('click', () => {
+      if (!isAccessible) {
+        setOverviewFeedback(section.lockedHint, 'info');
+        return;
+      }
+      activeLevelSection = section.id;
+      renderLevelList();
+    });
+    tabList.append(tab);
+  });
+
+  return tabList;
+}
+
+function createLockedAdvancedSectionHint() {
+  const advancedSection = LEVEL_SECTIONS.find(section => section.id === 'advancedJoins');
+  if (!advancedSection || isLevelSectionAccessible(advancedSection.id)) {
+    return null;
+  }
+
+  const hint = document.createElement('p');
+  hint.className = 'level-section-locked-hint';
+  hint.textContent = `🔒 ${advancedSection.lockedHint}`;
+  return hint;
+}
+
+function createActiveLevelSectionPanel() {
+  const section = LEVEL_SECTIONS.find(levelSection => levelSection.id === activeLevelSection) || LEVEL_SECTIONS[0];
+  const levels = getLevelsForLevelSection(section);
+  const solved = levels.filter(level => progress.solvedLevelIds.includes(level.id)).length;
+  const panel = document.createElement('section');
+  panel.id = getLevelSectionPanelId(section.id);
+  panel.className = `level-section ${solved === levels.length ? 'completed' : ''}`;
+  panel.setAttribute('role', 'tabpanel');
+  panel.setAttribute('aria-labelledby', getLevelSectionTabId(section.id));
+  panel.innerHTML = `<div class="level-section-heading"><h3>${section.title}</h3><span>${solved} von ${levels.length} gelöst</span></div>`;
+
+  const grid = document.createElement('div');
+  grid.className = 'level-list compact-level-grid';
+  levels.forEach(level => {
+    if (section.id === 'advancedJoins' && level.id === 41) {
+      const subheading = document.createElement('h4');
+      subheading.className = 'level-section-subheading';
+      subheading.textContent = 'JOIN-Auswertungen';
+      grid.append(subheading);
+    }
+    grid.append(createLevelButton(level, LEVELS.indexOf(level)));
+  });
+  panel.append(grid);
+  return panel;
+}
+
+function getLevelsForLevelSection(section) {
+  return LEVELS.filter(level => level.id >= section.levelStart && level.id <= section.levelEnd);
+}
+
+function isLevelSectionAccessible(sectionId) {
+  const section = LEVEL_SECTIONS.find(levelSection => levelSection.id === sectionId);
+  return Boolean(section && (!section.unlockLevelId || progress.solvedLevelIds.includes(section.unlockLevelId)));
+}
+
+function getLevelSectionTabId(sectionId) {
+  return `${sectionId}LevelSectionTab`;
+}
+
+function getLevelSectionPanelId(sectionId) {
+  return `${sectionId}LevelSectionPanel`;
 }
 
 function createLevelButton(level, index) {
