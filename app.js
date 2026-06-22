@@ -4,6 +4,68 @@ const MAX_STARS = 3;
 const MIN_STARS_TO_UNLOCK_NEXT_LEVEL = 2;
 const BLOCKED_COMMANDS = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'REPLACE', 'TRUNCATE', 'PRAGMA', 'ATTACH', 'DETACH'];
 
+const SQL_BASICS_CHAPTERS = [
+  {
+    title: 'SELECT und FROM',
+    unlockLevelId: 0,
+    content: [
+      'Mit SELECT wählst du aus, welche Daten du sehen möchtest.',
+      'Mit FROM gibst du an, aus welcher Tabelle die Daten kommen.'
+    ],
+    examples: ['SELECT * FROM kunden;']
+  },
+  {
+    title: 'Spalten und WHERE',
+    unlockLevelId: 5,
+    content: [
+      'Du kannst einzelne Spalten auswählen, indem du ihre Namen nach SELECT schreibst.',
+      'WHERE filtert einzelne Zeilen nach einer Bedingung.'
+    ],
+    examples: ["SELECT name FROM kunden;", "SELECT * FROM kunden WHERE stadt = 'Berlin';"]
+  },
+  {
+    title: 'Sortieren und Begrenzen',
+    unlockLevelId: 10,
+    content: [
+      'ORDER BY sortiert Ergebnisse aufsteigend oder absteigend.',
+      'LIMIT begrenzt, wie viele Zeilen angezeigt werden.'
+    ],
+    examples: ['SELECT * FROM kunden ORDER BY punkte DESC;', 'SELECT * FROM kunden LIMIT 3;']
+  },
+  {
+    title: 'Vergleichen und Verknüpfen',
+    unlockLevelId: 15,
+    content: [
+      'Mit Vergleichsoperatoren wie >, <, >= und <= prüfst du Zahlenwerte.',
+      'AND und OR verbinden mehrere Bedingungen.'
+    ],
+    examples: ["SELECT * FROM kunden WHERE stadt = 'Berlin' AND punkte > 100;"]
+  },
+  {
+    title: 'Einfache Auswertungen',
+    unlockLevelId: 20,
+    content: [
+      'COUNT zählt Zeilen, SUM addiert Zahlenwerte und AVG berechnet Durchschnittswerte.',
+      'MIN und MAX finden den kleinsten oder größten Wert einer Spalte.'
+    ],
+    examples: ['SELECT COUNT(*) FROM kunden;', 'SELECT AVG(punkte) FROM kunden;']
+  },
+  {
+    title: 'Gruppieren und Auswerten',
+    unlockLevelId: 25,
+    content: [
+      'Mit GROUP BY kannst du gleiche Werte zu Gruppen zusammenfassen.',
+      'Zum Beispiel kannst du Kunden nach ihrer Stadt gruppieren.',
+      'Mit COUNT, SUM oder AVG kannst du jede Gruppe auswerten.',
+      'HAVING filtert Gruppen nach dem Gruppieren.'
+    ],
+    examples: [
+      'SELECT stadt, COUNT(*)\nFROM kunden\nGROUP BY stadt;',
+      'SELECT stadt, COUNT(*)\nFROM kunden\nGROUP BY stadt\nHAVING COUNT(*) > 1;'
+    ]
+  }
+];
+
 const elements = {
   score: document.querySelector('#score'),
   levelList: document.querySelector('#levelList'),
@@ -11,6 +73,8 @@ const elements = {
   progressTrack: document.querySelector('#progressTrack'),
   progressFill: document.querySelector('#progressFill'),
   progressPercent: document.querySelector('#progressPercent'),
+  sqlBasicsList: document.querySelector('#sqlBasicsList'),
+  sqlBasicsProgress: document.querySelector('#sqlBasicsProgress'),
   difficulty: document.querySelector('#difficulty'),
   topic: document.querySelector('#topic'),
   levelTitle: document.querySelector('#levelTitle'),
@@ -183,6 +247,7 @@ function showLevelOverview() {
   hideLearningViews();
   elements.levelOverview.hidden = false;
   renderLevelList();
+  renderSqlBasicsChapters();
   updateProgressBar();
 }
 
@@ -317,7 +382,55 @@ function renderLevelList() {
     elements.levelList.append(button);
   });
   elements.score.textContent = progress.score;
+  renderSqlBasicsChapters();
   updateProgressBar();
+}
+
+
+function renderSqlBasicsChapters() {
+  if (!elements.sqlBasicsList || !elements.sqlBasicsProgress) {
+    return;
+  }
+
+  elements.sqlBasicsList.innerHTML = '';
+  const unlockedChapterCount = SQL_BASICS_CHAPTERS.filter(chapter => isSqlBasicsChapterUnlocked(chapter)).length;
+  elements.sqlBasicsProgress.textContent = `Kapitel ${unlockedChapterCount} von ${SQL_BASICS_CHAPTERS.length} freigeschaltet`;
+
+  SQL_BASICS_CHAPTERS.forEach((chapter, index) => {
+    const isUnlocked = isSqlBasicsChapterUnlocked(chapter);
+    const article = document.createElement('article');
+    article.className = 'sql-basics-chapter';
+    article.classList.toggle('locked', !isUnlocked);
+
+    if (isUnlocked) {
+      const paragraphs = chapter.content.map(text => `<p>${text}</p>`).join('');
+      const examples = chapter.examples.map(example => `<pre class="sql-example"><code>${example}</code></pre>`).join('');
+      article.innerHTML = `
+        <div class="level-button-topline">
+          <span>Kapitel ${index + 1}</span>
+          <span aria-hidden="true">📖</span>
+        </div>
+        <h3>${chapter.title}</h3>
+        ${paragraphs}
+        ${examples}
+      `;
+    } else {
+      article.innerHTML = `
+        <div class="level-button-topline">
+          <span>Kapitel ${index + 1}</span>
+          <span aria-hidden="true">🔒</span>
+        </div>
+        <h3>${chapter.title}</h3>
+        <p class="muted">Dieses Kapitel wird freigeschaltet, sobald Level ${chapter.unlockLevelId} gelöst wurde.</p>
+      `;
+    }
+
+    elements.sqlBasicsList.append(article);
+  });
+}
+
+function isSqlBasicsChapterUnlocked(chapter) {
+  return chapter.unlockLevelId === 0 || progress.solvedLevelIds.includes(chapter.unlockLevelId);
 }
 
 function getLevelButtonLabel(level, index, unlocked, stars) {
