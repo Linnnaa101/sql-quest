@@ -275,5 +275,60 @@ const LEVELS = [
     expectedSql: 'SELECT * FROM kunden WHERE punkte >= 80 ORDER BY punkte DESC LIMIT 2;',
     hint: 'Nutze zuerst WHERE, danach ORDER BY punkte DESC und am Ende LIMIT 2.',
     points: 10
+  },
+  {
+    id: 26,
+    title: 'Kunden pro Stadt zählen',
+    difficulty: 'Anfänger',
+    topic: 'GROUP BY + COUNT',
+    explanation: 'GROUP BY fasst Zeilen mit dem gleichen Wert zusammen. So werden alle Kunden aus derselben Stadt zu einer Gruppe zusammengefasst.',
+    task: 'Zeige jede Stadt und die Anzahl der Kunden aus dieser Stadt.',
+    expectedSql: 'SELECT stadt, COUNT(*) FROM kunden GROUP BY stadt;',
+    hint: 'GROUP BY fasst Zeilen mit dem gleichen Wert zusammen. Gruppiere nach stadt und zähle jede Gruppe mit COUNT(*).',
+    points: 10
+  },
+  {
+    id: 27,
+    title: 'Punkte pro Stadt berechnen',
+    difficulty: 'Anfänger',
+    topic: 'GROUP BY + SUM',
+    explanation: 'Mit GROUP BY kannst du gleiche Städte zusammenfassen und jede Gruppe mit SUM auswerten.',
+    task: 'Zeige jede Stadt und die Summe aller Punkte ihrer Kunden.',
+    expectedSql: 'SELECT stadt, SUM(punkte) FROM kunden GROUP BY stadt;',
+    hint: 'GROUP BY fasst Zeilen mit dem gleichen Wert zusammen. Nutze SUM(punkte), um die Punkte pro Stadt zu addieren.',
+    points: 10
+  },
+  {
+    id: 28,
+    title: 'Durchschnittliche Punkte pro Stadt',
+    difficulty: 'Anfänger',
+    topic: 'GROUP BY + AVG',
+    explanation: 'Mit AVG wertest du Zahlenspalten aus. Zusammen mit GROUP BY berechnest du den Durchschnitt pro Gruppe.',
+    task: 'Zeige jede Stadt und den durchschnittlichen Punktestand ihrer Kunden.',
+    expectedSql: 'SELECT stadt, AVG(punkte) FROM kunden GROUP BY stadt;',
+    hint: 'Gruppiere nach stadt und berechne mit AVG(punkte) den Durchschnitt für jede Stadt.',
+    points: 10
+  },
+  {
+    id: 29,
+    title: 'Städte mit mehreren Kunden',
+    difficulty: 'Anfänger',
+    topic: 'GROUP BY + HAVING',
+    explanation: 'HAVING filtert Gruppen. WHERE filtert einzelne Zeilen vor dem Gruppieren, HAVING filtert Gruppen nach GROUP BY.',
+    task: 'Zeige nur Städte, in denen mehr als ein Kunde lebt. Gib Stadt und Anzahl der Kunden aus.',
+    expectedSql: 'SELECT stadt, COUNT(*) FROM kunden GROUP BY stadt HAVING COUNT(*) > 1;',
+    hint: 'HAVING filtert Gruppen. Nutze HAVING COUNT(*) > 1 nach GROUP BY.',
+    points: 10
+  },
+  {
+    id: 30,
+    title: 'Stadt mit den meisten Punkten',
+    difficulty: 'Anfänger',
+    topic: 'GROUP BY + ORDER BY + LIMIT',
+    explanation: 'Du kannst Gruppen auswerten, die Gruppenergebnisse sortieren und mit LIMIT nur die beste Gruppe anzeigen.',
+    task: 'Zeige die Stadt mit der höchsten Summe an Kundenpunkten.',
+    expectedSql: 'SELECT stadt, SUM(punkte) FROM kunden GROUP BY stadt ORDER BY SUM(punkte) DESC LIMIT 1;',
+    hint: 'Gruppiere nach stadt, addiere SUM(punkte), sortiere absteigend und begrenze das Ergebnis mit LIMIT 1.',
+    points: 10
   }
 ];

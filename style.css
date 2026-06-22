@@ -742,3 +742,39 @@ button:disabled {
     flex-direction: column;
   }
 }
+
+.sql-basics-card {
+  margin-bottom: 18px;
+}
+
+.sql-basics-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.sql-basics-chapter {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sql-basics-chapter h3 {
+  margin: 8px 0 10px;
+}
+
+.sql-basics-chapter p {
+  margin: 8px 0;
+}
+
+.sql-basics-chapter.locked {
+  opacity: 0.72;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+@media (min-width: 760px) {
+  .sql-basics-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
