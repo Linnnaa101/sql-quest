@@ -778,3 +778,85 @@ button:disabled {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.game-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.game-info-card {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 20px;
+}
+
+.game-info-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.game-info-heading h2 {
+  margin-bottom: 0;
+}
+
+.info-progress {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border: 1px solid rgba(57, 217, 138, 0.38);
+  border-radius: 999px;
+  color: #d8fff0;
+  background: rgba(57, 217, 138, 0.12);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.learned-sql-list {
+  display: grid;
+  gap: 10px;
+}
+
+.learned-sql-item {
+  display: grid;
+  grid-template-columns: minmax(120px, max-content) 1fr;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(124, 92, 255, 0.28);
+  border-radius: 14px;
+  background: rgba(124, 92, 255, 0.1);
+}
+
+.learned-sql-item code {
+  justify-self: start;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(9, 12, 24, 0.72);
+  color: #d8fff0;
+  font-weight: 800;
+}
+
+.learned-sql-item span {
+  color: var(--muted);
+}
+
+@media (max-width: 840px) {
+  .game-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .game-info-heading,
+  .learned-sql-item {
+    grid-template-columns: 1fr;
+  }
+
+  .game-info-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -4,6 +4,56 @@ const MAX_STARS = 3;
 const MIN_STARS_TO_UNLOCK_NEXT_LEVEL = 2;
 const BLOCKED_COMMANDS = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'REPLACE', 'TRUNCATE', 'PRAGMA', 'ATTACH', 'DETACH'];
 
+
+const LEARNED_SQL_STAGES = [
+  {
+    unlockLevelId: 5,
+    items: [
+      { term: 'SELECT', description: 'legt fest, welche Daten angezeigt werden' },
+      { term: 'FROM', description: 'legt fest, aus welcher Tabelle Daten kommen' },
+      { term: '*', description: 'zeigt alle Spalten einer Tabelle' }
+    ]
+  },
+  {
+    unlockLevelId: 10,
+    items: [
+      { term: 'Spaltennamen nach SELECT', description: 'nur bestimmte Spalten anzeigen' },
+      { term: 'WHERE', description: 'Ergebnisse nach Bedingungen filtern' }
+    ]
+  },
+  {
+    unlockLevelId: 15,
+    items: [
+      { term: 'ORDER BY', description: 'Ergebnisse sortieren' },
+      { term: 'LIMIT', description: 'Anzahl der angezeigten Zeilen begrenzen' }
+    ]
+  },
+  {
+    unlockLevelId: 20,
+    items: [
+      { term: '> / < / >= / <=', description: 'Werte vergleichen' },
+      { term: 'AND', description: 'beide Bedingungen müssen stimmen' },
+      { term: 'OR', description: 'mindestens eine Bedingung muss stimmen' }
+    ]
+  },
+  {
+    unlockLevelId: 25,
+    items: [
+      { term: 'COUNT()', description: 'Zeilen zählen' },
+      { term: 'SUM()', description: 'Werte addieren' },
+      { term: 'AVG()', description: 'Durchschnitt berechnen' },
+      { term: 'MIN() / MAX()', description: 'kleinsten oder größten Wert finden' }
+    ]
+  },
+  {
+    unlockLevelId: 30,
+    items: [
+      { term: 'GROUP BY', description: 'gleiche Werte gruppieren' },
+      { term: 'HAVING', description: 'Gruppen filtern' }
+    ]
+  }
+];
+
 const SQL_BASICS_CHAPTERS = [
   {
     title: 'SELECT und FROM',
@@ -75,6 +125,8 @@ const elements = {
   progressPercent: document.querySelector('#progressPercent'),
   sqlBasicsList: document.querySelector('#sqlBasicsList'),
   sqlBasicsProgress: document.querySelector('#sqlBasicsProgress'),
+  learnedSqlList: document.querySelector('#learnedSqlList'),
+  learnedSqlProgress: document.querySelector('#learnedSqlProgress'),
   difficulty: document.querySelector('#difficulty'),
   topic: document.querySelector('#topic'),
   levelTitle: document.querySelector('#levelTitle'),
@@ -387,6 +439,53 @@ function renderLevelList() {
 }
 
 
+function getHighestSolvedLevelId() {
+  const validLevelIds = new Set(LEVELS.map(level => Number(level.id)));
+  return progress.solvedLevelIds.reduce((highestLevelId, solvedLevelId) => {
+    const numericLevelId = Number(solvedLevelId);
+    if (!Number.isFinite(numericLevelId) || !validLevelIds.has(numericLevelId)) {
+      return highestLevelId;
+    }
+    return Math.max(highestLevelId, numericLevelId);
+  }, 0);
+}
+
+function getUnlockedLearnedSqlItems() {
+  const highestSolvedLevelId = getHighestSolvedLevelId();
+  return LEARNED_SQL_STAGES
+    .filter(stage => highestSolvedLevelId >= stage.unlockLevelId)
+    .flatMap(stage => stage.items);
+}
+
+function renderLearnedSqlBlocks() {
+  if (!elements.learnedSqlList || !elements.learnedSqlProgress) {
+    return;
+  }
+
+  const highestSolvedLevelId = getHighestSolvedLevelId();
+  const unlockedStageCount = LEARNED_SQL_STAGES.filter(stage => highestSolvedLevelId >= stage.unlockLevelId).length;
+  const learnedItems = getUnlockedLearnedSqlItems();
+
+  elements.learnedSqlProgress.textContent = `Stufe ${unlockedStageCount} von ${LEARNED_SQL_STAGES.length}`;
+  elements.learnedSqlList.innerHTML = '';
+
+  if (learnedItems.length === 0) {
+    const emptyMessage = document.createElement('p');
+    emptyMessage.className = 'muted small';
+    emptyMessage.textContent = 'Löse Level 5, um deine ersten SQL-Bausteine freizuschalten.';
+    elements.learnedSqlList.append(emptyMessage);
+    return;
+  }
+
+  learnedItems.forEach(item => {
+    const definition = document.createElement('div');
+    definition.className = 'learned-sql-item';
+    definition.innerHTML = `<code>${item.term}</code><span>${item.description}</span>`;
+    elements.learnedSqlList.append(definition);
+  });
+}
+
+
 function renderSqlBasicsChapters() {
   if (!elements.sqlBasicsList || !elements.sqlBasicsProgress) {
     return;
@@ -507,6 +606,7 @@ function loadLevel(index) {
   setFeedback('Führe deine Abfrage aus, um das Level zu lösen.', 'info');
   saveProgress();
   renderLevelList();
+  renderLearnedSqlBlocks();
 }
 
 function runPlayerQuery() {
@@ -634,6 +734,7 @@ function markLevelSolved() {
   }
   saveProgress();
   renderLevelList();
+  renderLearnedSqlBlocks();
 
   const bestMessage = isNewBest ? ` Neue Bestleistung: ${bestStars} von ${MAX_STARS} Sternen!` : '';
   setFeedback(`Richtig gelöst! Du hast ${earnedStars} von ${MAX_STARS} Sternen erreicht.${bestMessage}`, 'success');
