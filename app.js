@@ -235,13 +235,21 @@ LIMIT 1;`,
 };
 
 const SQL_LEARNING_STAGES = [
-  { unlockLevelId: 5, title: 'Nach Level 5', lockedPreview: 'SELECT, FROM, *, Spaltenauswahl, WHERE, ORDER BY und COUNT() werden nach Level 5 freigeschaltet.', termKeys: ['select', 'from', 'star', 'columns', 'where', 'orderBy', 'count'] },
-  { unlockLevelId: 10, title: 'Nach Level 10', lockedPreview: 'LIMIT, Vergleich >, LIKE, AND und AVG() werden nach Level 10 freigeschaltet.', termKeys: ['limit', 'greaterThan', 'like', 'and', 'avg'] },
-  { unlockLevelId: 15, title: 'Nach Level 15', lockedPreview: 'OR, <, >=, <= und NOT werden nach Level 15 freigeschaltet.', termKeys: ['or', 'lessThan', 'greaterEqual', 'lessEqual', 'not'] },
-  { unlockLevelId: 20, title: 'Nach Level 20', lockedPreview: 'SUM(), MIN(), MAX(), DISTINCT und Kombinationen aus WHERE, ORDER BY und LIMIT werden nach Level 20 freigeschaltet.', termKeys: ['sum', 'min', 'max', 'distinct', 'whereOrderLimit'] },
-  { unlockLevelId: 25, title: 'Nach Level 25', lockedPreview: 'Eine Wiederholungs- und Kombinationsstufe wird nach Level 25 freigeschaltet.', termKeys: ['where', 'and', 'columns', 'orderBy', 'limit', 'queryOrder'] },
-  { unlockLevelId: 30, title: 'Nach Level 30', lockedPreview: 'GROUP BY, HAVING und Gruppenauswertungen werden nach Level 30 freigeschaltet.', termKeys: ['groupBy', 'having', 'groupAggregates', 'groupOrder', 'groupLimit'] }
+  { unlockLevelId: 5, title: 'Grundlagen', levelRange: 'Level 1–5', levelStart: 1, levelEnd: 5, summary: 'Du kannst einfache Daten aus Tabellen lesen, einzelne Spalten auswählen, filtern, sortieren und Datensätze zählen.', lockedPreview: 'SELECT, FROM, *, Spaltenauswahl, WHERE, ORDER BY und COUNT() werden nach Level 5 freigeschaltet.', termKeys: ['select', 'from', 'star', 'columns', 'where', 'orderBy', 'count'] },
+  { unlockLevelId: 10, title: 'Filtern und Sortieren', levelRange: 'Level 6–10', levelStart: 6, levelEnd: 10, summary: 'Du begrenzt Ergebnislisten, vergleichst Zahlenwerte, suchst Textmuster und verbindest Filterbedingungen.', lockedPreview: 'LIMIT, Vergleich >, LIKE, AND und AVG() werden nach Level 10 freigeschaltet.', termKeys: ['limit', 'greaterThan', 'like', 'and', 'avg'] },
+  { unlockLevelId: 15, title: 'Bedingungen', levelRange: 'Level 11–15', levelStart: 11, levelEnd: 15, summary: 'Du formulierst flexiblere Bedingungen mit OR, NOT und weiteren Vergleichsoperatoren.', lockedPreview: 'OR, <, >=, <= und NOT werden nach Level 15 freigeschaltet.', termKeys: ['or', 'lessThan', 'greaterEqual', 'lessEqual', 'not'] },
+  { unlockLevelId: 20, title: 'Funktionen und Auswertungen', levelRange: 'Level 16–20', levelStart: 16, levelEnd: 20, summary: 'Du wertest Zahlen mit SUM, MIN und MAX aus, entfernst Duplikate und kombinierst Filter, Sortierung und Begrenzung.', lockedPreview: 'SUM(), MIN(), MAX(), DISTINCT und Kombinationen aus WHERE, ORDER BY und LIMIT werden nach Level 20 freigeschaltet.', termKeys: ['sum', 'min', 'max', 'distinct', 'whereOrderLimit'] },
+  { unlockLevelId: 25, title: 'Kombinierte Abfragen', levelRange: 'Level 21–25', levelStart: 21, levelEnd: 25, summary: 'Du festigst die typische Reihenfolge von SELECT-Abfragen und kombinierst mehrere SQL-Bausteine sicher.', lockedPreview: 'Eine Wiederholungs- und Kombinationsstufe wird nach Level 25 freigeschaltet.', termKeys: ['where', 'and', 'columns', 'orderBy', 'limit', 'queryOrder'] },
+  { unlockLevelId: 30, title: 'Gruppieren und Auswerten', levelRange: 'Level 26–30', levelStart: 26, levelEnd: 30, summary: 'Du gruppierst Daten, filterst Gruppen und sortierst oder begrenzt Auswertungen pro Gruppe.', lockedPreview: 'GROUP BY, HAVING und Gruppenauswertungen werden nach Level 30 freigeschaltet.', termKeys: ['groupBy', 'having', 'groupAggregates', 'groupOrder', 'groupLimit'] }
 ];
+
+const ADVANCED_LEARNING_PREVIEW = {
+  title: 'Fortgeschritten',
+  levelRange: 'Nach Level 30',
+  unlockLevelId: 30,
+  lockedSummary: 'Wird nach Abschluss von Level 30 freigeschaltet. Hier lernst du später JOINs und Abfragen mit mehreren Tabellen.',
+  unlockedSummary: 'Inhalte folgen. Hier lernst du später JOINs und Abfragen mit mehreren Tabellen.'
+};
 
 const SQL_BASICS_CHAPTERS = SQL_LEARNING_STAGES.map(stage => ({
   title: stage.title,
@@ -266,6 +274,12 @@ const elements = {
   sqlBasicsProgress: document.querySelector('#sqlBasicsProgress'),
   learnedSqlList: document.querySelector('#learnedSqlList'),
   learnedSqlProgress: document.querySelector('#learnedSqlProgress'),
+  levelsTabButton: document.querySelector('#levelsTabButton'),
+  learnedOverviewTabButton: document.querySelector('#learnedOverviewTabButton'),
+  levelsOverviewPanel: document.querySelector('#levelsOverviewPanel'),
+  learnedOverviewPanel: document.querySelector('#learnedOverviewPanel'),
+  learnedOverviewList: document.querySelector('#learnedOverviewList'),
+  learnedOverviewSummary: document.querySelector('#learnedOverviewSummary'),
   difficulty: document.querySelector('#difficulty'),
   topic: document.querySelector('#topic'),
   levelTitle: document.querySelector('#levelTitle'),
@@ -324,6 +338,8 @@ elements.solutionButton.addEventListener('click', showSolution);
 elements.overviewButton.addEventListener('click', showLevelOverview);
 elements.backToOverviewButton.addEventListener('click', showLevelOverview);
 elements.resetProgressButton.addEventListener('click', resetProgress);
+elements.levelsTabButton.addEventListener('click', () => showOverviewTab('levels'));
+elements.learnedOverviewTabButton.addEventListener('click', () => showOverviewTab('learned'));
 elements.createDatabaseButton.addEventListener('click', createPracticeDatabase);
 elements.startLevelsButton.addEventListener('click', startLevels);
 elements.startBeginnerPathButton.addEventListener('click', startBeginnerPath);
@@ -439,7 +455,23 @@ function showLevelOverview() {
   elements.levelOverview.hidden = false;
   renderLevelList();
   renderSqlBasicsChapters();
+  renderLearnedOverview();
+  showOverviewTab('levels');
   updateProgressBar();
+}
+
+
+function showOverviewTab(tabName) {
+  const showLearned = tabName === 'learned';
+  elements.levelsOverviewPanel.hidden = showLearned;
+  elements.learnedOverviewPanel.hidden = !showLearned;
+  elements.levelsTabButton.classList.toggle('active', !showLearned);
+  elements.learnedOverviewTabButton.classList.toggle('active', showLearned);
+  elements.levelsTabButton.setAttribute('aria-selected', String(!showLearned));
+  elements.learnedOverviewTabButton.setAttribute('aria-selected', String(showLearned));
+  if (showLearned) {
+    renderLearnedOverview();
+  }
 }
 
 function showDatabaseInfo() {
@@ -686,6 +718,115 @@ function renderLearnedSqlBlocks() {
 
     elements.learnedSqlList.append(stageDetails);
   });
+}
+
+
+function renderLearnedOverview() {
+  if (!elements.learnedOverviewList || !elements.learnedOverviewSummary) {
+    return;
+  }
+
+  const highestSolvedLevelId = getHighestSolvedLevelId();
+  const unlockedStageCount = SQL_LEARNING_STAGES.filter(stage => isLearningStageUnlocked(stage, highestSolvedLevelId)).length;
+  const beginnerCompleted = highestSolvedLevelId >= ADVANCED_LEARNING_PREVIEW.unlockLevelId;
+  elements.learnedOverviewSummary.textContent = beginnerCompleted
+    ? 'Anfängerbereich abgeschlossen'
+    : `${unlockedStageCount} von ${SQL_LEARNING_STAGES.length} Stufen aktiv`;
+  elements.learnedOverviewList.innerHTML = '';
+
+  SQL_LEARNING_STAGES.forEach(stage => {
+    elements.learnedOverviewList.append(createLearningOverviewStageCard(stage, highestSolvedLevelId));
+  });
+  elements.learnedOverviewList.append(createAdvancedPreviewCard(beginnerCompleted));
+}
+
+function createLearningOverviewStageCard(stage, highestSolvedLevelId) {
+  const levelsInStage = getLevelsForStage(stage);
+  const solvedInStage = levelsInStage.filter(level => progress.solvedLevelIds.includes(level.id)).length;
+  const isAccessible = isLearningOverviewStageAccessible(stage, highestSolvedLevelId);
+  const status = getLearningOverviewStatus(solvedInStage, levelsInStage.length, isAccessible);
+  const article = document.createElement('article');
+  article.className = `learning-overview-card ${status.className}`;
+  article.setAttribute('aria-label', `${stage.title}: ${status.label}, ${solvedInStage} von ${levelsInStage.length} Leveln gelöst`);
+
+  const header = document.createElement('div');
+  header.className = 'learning-overview-card-header';
+  const title = document.createElement('h4');
+  title.textContent = stage.title;
+  const badge = document.createElement('span');
+  badge.className = `status-badge ${status.className}`;
+  badge.textContent = status.label;
+  header.append(title, badge);
+
+  const range = document.createElement('p');
+  range.className = 'learning-overview-range';
+  range.textContent = stage.levelRange;
+
+  const terms = document.createElement('p');
+  terms.className = 'learning-overview-terms';
+  terms.innerHTML = `<strong>SQL-Begriffe:</strong> ${stage.termKeys.map(termKey => SQL_LEARNING_TERMS[termKey].term).join(', ')}`;
+
+  const summary = document.createElement('p');
+  summary.className = 'muted';
+  summary.textContent = isAccessible ? stage.summary : stage.lockedPreview;
+
+  const progressText = document.createElement('p');
+  progressText.className = 'learning-overview-progress';
+  progressText.textContent = `${solvedInStage} von ${levelsInStage.length} Leveln gelöst`;
+
+  article.append(header, range, terms, summary, createMiniProgressBar(solvedInStage, levelsInStage.length, `${stage.title}: Fortschritt innerhalb des Abschnitts`), progressText);
+  return article;
+}
+
+function getLearningOverviewStatus(solvedCount, totalCount, isAccessible) {
+  if (!isAccessible) {
+    return { label: 'noch gesperrt', className: 'locked' };
+  }
+  if (solvedCount > 0 && solvedCount < totalCount) {
+    return { label: 'in Bearbeitung', className: 'in-progress' };
+  }
+  return { label: 'freigeschaltet', className: 'unlocked' };
+}
+
+function isLearningOverviewStageAccessible(stage, highestSolvedLevelId) {
+  return stage.levelStart === 1 || highestSolvedLevelId >= stage.levelStart - 1;
+}
+
+function getLevelsForStage(stage) {
+  return LEVELS.filter(level => level.id >= stage.levelStart && level.id <= stage.levelEnd);
+}
+
+function createMiniProgressBar(value, max, label) {
+  const track = document.createElement('div');
+  track.className = 'mini-progress-track';
+  track.setAttribute('role', 'progressbar');
+  track.setAttribute('aria-label', label);
+  track.setAttribute('aria-valuemin', '0');
+  track.setAttribute('aria-valuemax', String(max));
+  track.setAttribute('aria-valuenow', String(value));
+  const fill = document.createElement('div');
+  fill.className = 'mini-progress-fill';
+  fill.style.width = max === 0 ? '0%' : `${Math.round((value / max) * 100)}%`;
+  track.append(fill);
+  return track;
+}
+
+function createAdvancedPreviewCard(isUnlocked) {
+  const article = document.createElement('article');
+  article.className = `learning-overview-card advanced-preview ${isUnlocked ? 'unlocked' : 'locked'}`;
+  article.setAttribute('aria-label', `${ADVANCED_LEARNING_PREVIEW.title}: ${isUnlocked ? 'freigeschaltet' : 'noch gesperrt'}`);
+  const statusLabel = isUnlocked ? 'freigeschaltet' : 'noch gesperrt';
+  article.innerHTML = `
+    <div class="learning-overview-card-header">
+      <h4>${ADVANCED_LEARNING_PREVIEW.title}</h4>
+      <span class="status-badge ${isUnlocked ? 'unlocked' : 'locked'}">${statusLabel}</span>
+    </div>
+    <p class="learning-overview-range">${ADVANCED_LEARNING_PREVIEW.levelRange}</p>
+    <p class="learning-overview-terms"><strong>SQL-Begriffe:</strong> JOINs, mehrere Tabellen</p>
+    <p class="muted">${isUnlocked ? ADVANCED_LEARNING_PREVIEW.unlockedSummary : ADVANCED_LEARNING_PREVIEW.lockedSummary}</p>
+    <p class="learning-overview-progress">${isUnlocked ? 'Startkarte freigeschaltet · Inhalte folgen' : '0 von 0 Fortgeschrittenen-Leveln gelöst'}</p>
+  `;
+  return article;
 }
 
 function renderSqlBasicsChapters() {
