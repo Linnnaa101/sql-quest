@@ -816,31 +816,73 @@ button:disabled {
 
 .learned-sql-list {
   display: grid;
-  gap: 10px;
+  gap: 14px;
+}
+
+.learned-sql-stage {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.learned-sql-stage h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.learned-sql-stage.locked {
+  opacity: 0.74;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.learned-sql-stage-grid {
+  display: grid;
+  gap: 12px;
 }
 
 .learned-sql-item {
   display: grid;
-  grid-template-columns: minmax(120px, max-content) 1fr;
-  align-items: baseline;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 12px;
   border: 1px solid rgba(124, 92, 255, 0.28);
   border-radius: 14px;
   background: rgba(124, 92, 255, 0.1);
 }
 
-.learned-sql-item code {
+.learned-sql-item h4 {
   justify-self: start;
-  padding: 3px 8px;
+  margin: 0;
+  padding: 4px 10px;
   border-radius: 999px;
   background: rgba(9, 12, 24, 0.72);
   color: #d8fff0;
+  font-size: 0.95rem;
   font-weight: 800;
 }
 
-.learned-sql-item span {
+.learned-sql-item p {
+  margin: 0;
+}
+
+.learned-sql-details {
+  margin: 0;
+  padding-left: 20px;
   color: var(--muted);
+}
+
+.learned-sql-example-label {
+  color: #d8fff0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.learned-sql-example {
+  margin: 0;
 }
 
 @media (max-width: 840px) {
