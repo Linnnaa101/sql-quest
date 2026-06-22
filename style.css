@@ -902,3 +902,95 @@ button:disabled {
     flex-direction: column;
   }
 }
+
+.sql-basics-term-list {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding-left: 20px;
+  color: var(--muted);
+}
+
+.sql-basics-term-list strong {
+  color: var(--text);
+}
+
+.learned-sql-stage {
+  overflow: hidden;
+}
+
+.learned-sql-stage-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.learned-sql-stage-summary::-webkit-details-marker {
+  display: none;
+}
+
+.learned-sql-stage-summary::before {
+  content: '▸';
+  color: var(--warning);
+  font-weight: 900;
+  transition: transform 0.15s ease;
+}
+
+.learned-sql-stage[open] > .learned-sql-stage-summary::before {
+  transform: rotate(90deg);
+}
+
+.learned-sql-stage-summary:focus-visible {
+  border-radius: 12px;
+  outline: 3px solid var(--warning);
+  outline-offset: 4px;
+}
+
+.learned-sql-stage-title {
+  flex: 1;
+  color: var(--warning);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.learned-sql-stage-status {
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 4px 9px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.learned-sql-stage-status.unlocked {
+  border-color: rgba(57, 217, 138, 0.38);
+  color: #d8fff0;
+  background: rgba(57, 217, 138, 0.12);
+}
+
+.learned-sql-stage[open] {
+  gap: 14px;
+}
+
+.learned-sql-stage[open] > .learned-sql-stage-grid,
+.learned-sql-stage[open] > p {
+  margin-top: 12px;
+}
+
+.learned-sql-example code,
+.sql-example code {
+  display: block;
+  min-width: max-content;
+}
+
+@media (max-width: 520px) {
+  .learned-sql-stage-summary {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
