@@ -274,6 +274,58 @@ INNER JOIN bestellpositionen
 INNER JOIN produkte
   ON bestellpositionen.produkt_id = produkte.id;`,
     exampleExplanation: 'Erstellt eine Shop-Auswertung mit Kunde, Bestellung, Position und Produkt.'
+  },
+  countJoin: {
+    term: 'COUNT() mit JOIN',
+    description: 'Zählt passende Datensätze aus verbundenen Tabellen, zum Beispiel Bestellungen pro Kunde.',
+    example: `SELECT kunden.name, COUNT(bestellungen.id)
+FROM kunden
+LEFT JOIN bestellungen
+  ON kunden.id = bestellungen.kunden_id
+GROUP BY kunden.name;`,
+    exampleExplanation: 'Zeigt für jeden Kunden, wie viele Bestellungen gefunden wurden.'
+  },
+  sumJoin: {
+    term: 'SUM() mit JOIN',
+    description: 'Addiert Werte aus verbundenen Tabellen, zum Beispiel Umsatz oder verkaufte Mengen.',
+    example: `SELECT bestellungen.id, SUM(bestellpositionen.menge * bestellpositionen.einzelpreis)
+FROM bestellungen
+INNER JOIN bestellpositionen
+  ON bestellungen.id = bestellpositionen.bestellung_id
+GROUP BY bestellungen.id;`,
+    exampleExplanation: 'Berechnet den Bestellwert pro Bestellung.'
+  },
+  multiTableGrouping: {
+    term: 'Gruppieren über mehrere Tabellen',
+    description: 'GROUP BY kann JOIN-Ergebnisse nach Kunden, Produkten oder Bestellungen zusammenfassen.',
+    example: `SELECT produkte.name, SUM(bestellpositionen.menge)
+FROM produkte
+INNER JOIN bestellpositionen
+  ON produkte.id = bestellpositionen.produkt_id
+GROUP BY produkte.name
+ORDER BY SUM(bestellpositionen.menge) DESC;`,
+    exampleExplanation: 'Gruppiert Bestellpositionen nach Produkt und sortiert nach verkaufter Menge.'
+  },
+  havingJoin: {
+    term: 'HAVING mit JOIN',
+    description: 'Filtert gruppierte JOIN-Ergebnisse, wenn die Bedingung eine Aggregatfunktion betrifft.',
+    example: `SELECT kunden.name, COUNT(bestellungen.id)
+FROM kunden
+INNER JOIN bestellungen
+  ON kunden.id = bestellungen.kunden_id
+GROUP BY kunden.name
+HAVING COUNT(bestellungen.id) > 1;`,
+    exampleExplanation: 'Zeigt nur Kunden mit mehr als einer Bestellung.'
+  },
+  orderValueCalculation: {
+    term: 'Bestellwert berechnen mit menge * einzelpreis',
+    description: 'Der Wert einer Bestellposition entsteht aus der bestellten Menge multipliziert mit dem Einzelpreis.',
+    example: `SELECT bestellungen.id, SUM(bestellpositionen.menge * bestellpositionen.einzelpreis)
+FROM bestellungen
+INNER JOIN bestellpositionen
+  ON bestellungen.id = bestellpositionen.bestellung_id
+GROUP BY bestellungen.id;`,
+    exampleExplanation: 'Summiert alle Positionswerte zum Bestellwert.'
   }
 };
 
@@ -284,7 +336,8 @@ const SQL_LEARNING_STAGES = [
   { unlockLevelId: 20, title: 'Funktionen und Auswertungen', levelRange: 'Level 16–20', levelStart: 16, levelEnd: 20, summary: 'Du wertest Zahlen mit SUM, MIN und MAX aus, entfernst Duplikate und kombinierst Filter, Sortierung und Begrenzung.', lockedPreview: 'SUM(), MIN(), MAX(), DISTINCT und Kombinationen aus WHERE, ORDER BY und LIMIT werden nach Level 20 freigeschaltet.', termKeys: ['sum', 'min', 'max', 'distinct', 'whereOrderLimit'] },
   { unlockLevelId: 25, title: 'Kombinierte Abfragen', levelRange: 'Level 21–25', levelStart: 21, levelEnd: 25, summary: 'Du festigst die typische Reihenfolge von SELECT-Abfragen und kombinierst mehrere SQL-Bausteine sicher.', lockedPreview: 'Eine Wiederholungs- und Kombinationsstufe wird nach Level 25 freigeschaltet.', termKeys: ['where', 'and', 'columns', 'orderBy', 'limit', 'queryOrder'] },
   { unlockLevelId: 30, title: 'Gruppieren und Auswerten', levelRange: 'Level 26–30', levelStart: 26, levelEnd: 30, summary: 'Du gruppierst Daten, filterst Gruppen und sortierst oder begrenzt Auswertungen pro Gruppe.', lockedPreview: 'GROUP BY, HAVING und Gruppenauswertungen werden nach Level 30 freigeschaltet.', termKeys: ['groupBy', 'having', 'groupAggregates', 'groupOrder', 'groupLimit'] },
-  { unlockLevelId: 30, title: 'Fortgeschritten – JOINs', levelRange: 'Level 31–40', levelStart: 31, levelEnd: 40, summary: 'Du verbindest Shop-Tabellen mit INNER JOIN und LEFT JOIN, nutzt ON-Bedingungen und wertest Bestellungen mit Produkten aus.', lockedPreview: 'Fortgeschritten – JOINs wird nach Abschluss von Level 30 freigeschaltet.', termKeys: ['innerJoin', 'leftJoin', 'joinOn', 'multiTableJoins'] }
+  { unlockLevelId: 30, title: 'Fortgeschritten – JOINs', levelRange: 'Level 31–40', levelStart: 31, levelEnd: 40, summary: 'Du verbindest Shop-Tabellen mit INNER JOIN und LEFT JOIN, nutzt ON-Bedingungen und wertest Bestellungen mit Produkten aus.', lockedPreview: 'Fortgeschritten – JOINs wird nach Abschluss von Level 30 freigeschaltet.', termKeys: ['innerJoin', 'leftJoin', 'joinOn', 'multiTableJoins'] },
+  { unlockLevelId: 40, title: 'Fortgeschritten – JOINs mit Auswertungen', levelRange: 'Level 41–50', levelStart: 41, levelEnd: 50, summary: 'Du zählst, summierst, gruppierst, sortierst und filterst JOIN-Ergebnisse für Shop-Auswertungen.', lockedPreview: 'Fortgeschritten – JOINs mit Auswertungen wird nach Abschluss von Level 40 freigeschaltet.', termKeys: ['countJoin', 'sumJoin', 'multiTableGrouping', 'havingJoin', 'orderValueCalculation'] }
 ];
 
 const SQL_BASICS_CHAPTERS = SQL_LEARNING_STAGES.map(stage => ({
@@ -722,12 +775,13 @@ function renderLevelList() {
   elements.levelList.innerHTML = '';
   [
     { title: 'Anfänger', levels: LEVELS.filter(level => level.difficulty === 'Anfänger') },
-    { title: 'Fortgeschritten – JOINs', levels: LEVELS.filter(level => level.difficulty === 'Fortgeschritten') }
+    { title: 'Fortgeschritten – JOINs', levels: LEVELS.filter(level => level.id >= 31 && level.id <= 40), completionLabel: 'JOIN-Grundlagen abgeschlossen' },
+    { title: 'Fortgeschritten – JOINs mit Auswertungen', levels: LEVELS.filter(level => level.id >= 41 && level.id <= 50) }
   ].forEach(section => {
     const solved = section.levels.filter(level => progress.solvedLevelIds.includes(level.id)).length;
     const sectionElement = document.createElement('section');
     sectionElement.className = `level-section ${solved === section.levels.length ? 'completed' : ''}`;
-    sectionElement.innerHTML = `<div class="level-section-heading"><h3>${section.title}</h3><span>${solved === section.levels.length ? 'Abgeschlossen' : `${solved} von ${section.levels.length} gelöst`}</span></div>`;
+    sectionElement.innerHTML = `<div class="level-section-heading"><h3>${section.title}</h3><span>${solved === section.levels.length ? (section.completionLabel || 'Abgeschlossen') : `${solved} von ${section.levels.length} gelöst`}</span></div>`;
     const grid = document.createElement('div');
     grid.className = 'level-list compact-level-grid';
     section.levels.forEach(level => grid.append(createLevelButton(level, LEVELS.indexOf(level))));
@@ -1045,6 +1099,9 @@ function getLockedLevelText(level) {
   if (level.id === 31) {
     return 'Freischaltung benötigt den Abschluss von Level 30';
   }
+  if (level.id === 41) {
+    return 'Freischaltung benötigt den Abschluss von Level 40';
+  }
   return 'Freischaltung benötigt mindestens 2 Sterne im vorherigen Level';
 }
 
@@ -1066,6 +1123,9 @@ function isLevelUnlocked(levelIndex) {
   }
   if (level.id === 31) {
     return isAdvancedPathUnlocked();
+  }
+  if (level.id === 41) {
+    return progress.solvedLevelIds.includes(40);
   }
   const previousLevel = LEVELS[levelIndex - 1];
   return getLevelStars(previousLevel.id) >= MIN_STARS_TO_UNLOCK_NEXT_LEVEL;
