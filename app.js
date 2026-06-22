@@ -437,7 +437,7 @@ function startBeginnerPath() {
 }
 
 function startAdvancedPath() {
-  if (getHighestSolvedLevelId() < 30) {
+  if (!isAdvancedPathUnlocked()) {
     setIntroFeedback('Der Fortgeschrittenenpfad wird nach Abschluss von Level 30 freigeschaltet.', 'info');
     return;
   }
@@ -497,7 +497,7 @@ function showPathSelection() {
 }
 
 function updatePathSelection() {
-  const advancedUnlocked = getHighestSolvedLevelId() >= 30;
+  const advancedUnlocked = isAdvancedPathUnlocked();
   elements.advancedPathCard.classList.toggle('active-path', advancedUnlocked);
   elements.advancedPathCard.classList.toggle('disabled-path', !advancedUnlocked);
   elements.advancedPathCard.setAttribute('aria-disabled', String(!advancedUnlocked));
@@ -961,8 +961,17 @@ function isSqlBasicsChapterUnlocked(chapter, highestSolvedLevelId = getHighestSo
 
 function getLevelButtonLabel(level, index, unlocked, stars) {
   const status = unlocked ? 'freigeschaltet' : 'gesperrt';
-  const starText = unlocked ? `${stars} von ${MAX_STARS} Sternen` : 'Freischaltung benötigt mindestens 2 Sterne im vorherigen Level';
+  const starText = unlocked
+    ? `${stars} von ${MAX_STARS} Sternen`
+    : getLockedLevelText(level);
   return `Level ${level.id}: ${level.title}, ${status}, ${starText}`;
+}
+
+function getLockedLevelText(level) {
+  if (level.id === 31) {
+    return 'Freischaltung benötigt den Abschluss von Level 30';
+  }
+  return 'Freischaltung benötigt mindestens 2 Sterne im vorherigen Level';
 }
 
 function renderStars(stars) {
@@ -974,11 +983,22 @@ function getLevelStars(levelId) {
 }
 
 function isLevelUnlocked(levelIndex) {
+  const level = LEVELS[levelIndex];
+  if (!level) {
+    return false;
+  }
   if (levelIndex === 0) {
     return true;
   }
+  if (level.id === 31) {
+    return isAdvancedPathUnlocked();
+  }
   const previousLevel = LEVELS[levelIndex - 1];
   return getLevelStars(previousLevel.id) >= MIN_STARS_TO_UNLOCK_NEXT_LEVEL;
+}
+
+function isAdvancedPathUnlocked() {
+  return progress.solvedLevelIds.includes(30);
 }
 
 function updateProgressBar() {
