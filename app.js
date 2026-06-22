@@ -782,7 +782,7 @@ const LEVEL_SECTIONS = [
   },
   {
     id: 'advancedJoins',
-    title: 'Fortgeschritten – JOINs',
+    title: 'Fortgeschritten',
     levelStart: 31,
     levelEnd: 50,
     unlockLevelId: 30,
