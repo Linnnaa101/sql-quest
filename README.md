@@ -12,6 +12,7 @@ SQL Quest ist eine interaktive Lernanwendung, mit der Nutzer SQL Schritt für Sc
 - Tab „Was habe ich gelernt?“ mit Überblick über den Lernfortschritt
 - Schwebender Zurück-Button und Nach-oben-Button
 - Responsive Darstellung für Desktop und Mobilgeräte
+- Versteckter Testmodus für Entwicklung über `?testmode=1`
 
 ## Lernpfade
 
@@ -125,3 +126,13 @@ README.md
 Die Anwendung ist über GitHub Pages erreichbar:
 
 [SQL Quest öffnen](https://linnnaa101.github.io/sql-quest/)
+
+## Testmodus für Entwicklung
+
+Zum schnellen Testen aller Level kann der Testmodus über diesen Link geöffnet werden:
+
+[Testmodus öffnen](https://linnnaa101.github.io/sql-quest/?testmode=1)
+
+Im Testmodus können alle Level freigeschaltet, alle Level als gelöst markiert, der Fortschritt zurückgesetzt sowie die Bereiche Anfänger, Fortgeschritten und Meister direkt geöffnet werden.
+
+Ohne den URL-Parameter `?testmode=1` bleibt dieser Bereich in der Anwendung unsichtbar.
