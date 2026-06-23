@@ -673,7 +673,15 @@ const elements = {
   testResetProgressButton: document.querySelector('#testResetProgressButton'),
   testJumpBeginnerButton: document.querySelector('#testJumpBeginnerButton'),
   testJumpAdvancedButton: document.querySelector('#testJumpAdvancedButton'),
-  testJumpMasterButton: document.querySelector('#testJumpMasterButton')
+  testJumpMasterButton: document.querySelector('#testJumpMasterButton'),
+  completionCard: document.querySelector('#completionCard'),
+  completionSolvedLevels: document.querySelector('#completionSolvedLevels'),
+  completionScore: document.querySelector('#completionScore'),
+  completionStars: document.querySelector('#completionStars'),
+  completionTotalLevels: document.querySelector('#completionTotalLevels'),
+  completionOverviewButton: document.querySelector('#completionOverviewButton'),
+  completionPracticeButton: document.querySelector('#completionPracticeButton'),
+  completionResetButton: document.querySelector('#completionResetButton')
 };
 
 let SQL;
@@ -711,6 +719,12 @@ elements.successModalCloseButton.addEventListener('click', closeSuccessModalToOv
 elements.successModal.addEventListener('keydown', handleSuccessModalKeydown);
 elements.scrollTopButton.addEventListener('click', scrollToPageTop);
 elements.globalBackButton.addEventListener('click', navigateBack);
+elements.completionOverviewButton.addEventListener('click', () => {
+  showOverviewTab('levels');
+  elements.levelList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+elements.completionPracticeButton.addEventListener('click', () => loadLevel(0));
+elements.completionResetButton.addEventListener('click', resetProgress);
 window.addEventListener('scroll', updateScrollTopButton);
 
 if (IS_TEST_MODE) {
@@ -873,6 +887,9 @@ function updateScrollTopButton() {
 }
 
 function hideLearningViews() {
+  if (elements.completionCard) {
+    elements.completionCard.hidden = true;
+  }
   elements.databaseIntro.hidden = true;
   elements.pathSelection.hidden = true;
   elements.beginnerIntro.hidden = true;
@@ -923,6 +940,7 @@ function showLevelOverview() {
     renderLearnedOverview();
     showOverviewTab('levels');
     updateProgressBar();
+    renderCompletionCard();
   });
 }
 
@@ -2027,6 +2045,7 @@ function markLevelSolved() {
   saveProgress();
   renderLevelList();
   renderLearnedSqlBlocks();
+  renderCompletionCard();
 
   const bestMessage = isNewBest ? ` Neue Bestleistung: ${bestStars} von ${MAX_STARS} Sternen!` : '';
   setFeedback(`Richtig gelöst! Du hast ${earnedStars} von ${MAX_STARS} Sternen erreicht.${bestMessage}`, 'success');
@@ -2049,7 +2068,7 @@ function showSuccessModal({ earnedStars, bestStars, isNewBest }) {
 
   if (hasBestStarsForUnlock) {
     if (isFinalLevel) {
-      addSuccessModalButton('Zur Levelübersicht', 'primary-button', showLevelOverview);
+      addSuccessModalButton('Abschluss anzeigen', 'primary-button', showLevelOverview);
       addSuccessModalButton(`Level ${level.id} wiederholen`, 'secondary-button', () => loadLevel(currentLevelIndex));
     } else {
       addSuccessModalButton('Nächstes Level', 'primary-button', () => {
@@ -2142,12 +2161,37 @@ function showSolution() {
   setFeedback('Die Musterlösung ist jetzt sichtbar. Führe sie aus, wenn du das Level lösen möchtest.', 'info');
 }
 
+function isQuestCompleted() {
+  return progress.solvedLevelIds.includes(80);
+}
+
+function getCollectedStars() {
+  return LEVELS.reduce((sum, level) => sum + getLevelStars(level.id), 0);
+}
+
+function renderCompletionCard() {
+  if (!elements.completionCard) {
+    return;
+  }
+  const completed = isQuestCompleted();
+  elements.completionCard.hidden = !completed;
+  if (!completed) {
+    return;
+  }
+  const solvedLevelCount = LEVELS.filter(level => progress.solvedLevelIds.includes(level.id)).length;
+  elements.completionSolvedLevels.textContent = String(solvedLevelCount);
+  elements.completionScore.textContent = String(progress.score);
+  elements.completionStars.textContent = `${getCollectedStars()} / ${LEVELS.length * MAX_STARS}`;
+  elements.completionTotalLevels.textContent = String(LEVELS.length);
+}
+
 function resetProgress() {
   progress = createEmptyProgress();
   saveProgress();
   currentLevelIndex = 0;
   activeLevelSection = 'beginner';
   elements.score.textContent = progress.score;
+  renderCompletionCard();
   showLevelOverview();
 }
 
@@ -2175,6 +2219,7 @@ function markAllLevelsSolvedForTesting() {
   currentLevelIndex = Math.min(currentLevelIndex, LEVELS.length - 1);
   saveProgress();
   refreshTestModeProgressDisplay();
+  renderCompletionCard();
   renderLearnedOverview();
   setOverviewFeedback('Testmodus: Alle Level wurden mit 3 Sternen als gelöst gespeichert.', 'success');
 }
@@ -2186,6 +2231,7 @@ function resetProgressForTesting() {
   currentLevelIndex = 0;
   activeLevelSection = 'beginner';
   refreshTestModeProgressDisplay();
+  renderCompletionCard();
   renderLearnedOverview();
   showOverviewTab('levels');
   setOverviewFeedback('Testmodus: Der Fortschritt wurde vollständig zurückgesetzt.', 'success');
