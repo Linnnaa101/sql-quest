@@ -160,11 +160,23 @@ h3 { margin-bottom: 8px; color: var(--warning); }
   gap: 10px;
   margin-bottom: 4px;
 }
+.level-number {
+  flex: 0 0 auto;
+  min-width: 2ch;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  line-height: 1.1;
+}
 .level-stars {
   color: var(--warning) !important;
   flex-shrink: 0;
   font-size: 0.95rem !important;
   letter-spacing: 1px;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  line-height: 1.1;
 }
 .level-button.active { border-color: var(--primary-strong); box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.18); }
 .level-button.locked {
@@ -587,15 +599,21 @@ button:disabled {
     margin-bottom: 3px;
   }
 
-  .level-overview .level-button-topline span:first-child {
+  .level-overview .level-number {
+    flex-basis: 2.3ch;
     font-size: 0;
   }
 
-  .level-overview .level-button-topline span:first-child::after {
+  .level-overview .level-number::after {
     content: attr(data-level-number);
+    display: inline-block;
     font-size: 1.05rem;
     color: var(--text);
     font-weight: 900;
+    white-space: nowrap;
+    word-break: normal;
+    overflow-wrap: normal;
+    line-height: 1.1;
   }
 
   .level-overview .level-stars {
@@ -607,7 +625,7 @@ button:disabled {
     display: none;
   }
 
-  .level-overview .level-button.locked .level-button-topline span:first-child::after {
+  .level-overview .level-button.locked .level-number::after {
     color: var(--muted);
   }
 
