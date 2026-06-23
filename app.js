@@ -3,6 +3,7 @@ const STAR_SYSTEM_VERSION = 3;
 const MAX_STARS = 3;
 const MIN_STARS_TO_UNLOCK_NEXT_LEVEL = 2;
 const BLOCKED_COMMANDS = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'REPLACE', 'TRUNCATE', 'PRAGMA', 'ATTACH', 'DETACH'];
+const READ_ONLY_SQL_MESSAGE = 'SQL Quest erlaubt nur lesende Abfragen. Die Übungsdatenbank wurde nicht verändert. Verwende für diese Aufgabe bitte eine SELECT-Abfrage.';
 
 
 const SQL_LEARNING_TERMS = {
@@ -1418,9 +1419,19 @@ function runPlayerQuery() {
     return;
   }
 
+  if (hasMultipleStatements(sql)) {
+    setFeedback(`Mehrere SQL-Befehle wurden sicher blockiert. ${READ_ONLY_SQL_MESSAGE}`, 'error');
+    return;
+  }
+
   const blockedCommand = findBlockedCommand(sql);
   if (blockedCommand) {
-    setFeedback(`Der Befehl ${blockedCommand} ist in SQL Quest gesperrt. Bitte verwende nur lesende SELECT-Abfragen.`, 'error');
+    setFeedback(`Der Befehl ${blockedCommand} ist in SQL Quest nicht erlaubt. ${READ_ONLY_SQL_MESSAGE}`, 'error');
+    return;
+  }
+
+  if (!isSelectStatement(sql)) {
+    setFeedback(READ_ONLY_SQL_MESSAGE, 'error');
     return;
   }
 
@@ -1433,17 +1444,93 @@ function runPlayerQuery() {
       markLevelSolved();
     } else {
       countFailedAttempt(LEVELS[currentLevelIndex].id);
-      setFeedback('Noch nicht richtig. Vergleiche deine Spalten und Zeilen mit der Aufgabe.', 'error');
+      setFeedback('Die Abfrage wurde ausgeführt, liefert aber noch nicht das erwartete Ergebnis der Aufgabe. Prüfe bitte Spalten, Filter, Sortierung und Anzahl der Zeilen.', 'error');
     }
   } catch (error) {
     countFailedAttempt(LEVELS[currentLevelIndex].id);
-    setFeedback(`SQL-Fehler: ${error.message}`, 'error');
+    setFeedback(`Deine SQL-Abfrage ist syntaktisch nicht korrekt. Bitte prüfe die Schreibweise und die Reihenfolge der SQL-Bausteine. Technischer Hinweis: ${error.message}`, 'error');
   }
 }
 
 function findBlockedCommand(sql) {
-  const normalized = sql.replace(/--.*$/gm, ' ').replace(/\/\*[\s\S]*?\*\//g, ' ');
-  return BLOCKED_COMMANDS.find(command => new RegExp(`\\b${command}\\b`, 'i').test(normalized));
+  return splitSqlStatements(sql)
+    .map(statement => removeSqlComments(statement).match(/^\s*([A-Z]+)/i)?.[1].toUpperCase())
+    .find(command => BLOCKED_COMMANDS.includes(command));
+}
+
+function isSelectStatement(sql) {
+  return /^\s*SELECT\b/i.test(removeSqlComments(sql));
+}
+
+function hasMultipleStatements(sql) {
+  return splitSqlStatements(sql).filter(statement => statement.trim()).length > 1;
+}
+
+function splitSqlStatements(sql) {
+  const statements = [];
+  let current = '';
+  let quote = null;
+  let inLineComment = false;
+  let inBlockComment = false;
+
+  for (let index = 0; index < sql.length; index += 1) {
+    const char = sql[index];
+    const next = sql[index + 1];
+
+    if (inLineComment) {
+      if (char === '\n') {
+        inLineComment = false;
+        current += char;
+      }
+      continue;
+    }
+
+    if (inBlockComment) {
+      if (char === '*' && next === '/') {
+        inBlockComment = false;
+        index += 1;
+      }
+      continue;
+    }
+
+    if (!quote && char === '-' && next === '-') {
+      inLineComment = true;
+      index += 1;
+      continue;
+    }
+
+    if (!quote && char === '/' && next === '*') {
+      inBlockComment = true;
+      index += 1;
+      continue;
+    }
+
+    current += char;
+
+    if (quote) {
+      if (char === quote && next === quote) {
+        current += next;
+        index += 1;
+      } else if (char === quote) {
+        quote = null;
+      }
+      continue;
+    }
+
+    if (char === '\'' || char === '"') {
+      quote = char;
+    } else if (char === ';') {
+      statements.push(current.slice(0, -1));
+      current = '';
+    }
+  }
+
+  statements.push(current);
+  return statements;
+}
+
+function removeSqlComments(sql) {
+  return splitSqlStatements(sql).join(' ');
 }
 
 function executeSelect(sql) {
