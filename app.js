@@ -2088,7 +2088,7 @@ function renderTestModePanel() {
 
 function unlockAllLevelsForTesting() {
   areAllLevelsUnlockedForTesting = true;
-  renderLevelList();
+  refreshTestModeProgressDisplay();
   setOverviewFeedback('Testmodus: Level 1–70 sind jetzt direkt auswählbar.', 'success');
 }
 
@@ -2105,7 +2105,7 @@ function markAllLevelsSolvedForTesting() {
   progress.score = LEVELS.reduce((score, level) => score + (Number(level.points) || 0), 0);
   currentLevelIndex = Math.min(currentLevelIndex, LEVELS.length - 1);
   saveProgress();
-  renderLevelList();
+  refreshTestModeProgressDisplay();
   renderLearnedOverview();
   setOverviewFeedback('Testmodus: Alle Level wurden mit 3 Sternen als gelöst gespeichert.', 'success');
 }
@@ -2116,10 +2116,16 @@ function resetProgressForTesting() {
   saveProgress();
   currentLevelIndex = 0;
   activeLevelSection = 'beginner';
-  renderLevelList();
+  refreshTestModeProgressDisplay();
   renderLearnedOverview();
   showOverviewTab('levels');
   setOverviewFeedback('Testmodus: Der Fortschritt wurde vollständig zurückgesetzt.', 'success');
+}
+
+function refreshTestModeProgressDisplay() {
+  elements.score.textContent = progress.score;
+  renderLevelList();
+  updateProgressBar();
 }
 
 function jumpToLevelSectionForTesting(sectionId) {
