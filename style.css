@@ -1321,3 +1321,305 @@ button:disabled {
     max-width: calc(100vw - 104px);
   }
 }
+
+/* Mobile robustness: keep every major region inside the viewport without masking layout bugs. */
+.app-shell,
+.card,
+.hero,
+.game-layout,
+.play-area,
+.level-panel,
+.level-card,
+.editor-card,
+.result-card,
+.database-intro,
+.path-selection,
+.beginner-intro,
+.game-info-grid,
+.learned-sql-list,
+.learned-overview-grid,
+.level-section,
+.level-list,
+.progress-card,
+.task-box,
+.hint-text,
+.feedback,
+.table-wrap,
+.sql-example,
+.relationship-box pre {
+  max-width: 100%;
+}
+
+.hero,
+.card,
+button,
+.pill,
+.status-badge,
+.info-progress,
+.level-button,
+.learning-overview-card,
+.learned-sql-stage,
+.learned-sql-item,
+.schema-card,
+.info-card,
+.path-card,
+.task-box,
+.hint-text,
+.feedback,
+th,
+td,
+p,
+li,
+h1,
+h2,
+h3,
+h4,
+strong,
+span {
+  overflow-wrap: anywhere;
+}
+
+.sql-example,
+.relationship-box pre,
+.table-wrap {
+  overscroll-behavior-x: contain;
+}
+
+.learning-overview-card {
+  overflow: hidden;
+}
+
+.learning-overview-card-header {
+  cursor: pointer;
+  list-style: none;
+}
+
+.learning-overview-card-header::-webkit-details-marker {
+  display: none;
+}
+
+.learning-overview-card-header::before {
+  content: '▸';
+  flex: 0 0 auto;
+  color: var(--warning);
+  font-weight: 900;
+  transition: transform 0.15s ease;
+}
+
+.learning-overview-card[open] > .learning-overview-card-header::before {
+  transform: rotate(90deg);
+}
+
+.learning-overview-card-content {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    width: min(calc(100% - 16px), 100%);
+    padding-top: 10px;
+  }
+
+  .hero,
+  .database-intro,
+  .path-selection,
+  .beginner-intro,
+  .level-panel,
+  .level-card,
+  .editor-card,
+  .result-card,
+  .game-info-card {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .hero,
+  .database-intro,
+  .path-selection,
+  .beginner-intro,
+  .level-overview,
+  .sql-basics-card {
+    margin-bottom: 16px;
+  }
+
+  h1 { font-size: clamp(2rem, 15vw, 3.1rem); }
+  h2 { font-size: 1.28rem; }
+  h3 { font-size: 1.05rem; }
+
+  .score-card {
+    min-width: 0;
+    padding: 14px;
+  }
+
+  .score-card strong { font-size: 2.35rem; }
+
+  .panel-heading,
+  .editor-heading,
+  .level-section-heading,
+  .game-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .panel-actions,
+  .button-row,
+  .intro-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .primary-button,
+  .secondary-button,
+  .ghost-button {
+    width: 100%;
+    padding: 11px 14px;
+  }
+
+  .overview-tabs,
+  .level-section-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    border-radius: 18px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .overview-tab,
+  .level-section-tab {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: min(76vw, 240px);
+    padding: 9px 11px;
+    font-size: 0.86rem;
+    white-space: normal;
+  }
+
+  .level-overview .level-list {
+    grid-template-columns: repeat(auto-fit, minmax(58px, 1fr));
+  }
+
+  .level-section-heading span,
+  .info-progress,
+  .status-badge {
+    align-self: flex-start;
+    white-space: normal;
+  }
+
+  .learned-overview-heading,
+  .learning-overview-card-header,
+  .learned-sql-stage-summary {
+    gap: 8px;
+  }
+
+  .learning-overview-card,
+  .learned-sql-stage,
+  .learned-sql-item,
+  .sql-basics-chapter,
+  .info-card {
+    gap: 8px;
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .learning-overview-card-content {
+    gap: 8px;
+  }
+
+  .learned-sql-stage-title {
+    min-width: 0;
+  }
+
+  .learned-sql-stage-status {
+    flex-shrink: 1;
+    white-space: normal;
+  }
+
+  .sql-example,
+  .relationship-box pre {
+    padding: 12px;
+    font-size: 0.86rem;
+  }
+
+  .sql-example code,
+  .learned-sql-example code {
+    font-size: 0.86rem;
+  }
+
+  textarea {
+    min-width: 0;
+    font-size: 0.95rem;
+  }
+
+  table {
+    min-width: 460px;
+  }
+}
+
+@media (max-width: 360px) {
+  .app-shell {
+    width: min(calc(100% - 12px), 100%);
+  }
+
+  .hero,
+  .database-intro,
+  .path-selection,
+  .beginner-intro,
+  .level-panel,
+  .level-card,
+  .editor-card,
+  .result-card,
+  .game-info-card,
+  .level-overview {
+    padding: 12px;
+  }
+
+  .level-overview .level-list {
+    grid-template-columns: repeat(auto-fit, minmax(52px, 1fr));
+    gap: 6px;
+  }
+
+  .level-overview .level-button {
+    min-height: 66px;
+    padding: 6px 4px;
+  }
+
+  .level-overview .level-stars {
+    font-size: 0.62rem !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .app-shell {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom));
+  }
+
+  .floating-nav-button {
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    min-width: 46px;
+    min-height: 46px;
+    padding: 0 12px;
+    font-size: 0.9rem;
+  }
+
+  .floating-nav-button-left {
+    left: calc(10px + env(safe-area-inset-left));
+  }
+
+  .floating-nav-button-right {
+    right: calc(10px + env(safe-area-inset-right));
+    max-width: calc(100vw - 84px - env(safe-area-inset-left) - env(safe-area-inset-right));
+  }
+}
+
+@media (max-width: 640px) {
+  .learning-overview-card-header {
+    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
