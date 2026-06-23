@@ -4,6 +4,7 @@ const MAX_STARS = 3;
 const MIN_STARS_TO_UNLOCK_NEXT_LEVEL = 2;
 const BLOCKED_COMMANDS = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'REPLACE', 'TRUNCATE', 'PRAGMA', 'ATTACH', 'DETACH'];
 const READ_ONLY_SQL_MESSAGE = 'SQL Quest erlaubt nur lesende Abfragen. Die Übungsdatenbank wurde nicht verändert. Verwende für diese Aufgabe bitte eine SELECT-Abfrage.';
+const IS_TEST_MODE = new URLSearchParams(window.location.search).get('testmode') === '1';
 
 
 const SQL_LEARNING_TERMS = {
@@ -596,7 +597,14 @@ const elements = {
   successModalCompletion: document.querySelector('#successModalCompletion'),
   successModalActions: document.querySelector('#successModalActions'),
   scrollTopButton: document.querySelector('#scrollTopButton'),
-  globalBackButton: document.querySelector('#globalBackButton')
+  globalBackButton: document.querySelector('#globalBackButton'),
+  testModePanel: document.querySelector('#testModePanel'),
+  testUnlockAllButton: document.querySelector('#testUnlockAllButton'),
+  testSolveAllButton: document.querySelector('#testSolveAllButton'),
+  testResetProgressButton: document.querySelector('#testResetProgressButton'),
+  testJumpBeginnerButton: document.querySelector('#testJumpBeginnerButton'),
+  testJumpAdvancedButton: document.querySelector('#testJumpAdvancedButton'),
+  testJumpMasterButton: document.querySelector('#testJumpMasterButton')
 };
 
 let SQL;
@@ -611,6 +619,7 @@ let progress = loadProgress();
 let currentView = null;
 let viewHistory = [];
 let isNavigatingBack = false;
+let areAllLevelsUnlockedForTesting = false;
 
 window.addEventListener('DOMContentLoaded', init);
 elements.runButton.addEventListener('click', runPlayerQuery);
@@ -634,6 +643,15 @@ elements.successModal.addEventListener('keydown', handleSuccessModalKeydown);
 elements.scrollTopButton.addEventListener('click', scrollToPageTop);
 elements.globalBackButton.addEventListener('click', navigateBack);
 window.addEventListener('scroll', updateScrollTopButton);
+
+if (IS_TEST_MODE) {
+  elements.testUnlockAllButton.addEventListener('click', unlockAllLevelsForTesting);
+  elements.testSolveAllButton.addEventListener('click', markAllLevelsSolvedForTesting);
+  elements.testResetProgressButton.addEventListener('click', resetProgressForTesting);
+  elements.testJumpBeginnerButton.addEventListener('click', () => jumpToLevelSectionForTesting('beginner'));
+  elements.testJumpAdvancedButton.addEventListener('click', () => jumpToLevelSectionForTesting('advancedJoins'));
+  elements.testJumpMasterButton.addEventListener('click', () => jumpToLevelSectionForTesting('master'));
+}
 
 async function init() {
   updateProgressBar();
@@ -830,6 +848,7 @@ function showLevelOverview() {
     hideSuccessModal();
     hideLearningViews();
     elements.levelOverview.hidden = false;
+    renderTestModePanel();
     renderLevelList();
     renderSqlBasicsChapters();
     renderLearnedOverview();
@@ -1085,7 +1104,7 @@ function getLevelsForLevelSection(section) {
 
 function isLevelSectionAccessible(sectionId) {
   const section = LEVEL_SECTIONS.find(levelSection => levelSection.id === sectionId);
-  return Boolean(section && (!section.unlockLevelId || progress.solvedLevelIds.includes(section.unlockLevelId)));
+  return Boolean(section && (isEveryLevelUnlockedForTesting() || !section.unlockLevelId || progress.solvedLevelIds.includes(section.unlockLevelId)));
 }
 
 function getLevelSectionTabId(sectionId) {
@@ -1430,6 +1449,9 @@ function isLevelUnlocked(levelIndex) {
   if (!level) {
     return false;
   }
+  if (isEveryLevelUnlockedForTesting()) {
+    return true;
+  }
   if (levelIndex === 0) {
     return true;
   }
@@ -1450,7 +1472,11 @@ function isLevelUnlocked(levelIndex) {
 }
 
 function isAdvancedPathUnlocked() {
-  return progress.solvedLevelIds.includes(30);
+  return isEveryLevelUnlockedForTesting() || progress.solvedLevelIds.includes(30);
+}
+
+function isEveryLevelUnlockedForTesting() {
+  return IS_TEST_MODE && areAllLevelsUnlockedForTesting;
 }
 
 function updateProgressBar() {
@@ -2051,8 +2077,61 @@ function resetProgress() {
   progress = createEmptyProgress();
   saveProgress();
   currentLevelIndex = 0;
+  activeLevelSection = 'beginner';
   elements.score.textContent = progress.score;
   showLevelOverview();
+}
+
+function renderTestModePanel() {
+  elements.testModePanel.hidden = !IS_TEST_MODE;
+}
+
+function unlockAllLevelsForTesting() {
+  areAllLevelsUnlockedForTesting = true;
+  renderLevelList();
+  setOverviewFeedback('Testmodus: Level 1–70 sind jetzt direkt auswählbar.', 'success');
+}
+
+function markAllLevelsSolvedForTesting() {
+  areAllLevelsUnlockedForTesting = true;
+  progress.solvedLevelIds = LEVELS.map(level => level.id);
+  progress.levelStars = LEVELS.reduce((levelStars, level) => {
+    levelStars[level.id] = MAX_STARS;
+    return levelStars;
+  }, {});
+  progress.levelAttempts = progress.levelAttempts && typeof progress.levelAttempts === 'object' ? progress.levelAttempts : {};
+  progress.savedQueries = progress.savedQueries && typeof progress.savedQueries === 'object' ? progress.savedQueries : {};
+  progress.solutionViewedLevelIds = Array.isArray(progress.solutionViewedLevelIds) ? progress.solutionViewedLevelIds : [];
+  progress.score = LEVELS.reduce((score, level) => score + (Number(level.points) || 0), 0);
+  currentLevelIndex = Math.min(currentLevelIndex, LEVELS.length - 1);
+  saveProgress();
+  renderLevelList();
+  renderLearnedOverview();
+  setOverviewFeedback('Testmodus: Alle Level wurden mit 3 Sternen als gelöst gespeichert.', 'success');
+}
+
+function resetProgressForTesting() {
+  progress = createEmptyProgress();
+  areAllLevelsUnlockedForTesting = false;
+  saveProgress();
+  currentLevelIndex = 0;
+  activeLevelSection = 'beginner';
+  renderLevelList();
+  renderLearnedOverview();
+  showOverviewTab('levels');
+  setOverviewFeedback('Testmodus: Der Fortschritt wurde vollständig zurückgesetzt.', 'success');
+}
+
+function jumpToLevelSectionForTesting(sectionId) {
+  areAllLevelsUnlockedForTesting = true;
+  activeLevelSection = sectionId;
+  showLevelOverview();
+  setOverviewFeedback(`Testmodus: Bereich ${getLevelSectionTitle(sectionId)} geöffnet.`, 'success');
+}
+
+function getLevelSectionTitle(sectionId) {
+  const section = LEVEL_SECTIONS.find(levelSection => levelSection.id === sectionId);
+  return section ? section.title : 'Levelübersicht';
 }
 
 function setFeedback(message, type) {

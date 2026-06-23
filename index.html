@@ -186,6 +186,26 @@ produkte 1 ─── n bestellpositionen</pre>
           <button id="resetProgressButton" class="ghost-button" type="button">Zurücksetzen</button>
         </div>
       </div>
+
+
+      <section id="testModePanel" class="test-mode-panel" aria-labelledby="testModeTitle" hidden>
+        <div class="test-mode-heading">
+          <div>
+            <p class="eyebrow">Nur für Entwicklung</p>
+            <h3 id="testModeTitle">Testmodus</h3>
+          </div>
+          <span class="test-mode-badge">?testmode=1</span>
+        </div>
+        <p class="muted small">Temporäre Werkzeuge zum Testen der Level 1–70. Ohne URL-Parameter bleibt dieser Bereich unsichtbar.</p>
+        <div class="test-mode-actions">
+          <button id="testUnlockAllButton" class="ghost-button" type="button">Alle Level freischalten</button>
+          <button id="testSolveAllButton" class="ghost-button" type="button">Alle Level als gelöst markieren</button>
+          <button id="testResetProgressButton" class="ghost-button" type="button">Fortschritt zurücksetzen</button>
+          <button id="testJumpBeginnerButton" class="ghost-button" type="button">Zu Anfänger springen</button>
+          <button id="testJumpAdvancedButton" class="ghost-button" type="button">Zu Fortgeschritten springen</button>
+          <button id="testJumpMasterButton" class="ghost-button" type="button">Zu Meister springen</button>
+        </div>
+      </section>
       <div class="overview-tabs" role="tablist" aria-label="Bereiche der Levelübersicht">
         <button id="levelsTabButton" class="overview-tab active" type="button" role="tab" aria-selected="true" aria-controls="levelsOverviewPanel">Levelübersicht</button>
         <button id="learnedOverviewTabButton" class="overview-tab" type="button" role="tab" aria-selected="false" aria-controls="learnedOverviewPanel">Was habe ich gelernt?</button>
