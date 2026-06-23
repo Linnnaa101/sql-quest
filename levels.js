@@ -772,6 +772,117 @@ const LEVELS = [
     expectedSql: `SELECT produkte.name, produkte.kategorie, SUM(bestellpositionen.menge), SUM(bestellpositionen.menge * bestellpositionen.einzelpreis), CASE WHEN SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) > (SELECT AVG(produktumsatz) FROM (SELECT SUM(menge * einzelpreis) AS produktumsatz FROM bestellpositionen GROUP BY produkt_id)) THEN 'Stark' ELSE 'Normal' END FROM produkte INNER JOIN bestellpositionen ON produkte.id = bestellpositionen.produkt_id GROUP BY produkte.name, produkte.kategorie HAVING SUM(bestellpositionen.menge) >= 2;`,
     hint: 'Außen gruppierst du pro Produkt. Im CASE WHEN vergleichst du den Produktumsatz mit dem Durchschnitt der gruppierten Produktumsätze.',
     points: 25
+
+  },
+  {
+    id: 71,
+    title: 'Fehlende Bestellungen lesbar anzeigen',
+    difficulty: 'Meister',
+    topic: 'NULL und COALESCE',
+    explanation: 'LEFT JOIN kann fehlende Werte erzeugen: Kunden ohne Bestellung haben dann NULL in den Bestellspalten. COALESCE() ersetzt NULL durch einen sinnvollen Text, ohne echte vorhandene Werte zu verändern.',
+    task: 'Zeige alle Kundennamen und den Bestellstatus. Kunden ohne Bestellung sollen beim Status den Text Keine Bestellung anzeigen.',
+    expectedSql: `SELECT kunden.name, COALESCE(bestellungen.status, 'Keine Bestellung') FROM kunden LEFT JOIN bestellungen ON kunden.id = bestellungen.kunden_id;`,
+    hint: `Nutze LEFT JOIN, damit auch Kunden ohne Bestellung erscheinen. COALESCE(bestellungen.status, 'Keine Bestellung') ersetzt nur fehlende Statuswerte.`,
+    points: 20
+  },
+  {
+    id: 72,
+    title: 'Kennzahlen gegen NULL absichern',
+    difficulty: 'Meister',
+    topic: 'COALESCE bei Aggregaten',
+    explanation: 'SUM() liefert bei fehlenden passenden Zeilen NULL. Mit COALESCE(SUM(...), 0) wird daraus ein echter Zahlenwert 0. So unterscheidest du fehlende Umsätze sauber von vorhandenen Umsätzen.',
+    task: 'Zeige alle Kundennamen und ihren Umsatz. Kunden ohne Bestellung sollen den Umsatz 0 erhalten. Sortiere nach Umsatz absteigend.',
+    expectedSql: 'SELECT kunden.name, COALESCE(SUM(bestellpositionen.menge * bestellpositionen.einzelpreis), 0) FROM kunden LEFT JOIN bestellungen ON kunden.id = bestellungen.kunden_id LEFT JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id GROUP BY kunden.name ORDER BY COALESCE(SUM(bestellpositionen.menge * bestellpositionen.einzelpreis), 0) DESC;',
+    hint: 'Nutze zwei LEFT JOINs und sichere die SUM()-Berechnung mit COALESCE(..., 0) ab.',
+    points: 20
+  },
+  {
+    id: 73,
+    title: 'Bestellungen pro Monat zählen',
+    difficulty: 'Meister',
+    topic: 'Datumsfunktionen',
+    explanation: `SQLite kann Textdaten im ISO-Format mit strftime('%Y-%m', bestelldatum) auswerten. Das erzeugt einen Monatsschlüssel wie 2026-01.`,
+    task: 'Zähle die Bestellungen pro Monat. Zeige Monat und Bestellanzahl, sortiert nach Monat.',
+    expectedSql: `SELECT strftime('%Y-%m', bestelldatum), COUNT(*) FROM bestellungen GROUP BY strftime('%Y-%m', bestelldatum) ORDER BY strftime('%Y-%m', bestelldatum);`,
+    hint: `Gruppiere und sortiere nach demselben strftime('%Y-%m', bestelldatum)-Ausdruck.`,
+    points: 20
+  },
+  {
+    id: 74,
+    title: 'Monatsumsatz im Jahr 2026',
+    difficulty: 'Meister',
+    topic: 'date() und strftime()',
+    explanation: `date() normalisiert Datumswerte, strftime('%Y', ...) filtert nach Jahr und strftime('%Y-%m', ...) gruppiert nach Monat.`,
+    task: 'Berechne den Umsatz pro Monat für Bestellungen aus dem Jahr 2026. Zeige Monat und Umsatz, sortiert nach Monat.',
+    expectedSql: `SELECT strftime('%Y-%m', date(bestellungen.bestelldatum)), SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) FROM bestellungen INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id WHERE strftime('%Y', date(bestellungen.bestelldatum)) = '2026' GROUP BY strftime('%Y-%m', date(bestellungen.bestelldatum)) ORDER BY strftime('%Y-%m', date(bestellungen.bestelldatum));`,
+    hint: `Verbinde Bestellungen mit Positionen, filtere das Jahr mit strftime('%Y', date(...)) und gruppiere nach strftime('%Y-%m', date(...)).`,
+    points: 20
+  },
+  {
+    id: 75,
+    title: 'Produkte eindeutig nach Preis nummerieren',
+    difficulty: 'Meister',
+    topic: 'ROW_NUMBER()',
+    explanation: 'Window Functions funktionieren in der verwendeten sql.js-Version 1.10.3, die auf einer SQLite-Version mit Fensterfunktionen basiert. ROW_NUMBER() vergibt eine eindeutige laufende Nummer gemäß ORDER BY innerhalb von OVER().',
+    task: 'Zeige Produktname, Preis und eine eindeutige Preisnummer. Das teuerste Produkt soll Nummer 1 erhalten.',
+    expectedSql: 'SELECT name, preis, ROW_NUMBER() OVER (ORDER BY preis DESC) FROM produkte;',
+    hint: 'Nutze ROW_NUMBER() OVER (ORDER BY preis DESC).',
+    points: 20
+  },
+  {
+    id: 76,
+    title: 'Kunden nach Punkten ranken',
+    difficulty: 'Meister',
+    topic: 'RANK()',
+    explanation: 'RANK() erstellt eine Rangliste. Gleiche Werte erhalten denselben Rang; danach kann eine Rangnummer übersprungen werden. Das ORDER BY steht innerhalb von OVER().',
+    task: 'Zeige Kundennamen, Punkte und ihren Punkterang. Die meisten Punkte sollen Rang 1 erhalten.',
+    expectedSql: 'SELECT name, punkte, RANK() OVER (ORDER BY punkte DESC) FROM kunden;',
+    hint: 'Nutze RANK() OVER (ORDER BY punkte DESC).',
+    points: 20
+  },
+  {
+    id: 77,
+    title: 'Produkte innerhalb der Kategorie ranken',
+    difficulty: 'Meister',
+    topic: 'PARTITION BY',
+    explanation: 'PARTITION BY teilt eine Window Function in Gruppen auf. Der Rang beginnt dadurch in jeder Kategorie neu.',
+    task: 'Zeige Kategorie, Produktname, Preis und den Preisrang innerhalb der jeweiligen Kategorie. Das teuerste Produkt jeder Kategorie soll Rang 1 erhalten.',
+    expectedSql: 'SELECT kategorie, name, preis, RANK() OVER (PARTITION BY kategorie ORDER BY preis DESC) FROM produkte;',
+    hint: 'PARTITION BY kategorie trennt die Rangliste je Kategorie; ORDER BY preis DESC sortiert innerhalb der Kategorie.',
+    points: 20
+  },
+  {
+    id: 78,
+    title: 'Laufenden Umsatz berechnen',
+    difficulty: 'Meister',
+    topic: 'laufende Summen',
+    explanation: 'Mit SUM(...) OVER (ORDER BY ...) berechnest du laufende Werte. Jede Zeile enthält dann die Summe bis zur aktuellen Zeile in der angegebenen Sortierung.',
+    task: 'Berechne mit WITH zuerst den Wert jeder Bestellung. Zeige danach Bestell-ID, Bestelldatum, Bestellwert und den laufenden Umsatz nach Bestelldatum und Bestell-ID.',
+    expectedSql: 'WITH bestellwerte AS (SELECT bestellungen.id, bestellungen.bestelldatum, SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) AS bestellwert FROM bestellungen INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id GROUP BY bestellungen.id, bestellungen.bestelldatum) SELECT id, bestelldatum, bestellwert, SUM(bestellwert) OVER (ORDER BY bestelldatum, id) FROM bestellwerte;',
+    hint: 'Die CTE berechnet bestellwert je Bestellung. Danach nutzt du SUM(bestellwert) OVER (ORDER BY bestelldatum, id).',
+    points: 20
+  },
+  {
+    id: 79,
+    title: 'Meister-Challenge Kundenranking',
+    difficulty: 'Meister',
+    topic: 'JOIN + COALESCE + Window Function',
+    explanation: 'Diese Challenge kombiniert LEFT JOIN, COALESCE, GROUP BY, CASE WHEN und RANK(). Eine CTE macht die Kundenumsätze wiederverwendbar.',
+    task: 'Berechne mit WITH für jeden Kunden den Umsatz, auch wenn keine Bestellung vorhanden ist. Zeige Name, Stadt, Umsatz, Kundenklasse Aktiv ab 50 Umsatz sonst Beobachten und den Umsatzrang. Sortiere nach Rang.',
+    expectedSql: `WITH kundenwerte AS (SELECT kunden.name, kunden.stadt, COALESCE(SUM(bestellpositionen.menge * bestellpositionen.einzelpreis), 0) AS umsatz FROM kunden LEFT JOIN bestellungen ON kunden.id = bestellungen.kunden_id LEFT JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id GROUP BY kunden.name, kunden.stadt) SELECT name, stadt, umsatz, CASE WHEN umsatz >= 50 THEN 'Aktiv' ELSE 'Beobachten' END, RANK() OVER (ORDER BY umsatz DESC) FROM kundenwerte ORDER BY RANK() OVER (ORDER BY umsatz DESC);`,
+    hint: 'Bereite Umsatz mit COALESCE in einer CTE vor. In der Hauptabfrage nutzt du CASE WHEN und RANK() OVER (ORDER BY umsatz DESC).',
+    points: 25
+  },
+  {
+    id: 80,
+    title: 'Meister-Challenge Monats- und Kategorieanalyse',
+    difficulty: 'Meister',
+    topic: 'CTE + PARTITION BY',
+    explanation: 'Die finale Challenge verbindet Datumsfunktionen, JOIN, GROUP BY, HAVING, CTE, CASE WHEN und Window Functions mit PARTITION BY.',
+    task: 'Berechne mit WITH den Umsatz pro Monat und Produktkategorie. Zeige Monat, Kategorie, Umsatz, Monatsrang innerhalb des Monats und Bewertung Stark ab 50 Umsatz sonst Normal. Es sollen nur Gruppen mit mindestens 2 verkauften Stück erscheinen. Sortiere nach Monat und Rang.',
+    expectedSql: `WITH monatskategorien AS (SELECT strftime('%Y-%m', bestellungen.bestelldatum) AS monat, produkte.kategorie, SUM(bestellpositionen.menge) AS menge, SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) AS umsatz FROM bestellungen INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id INNER JOIN produkte ON bestellpositionen.produkt_id = produkte.id GROUP BY strftime('%Y-%m', bestellungen.bestelldatum), produkte.kategorie HAVING SUM(bestellpositionen.menge) >= 2) SELECT monat, kategorie, umsatz, RANK() OVER (PARTITION BY monat ORDER BY umsatz DESC), CASE WHEN umsatz >= 50 THEN 'Stark' ELSE 'Normal' END FROM monatskategorien ORDER BY monat, RANK() OVER (PARTITION BY monat ORDER BY umsatz DESC);`,
+    hint: 'Gruppiere in der CTE nach Monat und Kategorie. In der Hauptabfrage rankst du mit RANK() OVER (PARTITION BY monat ORDER BY umsatz DESC).',
+    points: 25
   }
 
 
