@@ -1258,11 +1258,11 @@ function createLearningOverviewStageCard(stage, highestSolvedLevelId) {
   const solvedInStage = levelsInStage.filter(level => progress.solvedLevelIds.includes(level.id)).length;
   const isAccessible = isLearningOverviewStageAccessible(stage, highestSolvedLevelId);
   const status = getLearningOverviewStatus(solvedInStage, levelsInStage.length, isAccessible);
-  const article = document.createElement('article');
+  const article = document.createElement('details');
   article.className = `learning-overview-card ${status.className}`;
   article.setAttribute('aria-label', `${stage.title}: ${status.label}, ${solvedInStage} von ${levelsInStage.length} Leveln gelöst`);
 
-  const header = document.createElement('div');
+  const header = document.createElement('summary');
   header.className = 'learning-overview-card-header';
   const title = document.createElement('h4');
   title.textContent = stage.title;
@@ -1270,6 +1270,9 @@ function createLearningOverviewStageCard(stage, highestSolvedLevelId) {
   badge.className = `status-badge ${status.className}`;
   badge.textContent = status.label;
   header.append(title, badge);
+
+  const content = document.createElement('div');
+  content.className = 'learning-overview-card-content';
 
   const range = document.createElement('p');
   range.className = 'learning-overview-range';
@@ -1287,7 +1290,8 @@ function createLearningOverviewStageCard(stage, highestSolvedLevelId) {
   progressText.className = 'learning-overview-progress';
   progressText.textContent = `${solvedInStage} von ${levelsInStage.length} Leveln gelöst`;
 
-  article.append(header, range, terms, summary, createMiniProgressBar(solvedInStage, levelsInStage.length, `${stage.title}: Fortschritt innerhalb des Abschnitts`), progressText);
+  content.append(range, terms, summary, createMiniProgressBar(solvedInStage, levelsInStage.length, `${stage.title}: Fortschritt innerhalb des Abschnitts`), progressText);
+  article.append(header, content);
   return article;
 }
 
