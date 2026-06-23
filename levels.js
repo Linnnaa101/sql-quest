@@ -551,6 +551,117 @@ const LEVELS = [
     expectedSql: 'SELECT produkte.name, SUM(bestellpositionen.menge) FROM produkte INNER JOIN bestellpositionen ON produkte.id = bestellpositionen.produkt_id GROUP BY produkte.name HAVING SUM(bestellpositionen.menge) > 2;',
     hint: 'Nutze HAVING SUM(bestellpositionen.menge) > 2 nach GROUP BY.',
     points: 15
+  },
+  {
+    id: 51,
+    title: 'Kunden mit Bestellung per IN',
+    difficulty: 'Fortgeschritten',
+    topic: 'IN mit Unterabfrage',
+    explanation: 'Eine Unterabfrage liefert eine Liste von Werten. Mit IN prüfst du, ob ein Wert in dieser Liste vorkommt.',
+    task: 'Zeige die Namen aller Kunden, die mindestens eine Bestellung haben.',
+    expectedSql: 'SELECT name FROM kunden WHERE id IN (SELECT kunden_id FROM bestellungen);',
+    hint: 'Die Unterabfrage SELECT kunden_id FROM bestellungen liefert alle Kunden-IDs mit Bestellung.',
+    points: 15
+  },
+  {
+    id: 52,
+    title: 'Kunden ohne Bestellung per NOT IN',
+    difficulty: 'Fortgeschritten',
+    topic: 'NOT IN mit Unterabfrage',
+    explanation: 'NOT IN schließt alle Werte aus, die in der Ergebnisliste einer Unterabfrage vorkommen.',
+    task: 'Zeige die Namen aller Kunden, die keine Bestellung haben.',
+    expectedSql: 'SELECT name FROM kunden WHERE id NOT IN (SELECT kunden_id FROM bestellungen);',
+    hint: 'Suche Kunden-IDs, die nicht in den kunden_id-Werten der Tabelle bestellungen stehen.',
+    points: 15
+  },
+  {
+    id: 53,
+    title: 'Produkte über Durchschnittspreis',
+    difficulty: 'Fortgeschritten',
+    topic: 'Unterabfrage mit AVG()',
+    explanation: 'Eine Unterabfrage kann einen einzelnen Vergleichswert berechnen, zum Beispiel den Durchschnittspreis aller Produkte.',
+    task: 'Zeige Produktnamen und Preise aller Produkte, die teurer als der Durchschnittspreis sind.',
+    expectedSql: 'SELECT name, preis FROM produkte WHERE preis > (SELECT AVG(preis) FROM produkte);',
+    hint: 'Vergleiche preis mit einer Unterabfrage, die AVG(preis) aus produkte berechnet.',
+    points: 15
+  },
+  {
+    id: 54,
+    title: 'Produkte unter Durchschnittspreis',
+    difficulty: 'Fortgeschritten',
+    topic: 'Unterabfrage mit AVG()',
+    explanation: 'Mit demselben Durchschnittswert kannst du auch die günstigeren Produkte herausfiltern.',
+    task: 'Zeige Produktnamen und Preise aller Produkte, die günstiger als der Durchschnittspreis sind.',
+    expectedSql: 'SELECT name, preis FROM produkte WHERE preis < (SELECT AVG(preis) FROM produkte);',
+    hint: 'Nutze preis < (SELECT AVG(preis) FROM produkte).',
+    points: 15
+  },
+  {
+    id: 55,
+    title: 'Mehrfachbesteller per Unterabfrage',
+    difficulty: 'Fortgeschritten',
+    topic: 'Unterabfrage mit GROUP BY und HAVING',
+    explanation: 'GROUP BY und HAVING können in einer Unterabfrage eine Liste von IDs liefern, die eine Aggregatbedingung erfüllen.',
+    task: 'Zeige die Namen aller Kunden, die mehr als eine Bestellung haben.',
+    expectedSql: 'SELECT name FROM kunden WHERE id IN (SELECT kunden_id FROM bestellungen GROUP BY kunden_id HAVING COUNT(*) > 1);',
+    hint: 'Gruppiere bestellungen nach kunden_id und filtere Gruppen mit HAVING COUNT(*) > 1.',
+    points: 15
+  },
+  {
+    id: 56,
+    title: 'Produkte mit überdurchschnittlicher Verkaufsmenge',
+    difficulty: 'Fortgeschritten',
+    topic: 'Unterabfrage mit GROUP BY und HAVING',
+    explanation: 'Eine gruppierte Unterabfrage kann verkaufte Mengen pro Produkt mit der durchschnittlichen Positionsmenge vergleichen.',
+    task: 'Zeige Produktnamen und verkaufte Gesamtmenge für Produkte, deren Gesamtmenge über der durchschnittlichen Menge pro Bestellposition liegt.',
+    expectedSql: 'SELECT produkte.name, SUM(bestellpositionen.menge) FROM produkte INNER JOIN bestellpositionen ON produkte.id = bestellpositionen.produkt_id GROUP BY produkte.name HAVING SUM(bestellpositionen.menge) > (SELECT AVG(menge) FROM bestellpositionen);',
+    hint: 'Verbinde produkte mit bestellpositionen, gruppiere nach produkte.name und vergleiche SUM(menge) mit SELECT AVG(menge).',
+    points: 15
+  },
+  {
+    id: 57,
+    title: 'Kunden mit Bestellung per EXISTS',
+    difficulty: 'Fortgeschritten',
+    topic: 'EXISTS',
+    explanation: 'EXISTS prüft, ob eine passende Zeile in einer Unterabfrage existiert. Die Unterabfrage bezieht sich dabei auf die aktuelle Zeile der äußeren Abfrage.',
+    task: 'Zeige die Namen aller Kunden, für die mindestens eine Bestellung existiert.',
+    expectedSql: 'SELECT kunden.name FROM kunden WHERE EXISTS (SELECT 1 FROM bestellungen WHERE bestellungen.kunden_id = kunden.id);',
+    hint: 'In der Unterabfrage vergleichst du bestellungen.kunden_id mit kunden.id der äußeren Abfrage.',
+    points: 15
+  },
+  {
+    id: 58,
+    title: 'Kunden ohne Bestellung per NOT EXISTS',
+    difficulty: 'Fortgeschritten',
+    topic: 'NOT EXISTS',
+    explanation: 'NOT EXISTS findet Zeilen, für die keine passende Zeile in der Unterabfrage existiert.',
+    task: 'Zeige die Namen aller Kunden, für die keine Bestellung existiert.',
+    expectedSql: 'SELECT kunden.name FROM kunden WHERE NOT EXISTS (SELECT 1 FROM bestellungen WHERE bestellungen.kunden_id = kunden.id);',
+    hint: 'Nutze NOT EXISTS mit derselben Beziehung bestellungen.kunden_id = kunden.id.',
+    points: 15
+  },
+  {
+    id: 59,
+    title: 'Kundenumsatz über Durchschnittsbestellwert',
+    difficulty: 'Fortgeschritten',
+    topic: 'JOIN + GROUP BY + Unterabfrage',
+    explanation: 'Komplexere Auswertungen kombinieren JOINs, Bestellwertberechnung, GROUP BY und eine Unterabfrage mit Durchschnittswert.',
+    task: 'Zeige Kundennamen und Gesamtumsatz für Kunden, deren Gesamtumsatz größer als der durchschnittliche Bestellwert ist.',
+    expectedSql: 'SELECT kunden.name, SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) FROM kunden INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id GROUP BY kunden.name HAVING SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) > (SELECT AVG(bestellwert) FROM (SELECT SUM(menge * einzelpreis) AS bestellwert FROM bestellpositionen GROUP BY bestellung_id));',
+    hint: 'Berechne außen den Umsatz pro Kunde und innen den durchschnittlichen Wert gruppierter Bestellungen.',
+    points: 15
+  },
+  {
+    id: 60,
+    title: 'Bestellte Produkte über Durchschnittspreis',
+    difficulty: 'Fortgeschritten',
+    topic: 'JOIN + EXISTS + AVG()',
+    explanation: 'Diese Abfrage kombiniert eine Preis-Unterabfrage mit EXISTS, um nur Produkte zu zeigen, die auch wirklich bestellt wurden.',
+    task: 'Zeige Produktnamen und Preise aller Produkte, die teurer als der Durchschnittspreis sind und mindestens einmal bestellt wurden.',
+    expectedSql: 'SELECT produkte.name, produkte.preis FROM produkte WHERE produkte.preis > (SELECT AVG(preis) FROM produkte) AND EXISTS (SELECT 1 FROM bestellpositionen WHERE bestellpositionen.produkt_id = produkte.id);',
+    hint: 'Kombiniere den AVG(preis)-Vergleich mit EXISTS auf bestellpositionen.produkt_id = produkte.id.',
+    points: 15
   }
+
 
 ];

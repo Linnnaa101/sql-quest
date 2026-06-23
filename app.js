@@ -326,7 +326,109 @@ INNER JOIN bestellpositionen
   ON bestellungen.id = bestellpositionen.bestellung_id
 GROUP BY bestellungen.id;`,
     exampleExplanation: 'Summiert alle Positionswerte zum Bestellwert.'
+  },
+  subquery: {
+    term: 'Unterabfrage',
+    description: 'Eine Unterabfrage ist eine SELECT-Abfrage innerhalb einer anderen Abfrage. Sie liefert Werte für Filter oder Vergleiche.',
+    example: `SELECT name
+FROM kunden
+WHERE id IN (
+  SELECT kunden_id
+  FROM bestellungen
+);`,
+    exampleExplanation: 'Die innere Abfrage liefert Kunden-IDs mit Bestellung; die äußere Abfrage zeigt die passenden Kundennamen.'
+  },
+  inOperator: {
+    term: 'IN',
+    description: 'Prüft, ob ein Wert in einer Liste oder im Ergebnis einer Unterabfrage enthalten ist.',
+    example: `SELECT name
+FROM kunden
+WHERE id IN (
+  SELECT kunden_id
+  FROM bestellungen
+);`,
+    exampleExplanation: 'Zeigt Kunden, deren id in der Bestellliste vorkommt.'
+  },
+  notInOperator: {
+    term: 'NOT IN',
+    description: 'Schließt Werte aus, die in einer Liste oder im Ergebnis einer Unterabfrage enthalten sind.',
+    example: `SELECT name
+FROM kunden
+WHERE id NOT IN (
+  SELECT kunden_id
+  FROM bestellungen
+);`,
+    exampleExplanation: 'Zeigt Kunden ohne Bestellung.'
+  },
+  existsOperator: {
+    term: 'EXISTS',
+    description: 'Prüft, ob eine korrelierte Unterabfrage mindestens eine passende Zeile findet.',
+    example: `SELECT kunden.name
+FROM kunden
+WHERE EXISTS (
+  SELECT 1
+  FROM bestellungen
+  WHERE bestellungen.kunden_id = kunden.id
+);`,
+    exampleExplanation: 'Zeigt Kunden, zu denen mindestens eine Bestellung existiert.'
+  },
+  notExistsOperator: {
+    term: 'NOT EXISTS',
+    description: 'Prüft, ob eine korrelierte Unterabfrage keine passende Zeile findet.',
+    example: `SELECT kunden.name
+FROM kunden
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM bestellungen
+  WHERE bestellungen.kunden_id = kunden.id
+);`,
+    exampleExplanation: 'Zeigt Kunden, zu denen keine Bestellung existiert.'
+  },
+  avgComparisonSubquery: {
+    term: 'Vergleich mit AVG()',
+    description: 'Eine Unterabfrage kann einen Durchschnitt berechnen, mit dem die äußere Abfrage einzelne Werte vergleicht.',
+    example: `SELECT name, preis
+FROM produkte
+WHERE preis > (
+  SELECT AVG(preis)
+  FROM produkte
+);`,
+    exampleExplanation: 'Zeigt Produkte, die teurer als der Durchschnittspreis sind.'
+  },
+  groupedSubquery: {
+    term: 'Unterabfrage mit GROUP BY',
+    description: 'Unterabfragen können gruppieren und mit HAVING nur Gruppen zurückgeben, die eine Aggregatbedingung erfüllen.',
+    example: `SELECT name
+FROM kunden
+WHERE id IN (
+  SELECT kunden_id
+  FROM bestellungen
+  GROUP BY kunden_id
+  HAVING COUNT(*) > 1
+);`,
+    exampleExplanation: 'Zeigt Kunden mit mehr als einer Bestellung.'
+  },
+  joinSubqueryCombination: {
+    term: 'Kombination aus JOIN und Unterabfrage',
+    description: 'Fortgeschrittene Shop-Auswertungen verbinden Tabellen und vergleichen gruppierte Ergebnisse mit Werten aus Unterabfragen.',
+    example: `SELECT kunden.name, SUM(bestellpositionen.menge * bestellpositionen.einzelpreis)
+FROM kunden
+INNER JOIN bestellungen
+  ON kunden.id = bestellungen.kunden_id
+INNER JOIN bestellpositionen
+  ON bestellungen.id = bestellpositionen.bestellung_id
+GROUP BY kunden.name
+HAVING SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) > (
+  SELECT AVG(bestellwert)
+  FROM (
+    SELECT SUM(menge * einzelpreis) AS bestellwert
+    FROM bestellpositionen
+    GROUP BY bestellung_id
+  )
+);`,
+    exampleExplanation: 'Vergleicht Kundenumsätze mit dem durchschnittlichen Bestellwert.'
   }
+
 };
 
 const SQL_LEARNING_STAGES = [
@@ -336,7 +438,8 @@ const SQL_LEARNING_STAGES = [
   { unlockLevelId: 20, title: 'Funktionen und Auswertungen', levelRange: 'Level 16–20', levelStart: 16, levelEnd: 20, summary: 'Du wertest Zahlen mit SUM, MIN und MAX aus, entfernst Duplikate und kombinierst Filter, Sortierung und Begrenzung.', lockedPreview: 'SUM(), MIN(), MAX(), DISTINCT und Kombinationen aus WHERE, ORDER BY und LIMIT werden nach Level 20 freigeschaltet.', termKeys: ['sum', 'min', 'max', 'distinct', 'whereOrderLimit'] },
   { unlockLevelId: 25, title: 'Kombinierte Abfragen', levelRange: 'Level 21–25', levelStart: 21, levelEnd: 25, summary: 'Du festigst die typische Reihenfolge von SELECT-Abfragen und kombinierst mehrere SQL-Bausteine sicher.', lockedPreview: 'Eine Wiederholungs- und Kombinationsstufe wird nach Level 25 freigeschaltet.', termKeys: ['where', 'and', 'columns', 'orderBy', 'limit', 'queryOrder'] },
   { unlockLevelId: 30, title: 'Gruppieren und Auswerten', levelRange: 'Level 26–30', levelStart: 26, levelEnd: 30, summary: 'Du gruppierst Daten, filterst Gruppen und sortierst oder begrenzt Auswertungen pro Gruppe.', lockedPreview: 'GROUP BY, HAVING und Gruppenauswertungen werden nach Level 30 freigeschaltet.', termKeys: ['groupBy', 'having', 'groupAggregates', 'groupOrder', 'groupLimit'] },
-  { unlockLevelId: 30, title: 'Fortgeschritten – JOINs', levelRange: 'Level 31–50', levelStart: 31, levelEnd: 50, summary: 'Du verbindest Shop-Tabellen mit INNER JOIN und LEFT JOIN, nutzt ON-Bedingungen und wertest Bestellungen mit Produkten aus. Anschließend zählst, summierst, gruppierst, sortierst und filterst du JOIN-Ergebnisse für Shop-Auswertungen.', lockedPreview: 'Fortgeschritten – JOINs wird nach Abschluss von Level 30 freigeschaltet.', termKeys: ['innerJoin', 'leftJoin', 'joinOn', 'multiTableJoins', 'countJoin', 'sumJoin', 'multiTableGrouping', 'havingJoin', 'orderValueCalculation'] }
+  { unlockLevelId: 30, title: 'Fortgeschritten – JOINs', levelRange: 'Level 31–50', levelStart: 31, levelEnd: 50, summary: 'Du verbindest Shop-Tabellen mit INNER JOIN und LEFT JOIN, nutzt ON-Bedingungen und wertest Bestellungen mit Produkten aus. Anschließend zählst, summierst, gruppierst, sortierst und filterst du JOIN-Ergebnisse für Shop-Auswertungen.', lockedPreview: 'Fortgeschritten – JOINs wird nach Abschluss von Level 30 freigeschaltet.', termKeys: ['innerJoin', 'leftJoin', 'joinOn', 'multiTableJoins', 'countJoin', 'sumJoin', 'multiTableGrouping', 'havingJoin', 'orderValueCalculation'] },
+  { unlockLevelId: 50, title: 'Fortgeschritten – Unterabfragen und komplexe Filter', levelRange: 'Level 51–60', levelStart: 51, levelEnd: 60, summary: 'Du nutzt Unterabfragen mit IN, NOT IN, EXISTS und NOT EXISTS, vergleichst Werte mit AVG() und kombinierst JOINs, GROUP BY, HAVING und Bestellwertberechnungen.', lockedPreview: 'Unterabfragen und komplexe Filter werden nach Abschluss von Level 50 freigeschaltet.', termKeys: ['subquery', 'inOperator', 'notInOperator', 'existsOperator', 'notExistsOperator', 'avgComparisonSubquery', 'groupedSubquery', 'joinSubqueryCombination'] }
 ];
 
 const SQL_BASICS_CHAPTERS = SQL_LEARNING_STAGES.map(stage => ({
@@ -784,7 +887,7 @@ const LEVEL_SECTIONS = [
     id: 'advancedJoins',
     title: 'Fortgeschritten',
     levelStart: 31,
-    levelEnd: 50,
+    levelEnd: 60,
     unlockLevelId: 30,
     lockedHint: 'Wird nach dem Lösen von Level 30 freigeschaltet.'
   }
@@ -869,10 +972,10 @@ function createActiveLevelSectionPanel() {
   const grid = document.createElement('div');
   grid.className = 'level-list compact-level-grid';
   levels.forEach(level => {
-    if (section.id === 'advancedJoins' && level.id === 41) {
+    if (section.id === 'advancedJoins' && (level.id === 41 || level.id === 51)) {
       const subheading = document.createElement('h4');
       subheading.className = 'level-section-subheading';
-      subheading.textContent = 'JOIN-Auswertungen';
+      subheading.textContent = level.id === 41 ? 'JOIN-Auswertungen' : 'Unterabfragen und komplexe Filter';
       grid.append(subheading);
     }
     grid.append(createLevelButton(level, LEVELS.indexOf(level)));
@@ -1207,6 +1310,9 @@ function getLockedLevelText(level) {
   if (level.id === 41) {
     return 'Freischaltung benötigt den Abschluss von Level 40';
   }
+  if (level.id === 51) {
+    return 'Freischaltung benötigt den Abschluss von Level 50';
+  }
   return 'Freischaltung benötigt mindestens 2 Sterne im vorherigen Level';
 }
 
@@ -1231,6 +1337,9 @@ function isLevelUnlocked(levelIndex) {
   }
   if (level.id === 41) {
     return progress.solvedLevelIds.includes(40);
+  }
+  if (level.id === 51) {
+    return progress.solvedLevelIds.includes(50);
   }
   const previousLevel = LEVELS[levelIndex - 1];
   return getLevelStars(previousLevel.id) >= MIN_STARS_TO_UNLOCK_NEXT_LEVEL;

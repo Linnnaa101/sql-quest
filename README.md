@@ -33,7 +33,7 @@ SQL Quest ist eine interaktive Lernanwendung, mit der Nutzer SQL Schritt für Sc
 ### Fortgeschritten
 
 - Wird nach Abschluss von Level 30 freigeschaltet
-- Level 31–50
+- Level 31–60
 - Themen:
   - `INNER JOIN`
   - `LEFT JOIN`
@@ -42,6 +42,10 @@ SQL Quest ist eine interaktive Lernanwendung, mit der Nutzer SQL Schritt für Sc
   - `COUNT` und `SUM` mit JOIN
   - `GROUP BY`, `ORDER BY` und `HAVING` mit JOIN
   - Bestellwerte und Shop-Auswertungen
+  - Unterabfragen
+  - `IN` und `NOT IN`
+  - `EXISTS` und `NOT EXISTS`
+  - Vergleiche mit `AVG` und komplexere Filter
 
 ## Fortschritt und Freischaltung
 
