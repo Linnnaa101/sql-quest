@@ -47,11 +47,28 @@ SQL Quest ist eine interaktive Lernanwendung, mit der Nutzer SQL Schritt für Sc
   - `EXISTS` und `NOT EXISTS`
   - Vergleiche mit `AVG` und komplexere Filter
 
+
+### Meister
+
+- Wird nach Abschluss von Level 60 freigeschaltet
+- Level 61–70
+- Themen:
+  - `CASE WHEN` für Umsatzkategorien und verständliche Einordnungen
+  - CTEs mit `WITH` für übersichtliche Zwischenergebnisse
+  - verschachtelte Unterabfragen als Alternative für komplexe Vergleichswerte
+  - mehrstufige Unterabfragen mit `AVG`, `GROUP BY` und `HAVING`
+  - komplexe JOIN-Auswertungen über Kunden, Bestellungen, Bestellpositionen und Produkte
+  - Meister-Challenges mit `JOIN`, Unterabfrage oder CTE, `CASE WHEN`, `GROUP BY`, `HAVING`, `AVG`, `SUM` und `COUNT`
+  - Bestellwertberechnung mit `menge * einzelpreis`
+
 ## Fortschritt und Freischaltung
 
 - Neue Level werden normalerweise mit mindestens zwei Sternen im vorherigen Level freigeschaltet.
 - Level 31 wird direkt nach dem Lösen von Level 30 freigeschaltet.
 - Level 41 wird direkt nach dem Lösen von Level 40 freigeschaltet.
+- Level 51 wird direkt nach dem Lösen von Level 50 freigeschaltet.
+- Level 61 wird direkt nach dem Lösen von Level 60 freigeschaltet.
+- Für Level 62–70 sind mindestens zwei Sterne im vorherigen Level erforderlich.
 - Der aktuelle Fortschritt wird lokal im Browser gespeichert.
 
 ## Datenmodell

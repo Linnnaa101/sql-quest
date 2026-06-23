@@ -428,7 +428,86 @@ HAVING SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) > (
   )
 );`,
     exampleExplanation: 'Vergleicht Kundenumsätze mit dem durchschnittlichen Bestellwert.'
+  },
+  caseWhen: {
+    term: 'CASE WHEN',
+    description: 'Erzeugt bedingte Ausgaben direkt in der SELECT-Liste, zum Beispiel Kategorien abhängig von Umsatz oder Menge.',
+    example: `SELECT name,
+  CASE WHEN punkte >= 150 THEN 'Top'
+       WHEN punkte >= 100 THEN 'Aktiv'
+       ELSE 'Basis'
+  END
+FROM kunden;`,
+    exampleExplanation: 'Ordnet Kunden anhand ihrer Punkte in Textkategorien ein.'
+  },
+  cteWith: {
+    term: 'CTE / WITH',
+    description: 'Definiert ein benanntes Zwischenergebnis, das die Hauptabfrage wie eine temporäre Tabelle nutzen kann.',
+    example: `WITH bestellwerte AS (
+  SELECT bestellung_id, SUM(menge * einzelpreis) AS bestellwert
+  FROM bestellpositionen
+  GROUP BY bestellung_id
+)
+SELECT AVG(bestellwert)
+FROM bestellwerte;`,
+    exampleExplanation: 'Berechnet erst Bestellwerte und wertet sie anschließend übersichtlich aus.'
+  },
+  nestedSubquery: {
+    term: 'mehrstufige Unterabfrage',
+    description: 'Verschachtelt mehrere SELECT-Abfragen, damit gruppierte Kennzahlen mit daraus berechneten Vergleichswerten geprüft werden können.',
+    example: `SELECT produkt_id, SUM(menge)
+FROM bestellpositionen
+GROUP BY produkt_id
+HAVING SUM(menge) > (
+  SELECT AVG(gesamtmenge)
+  FROM (
+    SELECT SUM(menge) AS gesamtmenge
+    FROM bestellpositionen
+    GROUP BY produkt_id
+  )
+);`,
+    exampleExplanation: 'Vergleicht Produktmengen mit dem Durchschnitt bereits gruppierter Produktmengen.'
+  },
+  complexAggregation: {
+    term: 'komplexe Aggregation',
+    description: 'Kombiniert JOINs, GROUP BY, HAVING und mehrere Aggregatfunktionen für aussagekräftige Shop-Auswertungen.',
+    example: `SELECT produkte.kategorie, SUM(bestellpositionen.menge), SUM(bestellpositionen.menge * bestellpositionen.einzelpreis)
+FROM produkte
+INNER JOIN bestellpositionen
+  ON produkte.id = bestellpositionen.produkt_id
+GROUP BY produkte.kategorie
+HAVING SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) > 50;`,
+    exampleExplanation: 'Zeigt nur Produktkategorien mit nennenswertem Umsatz.'
+  },
+  revenueCategory: {
+    term: 'Umsatzkategorie',
+    description: 'Eine mit CASE WHEN erzeugte fachliche Einordnung von berechneten Umsätzen, etwa Niedrig, Mittel oder Hoch.',
+    example: `SELECT bestellung_id,
+  SUM(menge * einzelpreis),
+  CASE WHEN SUM(menge * einzelpreis) >= 500 THEN 'Hoch'
+       WHEN SUM(menge * einzelpreis) >= 50 THEN 'Mittel'
+       ELSE 'Niedrig'
+  END
+FROM bestellpositionen
+GROUP BY bestellung_id;`,
+    exampleExplanation: 'Macht Zahlenwerte als Kategorien leichter verständlich.'
+  },
+  masterAnalysis: {
+    term: 'Meister-Auswertung',
+    description: 'Verbindet mehrere SQL-Bausteine wie JOIN, Unterabfrage oder CTE, CASE WHEN, GROUP BY, HAVING und Aggregatfunktionen.',
+    example: `WITH kundenumsaetze AS (
+  SELECT kunden.name, SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) AS umsatz
+  FROM kunden
+  INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id
+  INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id
+  GROUP BY kunden.name
+)
+SELECT name, umsatz
+FROM kundenumsaetze
+WHERE umsatz > (SELECT AVG(umsatz) FROM kundenumsaetze);`,
+    exampleExplanation: 'Bereitet Umsätze vor und filtert anschließend Kunden oberhalb des Durchschnitts.'
   }
+
 
 };
 
@@ -440,7 +519,8 @@ const SQL_LEARNING_STAGES = [
   { unlockLevelId: 25, title: 'Kombinierte Abfragen', levelRange: 'Level 21–25', levelStart: 21, levelEnd: 25, summary: 'Du festigst die typische Reihenfolge von SELECT-Abfragen und kombinierst mehrere SQL-Bausteine sicher.', lockedPreview: 'Eine Wiederholungs- und Kombinationsstufe wird nach Level 25 freigeschaltet.', termKeys: ['where', 'and', 'columns', 'orderBy', 'limit', 'queryOrder'] },
   { unlockLevelId: 30, title: 'Gruppieren und Auswerten', levelRange: 'Level 26–30', levelStart: 26, levelEnd: 30, summary: 'Du gruppierst Daten, filterst Gruppen und sortierst oder begrenzt Auswertungen pro Gruppe.', lockedPreview: 'GROUP BY, HAVING und Gruppenauswertungen werden nach Level 30 freigeschaltet.', termKeys: ['groupBy', 'having', 'groupAggregates', 'groupOrder', 'groupLimit'] },
   { unlockLevelId: 30, title: 'Fortgeschritten – JOINs', levelRange: 'Level 31–50', levelStart: 31, levelEnd: 50, summary: 'Du verbindest Shop-Tabellen mit INNER JOIN und LEFT JOIN, nutzt ON-Bedingungen und wertest Bestellungen mit Produkten aus. Anschließend zählst, summierst, gruppierst, sortierst und filterst du JOIN-Ergebnisse für Shop-Auswertungen.', lockedPreview: 'Fortgeschritten – JOINs wird nach Abschluss von Level 30 freigeschaltet.', termKeys: ['innerJoin', 'leftJoin', 'joinOn', 'multiTableJoins', 'countJoin', 'sumJoin', 'multiTableGrouping', 'havingJoin', 'orderValueCalculation'] },
-  { unlockLevelId: 50, title: 'Fortgeschritten – Unterabfragen und komplexe Filter', levelRange: 'Level 51–60', levelStart: 51, levelEnd: 60, summary: 'Du nutzt Unterabfragen mit IN, NOT IN, EXISTS und NOT EXISTS, vergleichst Werte mit AVG() und kombinierst JOINs, GROUP BY, HAVING und Bestellwertberechnungen.', lockedPreview: 'Unterabfragen und komplexe Filter werden nach Abschluss von Level 50 freigeschaltet.', termKeys: ['subquery', 'inOperator', 'notInOperator', 'existsOperator', 'notExistsOperator', 'avgComparisonSubquery', 'groupedSubquery', 'joinSubqueryCombination'] }
+  { unlockLevelId: 50, title: 'Fortgeschritten – Unterabfragen und komplexe Filter', levelRange: 'Level 51–60', levelStart: 51, levelEnd: 60, summary: 'Du nutzt Unterabfragen mit IN, NOT IN, EXISTS und NOT EXISTS, vergleichst Werte mit AVG() und kombinierst JOINs, GROUP BY, HAVING und Bestellwertberechnungen.', lockedPreview: 'Unterabfragen und komplexe Filter werden nach Abschluss von Level 50 freigeschaltet.', termKeys: ['subquery', 'inOperator', 'notInOperator', 'existsOperator', 'notExistsOperator', 'avgComparisonSubquery', 'groupedSubquery', 'joinSubqueryCombination'] },
+  { unlockLevelId: 60, title: 'Meister – komplexe Auswertungen', levelRange: 'Level 61–70', levelStart: 61, levelEnd: 70, summary: 'Du erstellst Meister-Abfragen mit CASE WHEN, CTEs mit WITH, mehrstufigen Unterabfragen, komplexen Aggregationen und vollständigen Shop-Auswertungen.', lockedPreview: 'Meister-Themen werden nach Abschluss von Level 60 freigeschaltet.', termKeys: ['caseWhen', 'cteWith', 'nestedSubquery', 'complexAggregation', 'revenueCategory', 'masterAnalysis'] }
 ];
 
 const SQL_BASICS_CHAPTERS = SQL_LEARNING_STAGES.map(stage => ({
@@ -891,6 +971,14 @@ const LEVEL_SECTIONS = [
     levelEnd: 60,
     unlockLevelId: 30,
     lockedHint: 'Wird nach dem Lösen von Level 30 freigeschaltet.'
+  },
+  {
+    id: 'master',
+    title: 'Meister',
+    levelStart: 61,
+    levelEnd: 70,
+    unlockLevelId: 60,
+    lockedHint: 'Wird nach dem Lösen von Level 60 freigeschaltet.'
   }
 ];
 
@@ -901,7 +989,7 @@ function renderLevelList() {
 
   elements.levelList.innerHTML = '';
   elements.levelList.append(createLevelSectionTabs());
-  const lockedHint = createLockedAdvancedSectionHint();
+  const lockedHint = createLockedLevelSectionHint();
   if (lockedHint) {
     elements.levelList.append(lockedHint);
   }
@@ -947,15 +1035,15 @@ function createLevelSectionTabs() {
   return tabList;
 }
 
-function createLockedAdvancedSectionHint() {
-  const advancedSection = LEVEL_SECTIONS.find(section => section.id === 'advancedJoins');
-  if (!advancedSection || isLevelSectionAccessible(advancedSection.id)) {
+function createLockedLevelSectionHint() {
+  const lockedSections = LEVEL_SECTIONS.filter(section => section.unlockLevelId && !isLevelSectionAccessible(section.id));
+  if (!lockedSections.length) {
     return null;
   }
 
   const hint = document.createElement('p');
   hint.className = 'level-section-locked-hint';
-  hint.textContent = `🔒 ${advancedSection.lockedHint}`;
+  hint.textContent = lockedSections.map(section => `🔒 ${section.title}: ${section.lockedHint}`).join(' ');
   return hint;
 }
 
@@ -977,6 +1065,12 @@ function createActiveLevelSectionPanel() {
       const subheading = document.createElement('h4');
       subheading.className = 'level-section-subheading';
       subheading.textContent = level.id === 41 ? 'JOIN-Auswertungen' : 'Unterabfragen und komplexe Filter';
+      grid.append(subheading);
+    }
+    if (section.id === 'master' && level.id === 61) {
+      const subheading = document.createElement('h4');
+      subheading.className = 'level-section-subheading';
+      subheading.textContent = 'Meister-Abfragen und komplexe Auswertungen';
       grid.append(subheading);
     }
     grid.append(createLevelButton(level, LEVELS.indexOf(level)));
@@ -1314,6 +1408,9 @@ function getLockedLevelText(level) {
   if (level.id === 51) {
     return 'Freischaltung benötigt den Abschluss von Level 50';
   }
+  if (level.id === 61) {
+    return 'Freischaltung benötigt den Abschluss von Level 60';
+  }
   return 'Freischaltung benötigt mindestens 2 Sterne im vorherigen Level';
 }
 
@@ -1342,6 +1439,9 @@ function isLevelUnlocked(levelIndex) {
   if (level.id === 51) {
     return progress.solvedLevelIds.includes(50);
   }
+  if (level.id === 61) {
+    return progress.solvedLevelIds.includes(60);
+  }
   const previousLevel = LEVELS[levelIndex - 1];
   return getLevelStars(previousLevel.id) >= MIN_STARS_TO_UNLOCK_NEXT_LEVEL;
 }
@@ -1353,23 +1453,26 @@ function isAdvancedPathUnlocked() {
 function updateProgressBar() {
   const beginnerLevels = LEVELS.filter(level => level.difficulty === 'Anfänger');
   const advancedLevels = LEVELS.filter(level => level.difficulty === 'Fortgeschritten');
+  const masterLevels = LEVELS.filter(level => level.difficulty === 'Meister');
   const solvedBeginnerLevelCount = beginnerLevels.filter(level => progress.solvedLevelIds.includes(level.id)).length;
   const solvedAdvancedLevelCount = advancedLevels.filter(level => progress.solvedLevelIds.includes(level.id)).length;
+  const solvedMasterLevelCount = masterLevels.filter(level => progress.solvedLevelIds.includes(level.id)).length;
   const beginnerCompleted = solvedBeginnerLevelCount >= beginnerLevels.length;
   const unlockedAdvancedLevelCount = advancedLevels.filter(level => isLevelUnlocked(LEVELS.indexOf(level))).length;
+  const unlockedMasterLevelCount = masterLevels.filter(level => isLevelUnlocked(LEVELS.indexOf(level))).length;
   const consideredBeginnerLevelCount = Math.max(beginnerLevels.filter(level => isLevelUnlocked(LEVELS.indexOf(level))).length, solvedBeginnerLevelCount);
   const totalLevelCount = LEVELS.length;
-  const consideredTotalLevelCount = consideredBeginnerLevelCount + Math.max(unlockedAdvancedLevelCount, solvedAdvancedLevelCount);
+  const consideredTotalLevelCount = consideredBeginnerLevelCount + Math.max(unlockedAdvancedLevelCount, solvedAdvancedLevelCount) + Math.max(unlockedMasterLevelCount, solvedMasterLevelCount);
   const progressPercent = totalLevelCount === 0 ? 0 : Math.round((consideredTotalLevelCount / totalLevelCount) * 100);
   const collectedStars = LEVELS.reduce((sum, level) => sum + getLevelStars(level.id), 0);
   const maxStars = LEVELS.length * MAX_STARS;
 
-  elements.progressText.textContent = `Anfänger: ${solvedBeginnerLevelCount}/${beginnerLevels.length}${beginnerCompleted ? ' abgeschlossen' : ''} · Fortgeschritten: ${solvedAdvancedLevelCount}/${advancedLevels.length}`;
+  elements.progressText.textContent = `Anfänger: ${solvedBeginnerLevelCount}/${beginnerLevels.length}${beginnerCompleted ? ' abgeschlossen' : ''} · Fortgeschritten: ${solvedAdvancedLevelCount}/${advancedLevels.length} · Meister: ${solvedMasterLevelCount}/${masterLevels.length}`;
   elements.progressPercent.textContent = `${progressPercent} % gesamt · ${collectedStars} von ${maxStars} Sternen gesammelt`;
   elements.progressFill.style.width = `${progressPercent}%`;
   elements.progressTrack.setAttribute('aria-valuemax', totalLevelCount);
   elements.progressTrack.setAttribute('aria-valuenow', consideredTotalLevelCount);
-  elements.progressTrack.setAttribute('aria-label', 'Gesamtfortschritt über Anfänger und Fortgeschritten');
+  elements.progressTrack.setAttribute('aria-label', 'Gesamtfortschritt über Anfänger, Fortgeschritten und Meister');
 }
 
 function loadLevel(index) {

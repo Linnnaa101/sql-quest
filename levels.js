@@ -661,6 +661,117 @@ const LEVELS = [
     expectedSql: 'SELECT produkte.name, produkte.preis FROM produkte WHERE produkte.preis > (SELECT AVG(preis) FROM produkte) AND EXISTS (SELECT 1 FROM bestellpositionen WHERE bestellpositionen.produkt_id = produkte.id);',
     hint: 'Kombiniere den AVG(preis)-Vergleich mit EXISTS auf bestellpositionen.produkt_id = produkte.id.',
     points: 15
+
+  },
+  {
+    id: 61,
+    title: 'Kundenumsätze einordnen',
+    difficulty: 'Meister',
+    topic: 'CASE WHEN',
+    explanation: 'Mit CASE WHEN ordnest du berechnete Werte in lesbare Kategorien ein. So wird aus einem Zahlenwert eine verständliche Bewertung.',
+    task: 'Berechne den Umsatz pro Kunde und teile ihn in Umsatzkategorien ein: Hoch ab 500, Mittel ab 50, sonst Niedrig. Zeige nur Kunden mit Bestellungen.',
+    expectedSql: `SELECT kunden.name, SUM(bestellpositionen.menge * bestellpositionen.einzelpreis), CASE WHEN SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) >= 500 THEN 'Hoch' WHEN SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) >= 50 THEN 'Mittel' ELSE 'Niedrig' END FROM kunden INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id GROUP BY kunden.name;`,
+    hint: 'Gruppiere nach kunden.name, summiere menge * einzelpreis und nutze CASE WHEN direkt auf der SUM()-Berechnung.',
+    points: 20
+  },
+  {
+    id: 62,
+    title: 'Bestellungen nach Wert klassifizieren',
+    difficulty: 'Meister',
+    topic: 'CASE WHEN',
+    explanation: 'CASE WHEN kann auch Bestellungen nach ihrem Gesamtwert bewerten. Die Gruppierung berechnet zuerst den Bestellwert, CASE WHEN gibt danach die passende Kategorie zurück.',
+    task: 'Zeige jede Bestellung mit Bestell-ID, Bestelldatum, Bestellwert und Wertklasse: Groß ab 500, Normal ab 50, Klein darunter.',
+    expectedSql: `SELECT bestellungen.id, bestellungen.bestelldatum, SUM(bestellpositionen.menge * bestellpositionen.einzelpreis), CASE WHEN SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) >= 500 THEN 'Groß' WHEN SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) >= 50 THEN 'Normal' ELSE 'Klein' END FROM bestellungen INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id GROUP BY bestellungen.id, bestellungen.bestelldatum;`,
+    hint: 'Verbinde bestellungen mit bestellpositionen, gruppiere nach Bestellung und klassifiziere die Summe mit CASE WHEN.',
+    points: 20
+  },
+  {
+    id: 63,
+    title: 'Bestellwerte mit WITH vorbereiten',
+    difficulty: 'Meister',
+    topic: 'CTE / WITH',
+    explanation: 'WITH erstellt eine Common Table Expression (CTE): ein benanntes Zwischenergebnis, das die Hauptabfrage übersichtlicher macht. sql.js 1.10.3 basiert auf SQLite mit WITH-Unterstützung.',
+    task: 'Berechne zuerst mit WITH den Wert jeder Bestellung. Werte danach aus, wie viele Bestellungen es gibt und wie hoch der durchschnittliche Bestellwert ist.',
+    expectedSql: 'WITH bestellwerte AS (SELECT bestellung_id, SUM(menge * einzelpreis) AS bestellwert FROM bestellpositionen GROUP BY bestellung_id) SELECT COUNT(*), AVG(bestellwert) FROM bestellwerte;',
+    hint: 'Lege mit WITH bestellwerte AS (...) ein Zwischenergebnis an und nutze es danach wie eine Tabelle.',
+    points: 20
+  },
+  {
+    id: 64,
+    title: 'Kundenumsätze mit CTE auswerten',
+    difficulty: 'Meister',
+    topic: 'CTE / WITH',
+    explanation: 'CTEs helfen besonders, wenn du einen berechneten Zwischenstand anschließend filtern oder sortieren möchtest.',
+    task: 'Berechne mit WITH den Umsatz pro Kunde. Zeige danach nur Kunden, deren Umsatz über dem durchschnittlichen Kundenumsatz liegt.',
+    expectedSql: 'WITH kundenumsaetze AS (SELECT kunden.name, SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) AS umsatz FROM kunden INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id GROUP BY kunden.name) SELECT name, umsatz FROM kundenumsaetze WHERE umsatz > (SELECT AVG(umsatz) FROM kundenumsaetze);',
+    hint: 'Die CTE liefert name und umsatz. In der Hauptabfrage vergleichst du umsatz mit SELECT AVG(umsatz) FROM kundenumsaetze.',
+    points: 20
+  },
+  {
+    id: 65,
+    title: 'Kunden über dem Durchschnittsumsatz',
+    difficulty: 'Meister',
+    topic: 'mehrstufige Unterabfrage',
+    explanation: 'Mehrstufige Unterabfragen verschachteln mehrere Auswertungen. Hier vergleichst du gruppierte Kundenumsätze mit einem Durchschnitt aus einer weiteren Gruppierung.',
+    task: 'Zeige Kunden und Umsatz, wenn ihr Umsatz höher ist als der durchschnittliche Umsatz aller Kunden mit Bestellung.',
+    expectedSql: 'SELECT kunden.name, SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) FROM kunden INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id GROUP BY kunden.name HAVING SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) > (SELECT AVG(umsatz) FROM (SELECT SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) AS umsatz FROM kunden INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id GROUP BY kunden.name));',
+    hint: 'Außen gruppierst du pro Kunde. Innen berechnest du ebenfalls Kundenumsätze und bildest daraus AVG(umsatz).',
+    points: 20
+  },
+  {
+    id: 66,
+    title: 'Ungewöhnlich häufig verkaufte Produkte',
+    difficulty: 'Meister',
+    topic: 'mehrstufige Unterabfrage',
+    explanation: 'Mit HAVING und einer Unterabfrage findest du Gruppen, deren Kennzahl über einem Vergleichswert anderer Gruppen liegt.',
+    task: 'Zeige Produkte und verkaufte Gesamtmenge, wenn die Menge höher ist als die durchschnittlich verkaufte Gesamtmenge pro bestelltem Produkt.',
+    expectedSql: 'SELECT produkte.name, SUM(bestellpositionen.menge) FROM produkte INNER JOIN bestellpositionen ON produkte.id = bestellpositionen.produkt_id GROUP BY produkte.name HAVING SUM(bestellpositionen.menge) > (SELECT AVG(gesamtmenge) FROM (SELECT SUM(menge) AS gesamtmenge FROM bestellpositionen GROUP BY produkt_id));',
+    hint: 'Berechne außen SUM(menge) je Produkt. Die Unterabfrage berechnet erst Gesamtmengen je produkt_id und daraus den Durchschnitt.',
+    points: 20
+  },
+  {
+    id: 67,
+    title: 'Kunden mit starken Bestellwerten',
+    difficulty: 'Meister',
+    topic: 'komplexe Aggregation',
+    explanation: 'Komplexe JOIN-Auswertungen verbinden mehrere Tabellen, berechnen Werte und filtern Gruppen mit HAVING.',
+    task: 'Zeige Kundennamen, Anzahl ihrer Bestellungen und Umsatz. Es sollen nur Kunden mit mindestens zwei Bestellungen und mehr als 100 Umsatz erscheinen.',
+    expectedSql: 'SELECT kunden.name, COUNT(DISTINCT bestellungen.id), SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) FROM kunden INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id GROUP BY kunden.name HAVING COUNT(DISTINCT bestellungen.id) >= 2 AND SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) > 100;',
+    hint: 'Nutze COUNT(DISTINCT bestellungen.id) für Bestellungen und SUM(menge * einzelpreis) für Umsatz.',
+    points: 20
+  },
+  {
+    id: 68,
+    title: 'Kategorien mit nennenswertem Umsatz',
+    difficulty: 'Meister',
+    topic: 'komplexe Aggregation',
+    explanation: 'Gruppierungen über Produktkategorien zeigen, welche Bereiche Umsatz und Menge bringen. HAVING blendet kleine Gruppen aus.',
+    task: 'Zeige Produktkategorie, verkaufte Menge und Umsatz für Kategorien mit mehr als 50 Umsatz. Sortiere nach Umsatz absteigend.',
+    expectedSql: 'SELECT produkte.kategorie, SUM(bestellpositionen.menge), SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) FROM produkte INNER JOIN bestellpositionen ON produkte.id = bestellpositionen.produkt_id GROUP BY produkte.kategorie HAVING SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) > 50 ORDER BY SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) DESC;',
+    hint: 'Verbinde produkte mit bestellpositionen, gruppiere nach kategorie und filtere den Umsatz mit HAVING.',
+    points: 20
+  },
+  {
+    id: 69,
+    title: 'Meister-Challenge Kundenwert',
+    difficulty: 'Meister',
+    topic: 'Meister-Auswertung',
+    explanation: 'Diese Challenge verbindet JOIN, CTE, CASE WHEN, GROUP BY, HAVING und AVG. Du bereitest Kundenumsätze vor und bewertest sie im Vergleich zum Durchschnitt.',
+    task: 'Berechne mit WITH den Umsatz pro Kunde. Zeige Kunden mit Umsatz über 50 und ordne sie im Vergleich zum durchschnittlichen Kundenumsatz als Über Durchschnitt oder Im Durchschnitt ein.',
+    expectedSql: `WITH kundenumsaetze AS (SELECT kunden.name, SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) AS umsatz FROM kunden INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id INNER JOIN bestellpositionen ON bestellungen.id = bestellpositionen.bestellung_id GROUP BY kunden.name) SELECT name, umsatz, CASE WHEN umsatz > (SELECT AVG(umsatz) FROM kundenumsaetze) THEN 'Über Durchschnitt' ELSE 'Im Durchschnitt' END FROM kundenumsaetze WHERE umsatz > 50;`,
+    hint: 'Die CTE liefert alle Kundenumsätze. Danach nutzt du CASE WHEN und eine AVG-Unterabfrage auf derselben CTE.',
+    points: 25
+  },
+  {
+    id: 70,
+    title: 'Meister-Challenge Produktperformance',
+    difficulty: 'Meister',
+    topic: 'Meister-Auswertung',
+    explanation: 'Die Abschlussaufgabe kombiniert eine Unterabfrage, mehrere JOIN-Bausteine, CASE WHEN, GROUP BY, HAVING, SUM und eine Umsatzberechnung.',
+    task: 'Zeige Produktname, Kategorie, verkaufte Menge, Umsatz und Performance. Produkte mit Umsatz über dem durchschnittlichen Produktumsatz heißen Stark, alle anderen Normal. Zeige nur Produkte mit mindestens 2 verkauften Stück.',
+    expectedSql: `SELECT produkte.name, produkte.kategorie, SUM(bestellpositionen.menge), SUM(bestellpositionen.menge * bestellpositionen.einzelpreis), CASE WHEN SUM(bestellpositionen.menge * bestellpositionen.einzelpreis) > (SELECT AVG(produktumsatz) FROM (SELECT SUM(menge * einzelpreis) AS produktumsatz FROM bestellpositionen GROUP BY produkt_id)) THEN 'Stark' ELSE 'Normal' END FROM produkte INNER JOIN bestellpositionen ON produkte.id = bestellpositionen.produkt_id GROUP BY produkte.name, produkte.kategorie HAVING SUM(bestellpositionen.menge) >= 2;`,
+    hint: 'Außen gruppierst du pro Produkt. Im CASE WHEN vergleichst du den Produktumsatz mit dem Durchschnitt der gruppierten Produktumsätze.',
+    points: 25
   }
 
 
