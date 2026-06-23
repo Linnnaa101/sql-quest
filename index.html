@@ -196,7 +196,7 @@ produkte 1 ─── n bestellpositionen</pre>
           </div>
           <span class="test-mode-badge">?testmode=1</span>
         </div>
-        <p class="muted small">Temporäre Werkzeuge zum Testen der Level 1–70. Ohne URL-Parameter bleibt dieser Bereich unsichtbar.</p>
+        <p class="muted small">Temporäre Werkzeuge zum Testen der Level 1–80. Ohne URL-Parameter bleibt dieser Bereich unsichtbar.</p>
         <div class="test-mode-actions">
           <button id="testUnlockAllButton" class="ghost-button" type="button">Alle Level freischalten</button>
           <button id="testSolveAllButton" class="ghost-button" type="button">Alle Level als gelöst markieren</button>
@@ -206,6 +206,24 @@ produkte 1 ─── n bestellpositionen</pre>
           <button id="testJumpMasterButton" class="ghost-button" type="button">Zu Meister springen</button>
         </div>
       </section>
+      <section id="completionCard" class="completion-card card" aria-labelledby="completionTitle" hidden>
+        <p class="eyebrow">Finale erreicht</p>
+        <h2 id="completionTitle">SQL Quest abgeschlossen</h2>
+        <p class="completion-message">Stark gemacht! Du hast alle Anfänger-, Fortgeschrittenen- und Meisteraufgaben erfolgreich gemeistert.</p>
+        <dl class="completion-stats">
+          <div><dt>Gelöste Level</dt><dd id="completionSolvedLevels">0</dd></div>
+          <div><dt>Gesamtpunktzahl</dt><dd id="completionScore">0</dd></div>
+          <div><dt>Erreichte Sterne</dt><dd id="completionStars">0</dd></div>
+          <div><dt>Alle Level</dt><dd id="completionTotalLevels">80</dd></div>
+        </dl>
+        <p class="completion-note">Anfänger-, Fortgeschrittenen- und Meisterbereich abgeschlossen.</p>
+        <div class="completion-actions button-row">
+          <button id="completionOverviewButton" class="primary-button" type="button">Levelübersicht öffnen</button>
+          <button id="completionPracticeButton" class="secondary-button" type="button">Nochmal üben</button>
+          <button id="completionResetButton" class="ghost-button" type="button">Fortschritt zurücksetzen</button>
+        </div>
+      </section>
+
       <div class="overview-tabs" role="tablist" aria-label="Bereiche der Levelübersicht">
         <button id="levelsTabButton" class="overview-tab active" type="button" role="tab" aria-selected="true" aria-controls="levelsOverviewPanel">Levelübersicht</button>
         <button id="learnedOverviewTabButton" class="overview-tab" type="button" role="tab" aria-selected="false" aria-controls="learnedOverviewPanel">Was habe ich gelernt?</button>

@@ -4,7 +4,7 @@ SQL Quest ist eine interaktive Lernanwendung, mit der Nutzer SQL Schritt für Sc
 
 ## Funktionen
 
-- Interaktive SQL-Level mit direkter Abfrageausführung im Browser
+- 80 interaktive SQL-Level mit direkter Abfrageausführung im Browser
 - Hinweise und Lösungen je Level
 - Sternesystem zur Freischaltung weiterer Level
 - Gespeicherter Fortschritt im Browser
@@ -12,6 +12,8 @@ SQL Quest ist eine interaktive Lernanwendung, mit der Nutzer SQL Schritt für Sc
 - Tab „Was habe ich gelernt?“ mit Überblick über den Lernfortschritt
 - Schwebender Zurück-Button und Nach-oben-Button
 - Responsive Darstellung für Desktop und Mobilgeräte
+- Abschlussseite nach Level 80 mit Punktzahl, gelösten Leveln und Sternen
+- Automatisierte Node-Basistests und GitHub Actions für Syntax-, Diff- und Funktionstests
 - Versteckter Testmodus für Entwicklung über `?testmode=1`
 
 ## Lernpfade
@@ -90,7 +92,7 @@ Diese Tabellen werden für realistische Shop-Abfragen und JOIN-Übungen verwende
 
 ## Projekt starten
 
-SQL Quest ist eine statische HTML/CSS/JavaScript-Anwendung. Es werden keine Paketmanager-Befehle und kein Build-Schritt benötigt.
+SQL Quest ist eine statische HTML/CSS/JavaScript-Anwendung. Es wird kein Build-Schritt benötigt. Die automatisierten Tests laufen mit Node.js und `npm test`.
 
 Repository klonen und einen einfachen lokalen Webserver starten:
 
@@ -124,6 +126,9 @@ app.js
 levels.js
 database.js
 README.md
+quest-logic.js
+tests/run-tests.js
+.github/workflows/tests.yml
 ```
 
 ## Live-Demo
@@ -141,3 +146,21 @@ Zum schnellen Testen aller Level kann der Testmodus über diesen Link geöffnet 
 Im Testmodus können alle Level freigeschaltet, alle Level als gelöst markiert, der Fortschritt zurückgesetzt sowie die Bereiche Anfänger, Fortgeschritten und Meister direkt geöffnet werden.
 
 Ohne den URL-Parameter `?testmode=1` bleibt dieser Bereich in der Anwendung unsichtbar.
+
+
+## Automatisierte Tests
+
+Die Basis-Tests prüfen Levelstruktur, Freischaltlogik, SQL-Sicherheitslogik und Testmodus-Helfer. Lokal ausführen:
+
+```bash
+node --check app.js
+node --check levels.js
+git diff --check
+npm test
+```
+
+Der Workflow `.github/workflows/tests.yml` führt diese Checks automatisch bei Pushes und Pull Requests aus.
+
+## Abschluss nach Level 80
+
+Nach erfolgreichem Lösen von Level 80 erscheint eine Abschlusskarte mit gelösten Leveln, Gesamtpunktzahl, erreichten Sternen und der Bestätigung, dass Anfänger-, Fortgeschrittenen- und Meisterbereich abgeschlossen wurden. Der Abschluss bleibt nach einem Neuladen über den gespeicherten Browser-Fortschritt erreichbar und wird durch „Fortschritt zurücksetzen“ entfernt.
