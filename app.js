@@ -1556,13 +1556,220 @@ function runPlayerQuery() {
 }
 
 function findBlockedCommand(sql) {
-  return splitSqlStatements(sql)
-    .map(statement => removeSqlComments(statement).match(/^\s*([A-Z]+)/i)?.[1].toUpperCase())
-    .find(command => BLOCKED_COMMANDS.includes(command));
+  const searchableSql = maskSqlCommentsAndStrings(sql);
+  const blockedCommandPattern = new RegExp(`\\b(${BLOCKED_COMMANDS.join('|')})\\b`, 'i');
+  return searchableSql.match(blockedCommandPattern)?.[1].toUpperCase();
 }
 
 function isSelectStatement(sql) {
-  return /^\s*SELECT\b/i.test(removeSqlComments(sql));
+  return getReadOnlyMainCommand(sql) === 'SELECT';
+}
+
+function getReadOnlyMainCommand(sql) {
+  const statement = removeSqlComments(sql);
+  const firstKeyword = readSqlKeyword(statement, 0);
+  if (firstKeyword?.keyword === 'SELECT') {
+    return 'SELECT';
+  }
+  if (firstKeyword?.keyword !== 'WITH') {
+    return firstKeyword?.keyword || null;
+  }
+
+  return getMainCommandAfterCtes(statement, firstKeyword.end);
+}
+
+function getMainCommandAfterCtes(sql, startIndex) {
+  let index = skipSqlWhitespace(sql, startIndex);
+  const recursiveKeyword = readSqlKeyword(sql, index);
+  if (recursiveKeyword?.keyword === 'RECURSIVE') {
+    index = skipSqlWhitespace(sql, recursiveKeyword.end);
+  }
+
+  while (index < sql.length) {
+    const cteName = readCteName(sql, index);
+    if (!cteName) {
+      return null;
+    }
+    index = skipSqlWhitespace(sql, cteName.end);
+
+    if (sql[index] === '(') {
+      index = findMatchingSqlParenthesis(sql, index);
+      if (index === -1) {
+        return null;
+      }
+      index = skipSqlWhitespace(sql, index + 1);
+    }
+
+    const asKeyword = readSqlKeyword(sql, index);
+    if (asKeyword?.keyword !== 'AS') {
+      return null;
+    }
+    index = skipSqlWhitespace(sql, asKeyword.end);
+
+    if (sql[index] !== '(') {
+      return null;
+    }
+    index = findMatchingSqlParenthesis(sql, index);
+    if (index === -1) {
+      return null;
+    }
+    index = skipSqlWhitespace(sql, index + 1);
+
+    if (sql[index] === ',') {
+      index = skipSqlWhitespace(sql, index + 1);
+      continue;
+    }
+
+    return readSqlKeyword(sql, index)?.keyword || null;
+  }
+
+  return null;
+}
+
+function readCteName(sql, startIndex) {
+  const index = skipSqlWhitespace(sql, startIndex);
+  if (sql[index] === '"' || sql[index] === '`' || sql[index] === '[') {
+    return readQuotedSqlIdentifier(sql, index);
+  }
+  return readSqlIdentifier(sql, index);
+}
+
+function readSqlKeyword(sql, startIndex) {
+  const identifier = readSqlIdentifier(sql, startIndex);
+  return identifier ? { keyword: identifier.value.toUpperCase(), end: identifier.end } : null;
+}
+
+function readSqlIdentifier(sql, startIndex) {
+  const index = skipSqlWhitespace(sql, startIndex);
+  const match = sql.slice(index).match(/^([A-Z_][A-Z0-9_$]*)/i);
+  return match ? { value: match[1], end: index + match[1].length } : null;
+}
+
+function readQuotedSqlIdentifier(sql, startIndex) {
+  const openingQuote = sql[startIndex];
+  const closingQuote = openingQuote === '[' ? ']' : openingQuote;
+  for (let index = startIndex + 1; index < sql.length; index += 1) {
+    const char = sql[index];
+    const next = sql[index + 1];
+    if (char === closingQuote && next === closingQuote) {
+      index += 1;
+      continue;
+    }
+    if (char === closingQuote) {
+      return { value: sql.slice(startIndex + 1, index), end: index + 1 };
+    }
+  }
+  return null;
+}
+
+function skipSqlWhitespace(sql, startIndex) {
+  let index = startIndex;
+  while (index < sql.length && /\s/.test(sql[index])) {
+    index += 1;
+  }
+  return index;
+}
+
+function findMatchingSqlParenthesis(sql, startIndex) {
+  let depth = 0;
+  let quote = null;
+
+  for (let index = startIndex; index < sql.length; index += 1) {
+    const char = sql[index];
+    const next = sql[index + 1];
+
+    if (quote) {
+      if (char === quote && next === quote) {
+        index += 1;
+      } else if (char === quote) {
+        quote = null;
+      }
+      continue;
+    }
+
+    if (char === '\'' || char === '"') {
+      quote = char;
+    } else if (char === '(') {
+      depth += 1;
+    } else if (char === ')') {
+      depth -= 1;
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+
+  return -1;
+}
+
+function maskSqlCommentsAndStrings(sql) {
+  let masked = '';
+  let quote = null;
+  let inLineComment = false;
+  let inBlockComment = false;
+
+  for (let index = 0; index < sql.length; index += 1) {
+    const char = sql[index];
+    const next = sql[index + 1];
+
+    if (inLineComment) {
+      if (char === '\n') {
+        inLineComment = false;
+        masked += char;
+      } else {
+        masked += ' ';
+      }
+      continue;
+    }
+
+    if (inBlockComment) {
+      if (char === '*' && next === '/') {
+        masked += '  ';
+        inBlockComment = false;
+        index += 1;
+      } else {
+        masked += ' ';
+      }
+      continue;
+    }
+
+    if (quote) {
+      if (char === quote && next === quote) {
+        masked += '  ';
+        index += 1;
+      } else if (char === quote) {
+        masked += ' ';
+        quote = null;
+      } else {
+        masked += ' ';
+      }
+      continue;
+    }
+
+    if (char === '-' && next === '-') {
+      masked += '  ';
+      inLineComment = true;
+      index += 1;
+      continue;
+    }
+
+    if (char === '/' && next === '*') {
+      masked += '  ';
+      inBlockComment = true;
+      index += 1;
+      continue;
+    }
+
+    if (char === '\'' || char === '"') {
+      masked += ' ';
+      quote = char;
+      continue;
+    }
+
+    masked += char;
+  }
+
+  return masked;
 }
 
 function hasMultipleStatements(sql) {
