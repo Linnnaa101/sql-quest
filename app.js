@@ -1203,7 +1203,6 @@ function renderLearnedSqlBlocks() {
     const isUnlocked = isLearningStageUnlocked(stage, highestSolvedLevelId);
     const stageDetails = document.createElement('details');
     stageDetails.className = `learned-sql-stage${isUnlocked ? '' : ' locked'}`;
-    stageDetails.open = isUnlocked && highestSolvedLevelId === stage.unlockLevelId;
 
     const summary = document.createElement('summary');
     summary.className = 'learned-sql-stage-summary';
