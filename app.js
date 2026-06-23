@@ -493,6 +493,75 @@ FROM bestellpositionen
 GROUP BY bestellung_id;`,
     exampleExplanation: 'Macht Zahlenwerte als Kategorien leichter verständlich.'
   },
+
+  nullValues: {
+    term: 'NULL',
+    description: 'NULL bedeutet: Ein Wert fehlt oder ist unbekannt. Das ist etwas anderes als ein echter Text wie Keine Bestellung oder die Zahl 0.',
+    example: `SELECT kunden.name, bestellungen.status
+FROM kunden
+LEFT JOIN bestellungen
+  ON kunden.id = bestellungen.kunden_id;`,
+    exampleExplanation: 'Kunden ohne Bestellung erhalten in den Bestellspalten NULL.'
+  },
+  coalesce: {
+    term: 'COALESCE()',
+    description: 'Gibt den ersten nicht-NULL-Wert zurück und eignet sich für Ersatztexte oder Ersatzwerte bei fehlenden Daten.',
+    example: `SELECT kunden.name, COALESCE(bestellungen.status, 'Keine Bestellung')
+FROM kunden
+LEFT JOIN bestellungen
+  ON kunden.id = bestellungen.kunden_id;`,
+    exampleExplanation: 'Fehlende Statuswerte werden lesbar ersetzt, vorhandene Statuswerte bleiben unverändert.'
+  },
+  dateFunctions: {
+    term: 'date() und strftime()',
+    description: 'SQLite wertet Datumswerte im Textformat mit Funktionen wie date() und strftime() aus, zum Beispiel für Jahre und Monate.',
+    example: `SELECT strftime('%Y-%m', bestelldatum), COUNT(*)
+FROM bestellungen
+GROUP BY strftime('%Y-%m', bestelldatum);`,
+    exampleExplanation: 'Zählt Bestellungen pro Monat.'
+  },
+  rowNumber: {
+    term: 'ROW_NUMBER()',
+    description: 'Vergibt mit OVER (ORDER BY ...) eindeutige laufende Nummern in einer sortierten Ergebnismenge.',
+    example: `SELECT name, preis, ROW_NUMBER() OVER (ORDER BY preis DESC)
+FROM produkte;`,
+    exampleExplanation: 'Nummeriert Produkte eindeutig vom teuersten zum günstigsten Produkt.'
+  },
+  rankFunction: {
+    term: 'RANK()',
+    description: 'Erstellt eine Rangliste. Gleiche Werte erhalten denselben Rang; danach können Rangnummern übersprungen werden.',
+    example: `SELECT name, punkte, RANK() OVER (ORDER BY punkte DESC)
+FROM kunden;`,
+    exampleExplanation: 'Rankt Kunden nach Punkten.'
+  },
+  overClause: {
+    term: 'OVER',
+    description: 'Leitet bei Window Functions das Fenster ein und enthält die Sortierung oder Gruppierung für die Berechnung.',
+    example: `SELECT name, preis, ROW_NUMBER() OVER (ORDER BY preis DESC)
+FROM produkte;`,
+    exampleExplanation: 'ORDER BY innerhalb von OVER bestimmt die Reihenfolge der Nummerierung.'
+  },
+  partitionBy: {
+    term: 'PARTITION BY',
+    description: 'Teilt Window Functions in Gruppen auf, sodass Ranking oder Summen innerhalb jeder Gruppe neu berechnet werden.',
+    example: `SELECT kategorie, name, preis,
+  RANK() OVER (PARTITION BY kategorie ORDER BY preis DESC)
+FROM produkte;`,
+    exampleExplanation: 'Rankt Produkte innerhalb jeder Kategorie separat.'
+  },
+  runningTotals: {
+    term: 'laufende Summen',
+    description: 'Berechnen mit SUM(...) OVER (ORDER BY ...) eine fortlaufende Summe bis zur aktuellen Zeile.',
+    example: `WITH bestellwerte AS (
+  SELECT bestellung_id, SUM(menge * einzelpreis) AS bestellwert
+  FROM bestellpositionen
+  GROUP BY bestellung_id
+)
+SELECT bestellung_id, bestellwert,
+  SUM(bestellwert) OVER (ORDER BY bestellung_id)
+FROM bestellwerte;`,
+    exampleExplanation: 'Zeigt je Bestellung den bisherigen kumulierten Umsatz.'
+  },
   masterAnalysis: {
     term: 'Meister-Auswertung',
     description: 'Verbindet mehrere SQL-Bausteine wie JOIN, Unterabfrage oder CTE, CASE WHEN, GROUP BY, HAVING und Aggregatfunktionen.',
@@ -521,7 +590,7 @@ const SQL_LEARNING_STAGES = [
   { unlockLevelId: 30, title: 'Gruppieren und Auswerten', levelRange: 'Level 26–30', levelStart: 26, levelEnd: 30, summary: 'Du gruppierst Daten, filterst Gruppen und sortierst oder begrenzt Auswertungen pro Gruppe.', lockedPreview: 'GROUP BY, HAVING und Gruppenauswertungen werden nach Level 30 freigeschaltet.', termKeys: ['groupBy', 'having', 'groupAggregates', 'groupOrder', 'groupLimit'] },
   { unlockLevelId: 30, title: 'Fortgeschritten – JOINs', levelRange: 'Level 31–50', levelStart: 31, levelEnd: 50, summary: 'Du verbindest Shop-Tabellen mit INNER JOIN und LEFT JOIN, nutzt ON-Bedingungen und wertest Bestellungen mit Produkten aus. Anschließend zählst, summierst, gruppierst, sortierst und filterst du JOIN-Ergebnisse für Shop-Auswertungen.', lockedPreview: 'Fortgeschritten – JOINs wird nach Abschluss von Level 30 freigeschaltet.', termKeys: ['innerJoin', 'leftJoin', 'joinOn', 'multiTableJoins', 'countJoin', 'sumJoin', 'multiTableGrouping', 'havingJoin', 'orderValueCalculation'] },
   { unlockLevelId: 50, title: 'Fortgeschritten – Unterabfragen und komplexe Filter', levelRange: 'Level 51–60', levelStart: 51, levelEnd: 60, summary: 'Du nutzt Unterabfragen mit IN, NOT IN, EXISTS und NOT EXISTS, vergleichst Werte mit AVG() und kombinierst JOINs, GROUP BY, HAVING und Bestellwertberechnungen.', lockedPreview: 'Unterabfragen und komplexe Filter werden nach Abschluss von Level 50 freigeschaltet.', termKeys: ['subquery', 'inOperator', 'notInOperator', 'existsOperator', 'notExistsOperator', 'avgComparisonSubquery', 'groupedSubquery', 'joinSubqueryCombination'] },
-  { unlockLevelId: 60, title: 'Meister – komplexe Auswertungen', levelRange: 'Level 61–70', levelStart: 61, levelEnd: 70, summary: 'Du erstellst Meister-Abfragen mit CASE WHEN, CTEs mit WITH, mehrstufigen Unterabfragen, komplexen Aggregationen und vollständigen Shop-Auswertungen.', lockedPreview: 'Meister-Themen werden nach Abschluss von Level 60 freigeschaltet.', termKeys: ['caseWhen', 'cteWith', 'nestedSubquery', 'complexAggregation', 'revenueCategory', 'masterAnalysis'] }
+  { unlockLevelId: 60, title: 'Meister – komplexe Auswertungen', levelRange: 'Level 61–80', levelStart: 61, levelEnd: 80, summary: 'Du erstellst Meister-Abfragen mit CASE WHEN, CTEs, NULL-Behandlung, COALESCE, Datumsfunktionen, Window Functions, PARTITION BY, laufenden Summen und kombinierten Abschluss-Challenges.', lockedPreview: 'Meister-Themen werden nach Abschluss von Level 60 freigeschaltet.', termKeys: ['caseWhen', 'cteWith', 'nestedSubquery', 'complexAggregation', 'revenueCategory', 'nullValues', 'coalesce', 'dateFunctions', 'rowNumber', 'rankFunction', 'overClause', 'partitionBy', 'runningTotals', 'masterAnalysis'] }
 ];
 
 const SQL_BASICS_CHAPTERS = SQL_LEARNING_STAGES.map(stage => ({
@@ -995,7 +1064,7 @@ const LEVEL_SECTIONS = [
     id: 'master',
     title: 'Meister',
     levelStart: 61,
-    levelEnd: 70,
+    levelEnd: 80,
     unlockLevelId: 60,
     lockedHint: 'Wird nach dem Lösen von Level 60 freigeschaltet.'
   }
@@ -2089,7 +2158,7 @@ function renderTestModePanel() {
 function unlockAllLevelsForTesting() {
   areAllLevelsUnlockedForTesting = true;
   refreshTestModeProgressDisplay();
-  setOverviewFeedback('Testmodus: Level 1–70 sind jetzt direkt auswählbar.', 'success');
+  setOverviewFeedback(`Testmodus: Level 1–${LEVELS.length} sind jetzt direkt auswählbar.`, 'success');
 }
 
 function markAllLevelsSolvedForTesting() {
