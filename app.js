@@ -1128,7 +1128,7 @@ function createLevelButton(level, index) {
   button.setAttribute('aria-label', getLevelButtonLabel(level, index, unlocked, stars));
   button.innerHTML = `
     <span class="level-button-topline">
-      <span data-level-number="${level.id}">Level ${level.id}</span>
+      <span class="level-number" data-level-number="${level.id}">Level ${level.id}</span>
       <span class="level-stars" aria-hidden="true">${unlocked ? renderStars(stars) : '🔒'}</span>
     </span>
     <strong>${level.title}</strong>
