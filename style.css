@@ -588,19 +588,23 @@ button:disabled {
   }
 
   .level-overview .level-button {
-    min-height: 74px;
-    padding: 8px 6px;
+    display: grid;
+    align-content: center;
+    min-height: 82px;
+    padding: 9px 6px;
     text-align: center;
     border-radius: 14px;
   }
 
   .level-overview .level-button-topline {
-    justify-content: center;
-    margin-bottom: 3px;
+    display: grid !important;
+    justify-items: center;
+    gap: 6px;
+    margin-bottom: 0;
   }
 
   .level-overview .level-number {
-    flex-basis: 2.3ch;
+    flex-basis: auto;
     font-size: 0;
   }
 
@@ -617,8 +621,11 @@ button:disabled {
   }
 
   .level-overview .level-stars {
-    font-size: 0.72rem !important;
-    letter-spacing: 0;
+    display: block;
+    max-width: 100%;
+    font-size: 0.68rem !important;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
   }
 
   .level-overview .level-button strong {
@@ -1574,6 +1581,49 @@ span {
     font-size: 0.86rem;
   }
 
+  .learned-overview-panel {
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .learned-overview-grid,
+  .learned-sql-list,
+  .learned-sql-stage-grid {
+    gap: 10px;
+  }
+
+  .learned-overview-heading,
+  .learning-overview-card-header,
+  .learned-sql-stage-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .learning-overview-card-header::before,
+  .learned-sql-stage-summary::before {
+    margin-top: 2px;
+  }
+
+  .learning-overview-card-header,
+  .learned-sql-stage-summary {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .learning-overview-card-header .status-badge,
+  .learned-sql-stage-status {
+    grid-column: 2;
+  }
+
+  .learning-overview-terms {
+    line-height: 1.55;
+  }
+
+  .learned-sql-details {
+    padding-left: 18px;
+    line-height: 1.5;
+  }
+
   textarea {
     min-width: 0;
     font-size: 0.95rem;
@@ -1608,12 +1658,16 @@ span {
   }
 
   .level-overview .level-button {
-    min-height: 66px;
-    padding: 6px 4px;
+    min-height: 78px;
+    padding: 7px 4px;
+  }
+
+  .level-overview .level-button-topline {
+    gap: 5px;
   }
 
   .level-overview .level-stars {
-    font-size: 0.62rem !important;
+    font-size: 0.6rem !important;
   }
 }
 
