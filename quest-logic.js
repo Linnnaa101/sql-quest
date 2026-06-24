@@ -63,6 +63,46 @@ function findMatchingSqlParenthesis(sql, startIndex) { let depth = 0, quote = nu
 function getMainCommandAfterCtes(sql, startIndex) { let index = skipSqlWhitespace(sql, startIndex); const recursiveKeyword = readSqlKeyword(sql, index); if (recursiveKeyword?.keyword === 'RECURSIVE') index = skipSqlWhitespace(sql, recursiveKeyword.end); while (index < sql.length) { const cteName = readSqlIdentifier(sql, index); if (!cteName) return null; index = skipSqlWhitespace(sql, cteName.end); const asKeyword = readSqlKeyword(sql, index); if (asKeyword?.keyword !== 'AS') return null; index = skipSqlWhitespace(sql, asKeyword.end); if (sql[index] !== '(') return null; index = findMatchingSqlParenthesis(sql, index); if (index === -1) return null; index = skipSqlWhitespace(sql, index + 1); if (sql[index] === ',') { index = skipSqlWhitespace(sql, index + 1); continue; } return readSqlKeyword(sql, index)?.keyword || null; } return null; }
 function getReadOnlyMainCommand(sql) { const statement = splitSqlStatements(sql).join(' '); const firstKeyword = readSqlKeyword(statement, 0); if (firstKeyword?.keyword === 'SELECT') return 'SELECT'; if (firstKeyword?.keyword !== 'WITH') return firstKeyword?.keyword || null; return getMainCommandAfterCtes(statement, firstKeyword.end); }
 function isSelectStatement(sql) { return getReadOnlyMainCommand(sql) === 'SELECT'; }
-function solveAllLevelsForTesting(levels, progress = {}) { return { ...progress, solvedLevelIds: levels.map(level => level.id), levelStars: levels.reduce((stars, level) => ({ ...stars, [level.id]: MAX_STARS }), {}), score: levels.reduce((score, level) => score + (Number(level.points) || 0), 0) }; }
+function calculateStarsForHelpUsage({ hintUsed = false, solutionViewed = false } = {}) {
+  if (solutionViewed) return 1;
+  if (hintUsed) return 2;
+  return 3;
+}
+function calculatePointsForStars(level, stars) {
+  return Math.round((Number(level?.points) || 0) * (Math.max(0, Math.min(MAX_STARS, Number(stars) || 0)) / MAX_STARS));
+}
+function calculateScoreFromStars(levels, levelStars = {}) {
+  return levels.reduce((score, level) => score + calculatePointsForStars(level, levelStars[level.id]), 0);
+}
+function normalizeHelpTracking(progress = {}) {
+  return {
+    ...progress,
+    hintUsedLevelIds: Array.isArray(progress.hintUsedLevelIds) ? progress.hintUsedLevelIds : [],
+    solutionViewedLevelIds: Array.isArray(progress.solutionViewedLevelIds) ? progress.solutionViewedLevelIds : []
+  };
+}
+function getHelpUsageForLevel(progress = {}, levelId) {
+  const normalized = normalizeHelpTracking(progress);
+  return {
+    hintUsed: normalized.hintUsedLevelIds.includes(levelId),
+    solutionViewed: normalized.solutionViewedLevelIds.includes(levelId)
+  };
+}
+function solveLevelWithStars(levels, progress, levelId, earnedStars) {
+  const normalized = normalizeHelpTracking(progress);
+  const previousStars = getLevelStars(normalized, levelId);
+  const bestStars = Math.max(previousStars, earnedStars);
+  const levelStars = { ...(normalized.levelStars || {}), [levelId]: bestStars };
+  const solvedLevelIds = normalized.solvedLevelIds?.includes(levelId) ? normalized.solvedLevelIds : [...(normalized.solvedLevelIds || []), levelId];
+  return {
+    ...normalized,
+    solvedLevelIds,
+    levelStars,
+    score: calculateScoreFromStars(levels, levelStars),
+    hintUsedLevelIds: bestStars > previousStars && earnedStars === MAX_STARS ? normalized.hintUsedLevelIds.filter(id => id !== levelId) : normalized.hintUsedLevelIds,
+    solutionViewedLevelIds: bestStars > previousStars && earnedStars > 1 ? normalized.solutionViewedLevelIds.filter(id => id !== levelId) : normalized.solutionViewedLevelIds
+  };
+}
+function solveAllLevelsForTesting(levels, progress = {}) { const levelStars = levels.reduce((stars, level) => ({ ...stars, [level.id]: MAX_STARS }), {}); return { ...normalizeHelpTracking(progress), solvedLevelIds: levels.map(level => level.id), levelStars, hintUsedLevelIds: [], solutionViewedLevelIds: [], score: calculateScoreFromStars(levels, levelStars) }; }
 
-module.exports = { MAX_STARS, MIN_STARS_TO_UNLOCK_NEXT_LEVEL, BLOCKED_COMMANDS, isTestModeFromSearch, isLevelUnlocked, getLevelStars, isEveryLevelUnlockedForTesting, findBlockedCommand, hasMultipleStatements, isSelectStatement, solveAllLevelsForTesting };
+module.exports = { MAX_STARS, MIN_STARS_TO_UNLOCK_NEXT_LEVEL, BLOCKED_COMMANDS, isTestModeFromSearch, isLevelUnlocked, getLevelStars, isEveryLevelUnlockedForTesting, findBlockedCommand, hasMultipleStatements, isSelectStatement, calculateStarsForHelpUsage, calculatePointsForStars, calculateScoreFromStars, normalizeHelpTracking, getHelpUsageForLevel, solveLevelWithStars, solveAllLevelsForTesting };

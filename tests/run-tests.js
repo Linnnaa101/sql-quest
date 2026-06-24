@@ -39,4 +39,54 @@ const solved = logic.solveAllLevelsForTesting(LEVELS, emptyProgress());
 assert.equal(solved.solvedLevelIds.length, 80);
 assert.equal(Object.keys(solved.levelStars).length, 80);
 assert.equal(Object.values(solved.levelStars).every(stars => stars === 3), true);
+assert.deepEqual(solved.hintUsedLevelIds, [], 'Testmodus speichert keine Hinweisabzüge.');
+assert.deepEqual(solved.solutionViewedLevelIds, [], 'Testmodus speichert keine Lösungsabzüge.');
+
+
+const levelOne = LEVELS[0];
+const fullPoints = levelOne.points;
+assert.equal(logic.calculateStarsForHelpUsage({ hintUsed: false, solutionViewed: false }), 3, 'Ohne Hilfe gibt es 3 Sterne.');
+assert.equal(logic.calculatePointsForStars(levelOne, 3), fullPoints, 'Ohne Hilfe gibt es volle Punktzahl.');
+assert.equal(logic.calculateStarsForHelpUsage({ hintUsed: true, solutionViewed: false }), 2, 'Mit Hinweis gibt es maximal 2 Sterne.');
+assert.equal(logic.calculatePointsForStars(levelOne, 2), Math.round(fullPoints * 2 / 3), 'Mit Hinweis gibt es reduzierte Punktzahl.');
+assert.equal(logic.calculateStarsForHelpUsage({ hintUsed: true, solutionViewed: true }), 1, 'Mit Lösung gibt es maximal 1 Stern.');
+assert.equal(logic.calculatePointsForStars(levelOne, 1), Math.round(fullPoints / 3), 'Mit Lösung gibt es deutlich reduzierte Punktzahl.');
+
+let helpProgress = logic.normalizeHelpTracking({ solvedLevelIds: [], levelStars: {}, score: 0 });
+helpProgress.hintUsedLevelIds.push(1);
+helpProgress = logic.solveLevelWithStars(LEVELS, helpProgress, 1, logic.calculateStarsForHelpUsage({ hintUsed: true }));
+assert.equal(helpProgress.levelStars[1], 2, 'Hinweis-Lösung speichert 2 Sterne.');
+assert.equal(helpProgress.score, logic.calculatePointsForStars(levelOne, 2), 'Hinweis-Lösung speichert reduzierte Punktzahl.');
+assert.equal(logic.isLevelUnlocked(LEVELS, helpProgress, indexOf(2)), true, 'Level mit 2 Sternen bleibt freischaltbar.');
+
+const repeatedTwoStarProgress = logic.solveLevelWithStars(LEVELS, helpProgress, 1, 2);
+assert.equal(repeatedTwoStarProgress.levelStars[1], 2, 'Wiederholtes Lösen zählt Sterne nicht doppelt.');
+assert.equal(repeatedTwoStarProgress.score, helpProgress.score, 'Wiederholtes Lösen zählt Punktzahl nicht doppelt.');
+
+const improvedProgress = logic.solveLevelWithStars(LEVELS, helpProgress, 1, logic.calculateStarsForHelpUsage({ hintUsed: false, solutionViewed: false }));
+assert.equal(improvedProgress.levelStars[1], 3, 'Späteres Lösen ohne Hilfe verbessert auf 3 Sterne.');
+assert.equal(improvedProgress.score, fullPoints, 'Spätere bessere Leistung ersetzt die Punktzahl.');
+assert.equal(improvedProgress.hintUsedLevelIds.includes(1), false, 'Bessere Lösung ohne Hilfe entfernt gespeicherte Hinweisnutzung.');
+
+let solutionProgress = logic.normalizeHelpTracking({ solvedLevelIds: [], levelStars: {}, score: 0 });
+solutionProgress.solutionViewedLevelIds.push(1);
+solutionProgress = logic.solveLevelWithStars(LEVELS, solutionProgress, 1, logic.calculateStarsForHelpUsage({ solutionViewed: true }));
+assert.equal(solutionProgress.levelStars[1], 1, 'Angesehene Lösung speichert 1 Stern.');
+assert.equal(solutionProgress.score, logic.calculatePointsForStars(levelOne, 1), 'Angesehene Lösung speichert deutlich reduzierte Punktzahl.');
+assert.equal(logic.isLevelUnlocked(LEVELS, solutionProgress, indexOf(2)), false, 'Level mit 1 Stern schaltet das nächste Level nicht frei.');
+
+const legacyProgress = logic.normalizeHelpTracking({ solvedLevelIds: [1], levelStars: { 1: 2 }, score: 7 });
+assert.deepEqual(legacyProgress.hintUsedLevelIds, [], 'Alte Fortschrittsdaten ohne Hinweisfeld funktionieren.');
+assert.deepEqual(legacyProgress.solutionViewedLevelIds, [], 'Alte Fortschrittsdaten ohne Lösungsfeld funktionieren.');
+
+
+const storedHintProgress = logic.normalizeHelpTracking({ solvedLevelIds: [], levelStars: {}, score: 0, hintUsedLevelIds: [1] });
+const restoredHintUsage = logic.getHelpUsageForLevel(storedHintProgress, 1);
+assert.deepEqual(restoredHintUsage, { hintUsed: true, solutionViewed: false }, 'Gespeicherter Hinweisstatus wird beim Laden rekonstruiert.');
+assert.equal(logic.calculateStarsForHelpUsage(restoredHintUsage), 2, 'Rekonstruierter Hinweisstatus bleibt auf maximal 2 Sterne begrenzt.');
+
+const storedSolutionProgress = logic.normalizeHelpTracking({ solvedLevelIds: [], levelStars: {}, score: 0, solutionViewedLevelIds: [1] });
+const restoredSolutionUsage = logic.getHelpUsageForLevel(storedSolutionProgress, 1);
+assert.deepEqual(restoredSolutionUsage, { hintUsed: false, solutionViewed: true }, 'Gespeicherter Lösungsstatus wird beim Laden rekonstruiert.');
+assert.equal(logic.calculateStarsForHelpUsage(restoredSolutionUsage), 1, 'Rekonstruierter Lösungsstatus bleibt auf maximal 1 Stern begrenzt.');
 console.log('Alle Tests erfolgreich.');
