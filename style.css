@@ -779,18 +779,110 @@ button:disabled {
 }
 
 .sql-basics-chapter {
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 16px;
+  padding: 0;
   background: rgba(255, 255, 255, 0.04);
 }
 
-.sql-basics-chapter h3 {
-  margin: 8px 0 10px;
+.sql-basics-chapter[open] {
+  border-color: rgba(57, 217, 138, 0.36);
+  background: rgba(57, 217, 138, 0.08);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
 }
 
-.sql-basics-chapter p {
-  margin: 8px 0;
+.sql-basics-chapter-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+  overflow-wrap: anywhere;
+}
+
+.sql-basics-chapter-summary::-webkit-details-marker {
+  display: none;
+}
+
+.sql-basics-chapter-summary::before {
+  content: '+';
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(255, 209, 102, 0.45);
+  border-radius: 999px;
+  color: var(--warning);
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.sql-basics-chapter[open] > .sql-basics-chapter-summary::before {
+  content: '−';
+  background: rgba(255, 209, 102, 0.14);
+  transform: rotate(180deg);
+}
+
+.sql-basics-chapter-summary:focus-visible {
+  outline: 3px solid var(--warning);
+  outline-offset: -3px;
+}
+
+.sql-basics-chapter-title-group {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.sql-basics-chapter-label {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.sql-basics-chapter-title {
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 900;
+  line-height: 1.3;
+}
+
+.sql-basics-chapter-status {
+  justify-self: end;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 4px 9px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.75rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.sql-basics-chapter-status.unlocked {
+  border-color: rgba(57, 217, 138, 0.38);
+  color: #d8fff0;
+  background: rgba(57, 217, 138, 0.12);
+}
+
+.sql-basics-chapter-content {
+  display: grid;
+  gap: 10px;
+  padding: 0 16px 16px;
+  min-width: 0;
+}
+
+.sql-basics-chapter-content p {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .sql-basics-chapter.locked {
@@ -1608,6 +1700,22 @@ span {
   .learned-sql-stage-summary {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .sql-basics-chapter-summary {
+    grid-template-columns: auto minmax(0, 1fr);
+    min-height: 56px;
+    padding: 14px;
+  }
+
+  .sql-basics-chapter-status {
+    justify-self: start;
+    grid-column: 2;
+    white-space: normal;
+  }
+
+  .sql-basics-chapter-content {
+    padding: 0 14px 14px;
   }
 
   .learning-overview-card-header .status-badge,

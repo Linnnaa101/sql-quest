@@ -1449,22 +1449,40 @@ function renderSqlBasicsChapters() {
 
   SQL_BASICS_CHAPTERS.forEach((chapter, index) => {
     const isUnlocked = isSqlBasicsChapterUnlocked(chapter, highestSolvedLevelId);
-    const article = document.createElement('article');
-    article.className = 'sql-basics-chapter';
-    article.classList.toggle('locked', !isUnlocked);
+    const chapterDetails = document.createElement('details');
+    chapterDetails.className = 'sql-basics-chapter';
+    chapterDetails.classList.toggle('locked', !isUnlocked);
 
-    const topline = document.createElement('div');
-    topline.className = 'level-button-topline';
-    topline.innerHTML = `<span>Kapitel ${index + 1}</span><span aria-hidden="true">${isUnlocked ? '📖' : '🔒'}</span>`;
+    const summary = document.createElement('summary');
+    summary.className = 'sql-basics-chapter-summary';
 
-    const title = document.createElement('h3');
+    const titleGroup = document.createElement('span');
+    titleGroup.className = 'sql-basics-chapter-title-group';
+
+    const chapterLabel = document.createElement('span');
+    chapterLabel.className = 'sql-basics-chapter-label';
+    chapterLabel.textContent = `Kapitel ${index + 1}`;
+
+    const title = document.createElement('span');
+    title.className = 'sql-basics-chapter-title';
     title.textContent = chapter.title;
-    article.append(topline, title);
+
+    titleGroup.append(chapterLabel, title);
+
+    const status = document.createElement('span');
+    status.className = `sql-basics-chapter-status${isUnlocked ? ' unlocked' : ''}`;
+    status.textContent = isUnlocked ? 'Freigeschaltet' : 'Gesperrt';
+
+    summary.append(titleGroup, status);
+    chapterDetails.append(summary);
+
+    const content = document.createElement('div');
+    content.className = 'sql-basics-chapter-content';
 
     if (isUnlocked) {
       const terms = document.createElement('p');
       terms.innerHTML = `<strong>Begriffe:</strong> ${chapter.terms.map(term => term.term).join(', ')}`;
-      article.append(terms);
+      content.append(terms);
 
       const descriptions = document.createElement('ul');
       descriptions.className = 'sql-basics-term-list';
@@ -1473,7 +1491,7 @@ function renderSqlBasicsChapters() {
         item.innerHTML = `<strong>${term.term}:</strong> ${term.description}`;
         descriptions.append(item);
       });
-      article.append(descriptions);
+      content.append(descriptions);
 
       const firstExample = chapter.terms.find(term => term.example)?.example;
       if (firstExample) {
@@ -1482,16 +1500,17 @@ function renderSqlBasicsChapters() {
         const code = document.createElement('code');
         code.textContent = firstExample;
         example.append(code);
-        article.append(example);
+        content.append(example);
       }
     } else {
       const lockedMessage = document.createElement('p');
       lockedMessage.className = 'muted';
       lockedMessage.textContent = chapter.lockedPreview;
-      article.append(lockedMessage);
+      content.append(lockedMessage);
     }
 
-    elements.sqlBasicsList.append(article);
+    chapterDetails.append(content);
+    elements.sqlBasicsList.append(chapterDetails);
   });
 }
 
