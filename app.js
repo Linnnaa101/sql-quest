@@ -1636,7 +1636,10 @@ function loadLevel(index) {
     elements.solutionBox.textContent = `Lösung: ${level.expectedSql}`;
     elements.solutionBox.hidden = true;
     progress.levelAttempts[level.id] = 0;
-    currentLevelHelpUsage = { hintUsed: false, solutionViewed: false };
+    currentLevelHelpUsage = {
+      hintUsed: progress.hintUsedLevelIds.includes(level.id),
+      solutionViewed: progress.solutionViewedLevelIds.includes(level.id)
+    };
     elements.sqlInput.value = progress.savedQueries[level.id] || '';
     elements.sqlInput.placeholder = 'Schreibe hier deine SQL-Abfrage …';
     elements.resultTable.className = 'table-wrap empty-state';

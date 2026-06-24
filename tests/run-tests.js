@@ -78,4 +78,15 @@ assert.equal(logic.isLevelUnlocked(LEVELS, solutionProgress, indexOf(2)), false,
 const legacyProgress = logic.normalizeHelpTracking({ solvedLevelIds: [1], levelStars: { 1: 2 }, score: 7 });
 assert.deepEqual(legacyProgress.hintUsedLevelIds, [], 'Alte Fortschrittsdaten ohne Hinweisfeld funktionieren.');
 assert.deepEqual(legacyProgress.solutionViewedLevelIds, [], 'Alte Fortschrittsdaten ohne Lösungsfeld funktionieren.');
+
+
+const storedHintProgress = logic.normalizeHelpTracking({ solvedLevelIds: [], levelStars: {}, score: 0, hintUsedLevelIds: [1] });
+const restoredHintUsage = logic.getHelpUsageForLevel(storedHintProgress, 1);
+assert.deepEqual(restoredHintUsage, { hintUsed: true, solutionViewed: false }, 'Gespeicherter Hinweisstatus wird beim Laden rekonstruiert.');
+assert.equal(logic.calculateStarsForHelpUsage(restoredHintUsage), 2, 'Rekonstruierter Hinweisstatus bleibt auf maximal 2 Sterne begrenzt.');
+
+const storedSolutionProgress = logic.normalizeHelpTracking({ solvedLevelIds: [], levelStars: {}, score: 0, solutionViewedLevelIds: [1] });
+const restoredSolutionUsage = logic.getHelpUsageForLevel(storedSolutionProgress, 1);
+assert.deepEqual(restoredSolutionUsage, { hintUsed: false, solutionViewed: true }, 'Gespeicherter Lösungsstatus wird beim Laden rekonstruiert.');
+assert.equal(logic.calculateStarsForHelpUsage(restoredSolutionUsage), 1, 'Rekonstruierter Lösungsstatus bleibt auf maximal 1 Stern begrenzt.');
 console.log('Alle Tests erfolgreich.');

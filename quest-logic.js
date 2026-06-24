@@ -81,6 +81,13 @@ function normalizeHelpTracking(progress = {}) {
     solutionViewedLevelIds: Array.isArray(progress.solutionViewedLevelIds) ? progress.solutionViewedLevelIds : []
   };
 }
+function getHelpUsageForLevel(progress = {}, levelId) {
+  const normalized = normalizeHelpTracking(progress);
+  return {
+    hintUsed: normalized.hintUsedLevelIds.includes(levelId),
+    solutionViewed: normalized.solutionViewedLevelIds.includes(levelId)
+  };
+}
 function solveLevelWithStars(levels, progress, levelId, earnedStars) {
   const normalized = normalizeHelpTracking(progress);
   const previousStars = getLevelStars(normalized, levelId);
@@ -98,4 +105,4 @@ function solveLevelWithStars(levels, progress, levelId, earnedStars) {
 }
 function solveAllLevelsForTesting(levels, progress = {}) { const levelStars = levels.reduce((stars, level) => ({ ...stars, [level.id]: MAX_STARS }), {}); return { ...normalizeHelpTracking(progress), solvedLevelIds: levels.map(level => level.id), levelStars, hintUsedLevelIds: [], solutionViewedLevelIds: [], score: calculateScoreFromStars(levels, levelStars) }; }
 
-module.exports = { MAX_STARS, MIN_STARS_TO_UNLOCK_NEXT_LEVEL, BLOCKED_COMMANDS, isTestModeFromSearch, isLevelUnlocked, getLevelStars, isEveryLevelUnlockedForTesting, findBlockedCommand, hasMultipleStatements, isSelectStatement, calculateStarsForHelpUsage, calculatePointsForStars, calculateScoreFromStars, normalizeHelpTracking, solveLevelWithStars, solveAllLevelsForTesting };
+module.exports = { MAX_STARS, MIN_STARS_TO_UNLOCK_NEXT_LEVEL, BLOCKED_COMMANDS, isTestModeFromSearch, isLevelUnlocked, getLevelStars, isEveryLevelUnlockedForTesting, findBlockedCommand, hasMultipleStatements, isSelectStatement, calculateStarsForHelpUsage, calculatePointsForStars, calculateScoreFromStars, normalizeHelpTracking, getHelpUsageForLevel, solveLevelWithStars, solveAllLevelsForTesting };
