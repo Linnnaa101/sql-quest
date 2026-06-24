@@ -633,8 +633,15 @@ const elements = {
   learnedSqlProgress: document.querySelector('#learnedSqlProgress'),
   levelsTabButton: document.querySelector('#levelsTabButton'),
   learnedOverviewTabButton: document.querySelector('#learnedOverviewTabButton'),
+  replayTabButton: document.querySelector('#replayTabButton'),
   levelsOverviewPanel: document.querySelector('#levelsOverviewPanel'),
   learnedOverviewPanel: document.querySelector('#learnedOverviewPanel'),
+  replayOverviewPanel: document.querySelector('#replayOverviewPanel'),
+  replayOverviewSummary: document.querySelector('#replayOverviewSummary'),
+  replayLevelList: document.querySelector('#replayLevelList'),
+  replayAllFilterButton: document.querySelector('#replayAllFilterButton'),
+  replayUnderThreeFilterButton: document.querySelector('#replayUnderThreeFilterButton'),
+  replayRandomButton: document.querySelector('#replayRandomButton'),
   learnedOverviewList: document.querySelector('#learnedOverviewList'),
   learnedOverviewSummary: document.querySelector('#learnedOverviewSummary'),
   difficulty: document.querySelector('#difficulty'),
@@ -707,6 +714,7 @@ let selectedPath = null;
 let hasBeginnerIntroCompleted = false;
 let currentLevelIndex = 0;
 let activeLevelSection = 'beginner';
+let activeReplayFilter = 'all';
 let progress = loadProgress();
 let currentView = null;
 let viewHistory = [];
@@ -722,6 +730,10 @@ elements.backToOverviewButton.addEventListener('click', showLevelOverview);
 elements.resetProgressButton.addEventListener('click', resetProgress);
 elements.levelsTabButton.addEventListener('click', () => showOverviewTab('levels'));
 elements.learnedOverviewTabButton.addEventListener('click', () => showOverviewTab('learned'));
+elements.replayTabButton.addEventListener('click', () => showOverviewTab('replay'));
+elements.replayAllFilterButton.addEventListener('click', () => setReplayFilter('all'));
+elements.replayUnderThreeFilterButton.addEventListener('click', () => setReplayFilter('underThreeStars'));
+elements.replayRandomButton.addEventListener('click', startRandomReplayLevel);
 elements.createDatabaseButton.addEventListener('click', createPracticeDatabase);
 elements.startLevelsButton.addEventListener('click', startLevels);
 elements.startBeginnerPathButton.addEventListener('click', startBeginnerPath);
@@ -964,15 +976,18 @@ function showLevelOverview() {
 
 function showOverviewTab(tabName) {
   const showLearned = tabName === 'learned';
-  elements.levelsOverviewPanel.hidden = showLearned;
+  const showReplay = tabName === 'replay';
+  elements.levelsOverviewPanel.hidden = showLearned || showReplay;
   elements.learnedOverviewPanel.hidden = !showLearned;
-  elements.levelsTabButton.classList.toggle('active', !showLearned);
+  elements.replayOverviewPanel.hidden = !showReplay;
+  elements.levelsTabButton.classList.toggle('active', !showLearned && !showReplay);
   elements.learnedOverviewTabButton.classList.toggle('active', showLearned);
-  elements.levelsTabButton.setAttribute('aria-selected', String(!showLearned));
+  elements.replayTabButton.classList.toggle('active', showReplay);
+  elements.levelsTabButton.setAttribute('aria-selected', String(!showLearned && !showReplay));
   elements.learnedOverviewTabButton.setAttribute('aria-selected', String(showLearned));
-  if (showLearned) {
-    renderLearnedOverview();
-  }
+  elements.replayTabButton.setAttribute('aria-selected', String(showReplay));
+  if (showLearned) renderLearnedOverview();
+  if (showReplay) renderReplayOverview();
 }
 
 function showDatabaseInfo() {
@@ -1347,6 +1362,81 @@ function createLevelButton(level, index) {
   return button;
 }
 
+
+function getSolvedLevelsForReplay() {
+  const solved = getSolvedLevelIdSet();
+  return LEVELS.filter(level => solved.has(Number(level.id)));
+}
+
+function filterReplayLevels(filter = activeReplayFilter) {
+  const replayLevels = getSolvedLevelsForReplay();
+  if (filter === 'underThreeStars') {
+    return replayLevels.filter(level => getLevelStars(level.id) < MAX_STARS);
+  }
+  return replayLevels;
+}
+
+function getRandomSolvedLevel() {
+  const replayLevels = getSolvedLevelsForReplay();
+  if (!replayLevels.length) return null;
+  return replayLevels[Math.floor(Math.random() * replayLevels.length)];
+}
+
+function setReplayFilter(filter) {
+  activeReplayFilter = filter;
+  renderReplayOverview();
+}
+
+function startRandomReplayLevel() {
+  const level = getRandomSolvedLevel();
+  if (!level) {
+    setOverviewFeedback('Löse zuerst ein Level, um den Wiederholungsmodus freizuschalten.', 'info');
+    return;
+  }
+  loadLevel(LEVELS.indexOf(level), { replay: true });
+}
+
+function renderReplayOverview() {
+  const solvedReplayLevels = getSolvedLevelsForReplay();
+  const replayLevels = filterReplayLevels();
+  elements.replayOverviewSummary.textContent = `${solvedReplayLevels.length} Level bereit`;
+  elements.replayAllFilterButton.classList.toggle('active', activeReplayFilter === 'all');
+  elements.replayUnderThreeFilterButton.classList.toggle('active', activeReplayFilter === 'underThreeStars');
+  elements.replayRandomButton.disabled = solvedReplayLevels.length === 0;
+  elements.replayLevelList.innerHTML = '';
+
+  if (!solvedReplayLevels.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-state';
+    empty.textContent = 'Löse zuerst ein Level, um den Wiederholungsmodus freizuschalten.';
+    elements.replayLevelList.append(empty);
+    return;
+  }
+
+  if (!replayLevels.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-state';
+    empty.textContent = 'Für diesen Filter gibt es aktuell keine gelösten Level.';
+    elements.replayLevelList.append(empty);
+    return;
+  }
+
+  replayLevels.forEach(level => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'level-button solved replay-level-button';
+    button.innerHTML = `
+      <span class="level-button-topline">
+        <span class="level-number">Level ${level.id}</span>
+        <span class="level-stars" aria-label="${getLevelStars(level.id)} von ${MAX_STARS} Sternen">${renderStars(getLevelStars(level.id))}</span>
+      </span>
+      <strong>${level.title}</strong>
+      <span>Kategorie: ${level.difficulty}</span>
+    `;
+    button.addEventListener('click', () => loadLevel(LEVELS.indexOf(level), { replay: true }));
+    elements.replayLevelList.append(button);
+  });
+}
 
 function getHighestSolvedLevelId() {
   const validLevelIds = new Set(LEVELS.map(level => Number(level.id)));
@@ -1727,9 +1817,10 @@ function updateProgressBar() {
   elements.progressTrack.setAttribute('aria-label', 'Gesamtfortschritt über Anfänger, Fortgeschritten und Meister');
 }
 
-function loadLevel(index) {
+function loadLevel(index, options = {}) {
   hideSuccessModal();
-  if (!isLevelUnlocked(index)) {
+  const isReplay = Boolean(options.replay);
+  if (!isReplay && !isLevelUnlocked(index)) {
     setFeedback('Erreiche mindestens 2 Sterne im vorherigen Level, um dieses Level freizuschalten.', 'info');
     renderLevelList();
     return;
@@ -1759,7 +1850,7 @@ function loadLevel(index) {
     elements.resultTable.className = 'table-wrap empty-state';
     elements.resultTable.textContent = 'Noch keine Abfrage ausgeführt.';
     elements.rowCount.textContent = '';
-    setFeedback('Führe deine Abfrage aus, um das Level zu lösen.', 'info');
+    setFeedback(isReplay ? 'Wiederholungsmodus: Löse das Level erneut. Deine bisherigen Sterne und Punkte bleiben geschützt.' : 'Führe deine Abfrage aus, um das Level zu lösen.', 'info');
     saveProgress();
     renderLevelList();
     renderLearnedSqlBlocks();
@@ -2398,6 +2489,7 @@ function markAllLevelsSolvedForTesting() {
   refreshTestModeProgressDisplay();
   renderCompletionCard();
   renderLearnedOverview();
+  renderReplayOverview();
   renderBadges();
   checkAndShowMilestones();
   setOverviewFeedback('Testmodus: Alle Level wurden mit 3 Sternen als gelöst gespeichert.', 'success');
@@ -2412,6 +2504,7 @@ function resetProgressForTesting() {
   refreshTestModeProgressDisplay();
   renderCompletionCard();
   renderLearnedOverview();
+  renderReplayOverview();
   renderBadges();
   hideMilestoneBanner();
   showOverviewTab('levels');

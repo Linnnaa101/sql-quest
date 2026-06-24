@@ -229,6 +229,7 @@ produkte 1 ─── n bestellpositionen</pre>
       <div class="overview-tabs" role="tablist" aria-label="Bereiche der Levelübersicht">
         <button id="levelsTabButton" class="overview-tab active" type="button" role="tab" aria-selected="true" aria-controls="levelsOverviewPanel">Levelübersicht</button>
         <button id="learnedOverviewTabButton" class="overview-tab" type="button" role="tab" aria-selected="false" aria-controls="learnedOverviewPanel">Was habe ich gelernt?</button>
+        <button id="replayTabButton" class="overview-tab" type="button" role="tab" aria-selected="false" aria-controls="replayOverviewPanel">Wiederholen</button>
       </div>
 
       <div id="levelsOverviewPanel" role="tabpanel" aria-labelledby="levelsTabButton">
@@ -268,6 +269,23 @@ produkte 1 ─── n bestellpositionen</pre>
       </section>
       <div id="levelList" class="level-sections"></div>
       </div>
+
+      <section id="replayOverviewPanel" class="replay-overview-panel" role="tabpanel" aria-labelledby="replayTabButton" hidden>
+        <div class="learned-overview-heading">
+          <div>
+            <p class="eyebrow">Gezielt üben</p>
+            <h3>Wiederholen</h3>
+          </div>
+          <span id="replayOverviewSummary" class="info-progress">0 Level bereit</span>
+        </div>
+        <p class="muted">Übe bereits gelöste Level erneut. Schlechtere Wiederholungen senken deine Sterne und Punkte nicht.</p>
+        <div class="replay-controls" aria-label="Filter für Wiederholungslevel">
+          <button id="replayAllFilterButton" class="overview-tab active" type="button">Alle gelösten Level</button>
+          <button id="replayUnderThreeFilterButton" class="overview-tab" type="button">Weniger als 3 Sterne</button>
+          <button id="replayRandomButton" class="primary-button" type="button">Zufälliges Level starten</button>
+        </div>
+        <div id="replayLevelList" class="level-list compact-level-grid" aria-live="polite"></div>
+      </section>
 
       <section id="learnedOverviewPanel" class="learned-overview-panel" role="tabpanel" aria-labelledby="learnedOverviewTabButton" hidden>
         <div class="learned-overview-heading">
