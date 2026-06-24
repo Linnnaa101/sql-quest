@@ -1,5 +1,77 @@
 const MAX_STARS = 3;
 const MIN_STARS_TO_UNLOCK_NEXT_LEVEL = 2;
+
+const BADGE_DEFINITIONS = [
+  { id: 'first_steps', title: 'Erste Schritte', description: 'Erstes Level gelöst.', icon: '👣' },
+  { id: 'star_collector', title: 'Sternensammler', description: 'Mindestens 25 Sterne gesammelt.', icon: '⭐' },
+  { id: 'halfway', title: 'Halbzeit', description: 'Mindestens 40 von 80 Leveln gelöst.', icon: '🏁' },
+  { id: 'no_help', title: 'Ohne Hilfe', description: 'Mindestens 5 Level mit 3 Sternen gelöst.', icon: '💎' },
+  { id: 'beginner_done', title: 'Anfänger geschafft', description: 'Alle Anfänger-Level 1–30 gelöst.', icon: '🌱' },
+  { id: 'advanced_done', title: 'Fortgeschritten', description: 'Alle Fortgeschritten-Level 31–60 gelöst.', icon: '🚀' },
+  { id: 'masterclass', title: 'Meisterklasse', description: 'Level 80 gelöst.', icon: '👑' },
+  { id: 'quest_complete', title: 'SQL Quest abgeschlossen', description: 'Alle 80 Level gelöst.', icon: '🏆' }
+];
+const MILESTONE_DEFINITIONS = [25, 50, 75, 100];
+
+function normalizeAchievementTracking(progress = {}) {
+  return {
+    ...progress,
+    unlockedBadgeDates: progress.unlockedBadgeDates && typeof progress.unlockedBadgeDates === 'object' ? progress.unlockedBadgeDates : {},
+    shownMilestones: Array.isArray(progress.shownMilestones) ? progress.shownMilestones : []
+  };
+}
+
+function getSolvedLevelIdSet(progress = {}) {
+  return new Set((Array.isArray(progress.solvedLevelIds) ? progress.solvedLevelIds : []).map(id => Number(id)));
+}
+
+function countSolvedLevelsInRange(progress = {}, start, end) {
+  const solved = getSolvedLevelIdSet(progress);
+  let count = 0;
+  for (let id = start; id <= end; id += 1) if (solved.has(id)) count += 1;
+  return count;
+}
+
+function countSolvedLevels(progress = {}) { return countSolvedLevelsInRange(progress, 1, 80); }
+function countCollectedStars(progress = {}) { return Object.values(progress.levelStars || {}).reduce((sum, stars) => sum + Math.max(0, Math.min(MAX_STARS, Number(stars) || 0)), 0); }
+function countThreeStarLevels(progress = {}) { return Object.values(progress.levelStars || {}).filter(stars => Math.max(0, Math.min(MAX_STARS, Number(stars) || 0)) === MAX_STARS).length; }
+
+function isBadgeUnlocked(badgeId, progress = {}) {
+  const solved = getSolvedLevelIdSet(progress);
+  if (badgeId === 'first_steps') return countSolvedLevels(progress) >= 1;
+  if (badgeId === 'star_collector') return countCollectedStars(progress) >= 25;
+  if (badgeId === 'halfway') return countSolvedLevels(progress) >= 40;
+  if (badgeId === 'no_help') return countThreeStarLevels(progress) >= 5;
+  if (badgeId === 'beginner_done') return countSolvedLevelsInRange(progress, 1, 30) >= 30;
+  if (badgeId === 'advanced_done') return countSolvedLevelsInRange(progress, 31, 60) >= 30;
+  if (badgeId === 'masterclass') return solved.has(80);
+  if (badgeId === 'quest_complete') return countSolvedLevels(progress) >= 80;
+  return false;
+}
+
+function calculateBadges(progress = {}) {
+  const normalized = normalizeAchievementTracking(progress);
+  return BADGE_DEFINITIONS.map(badge => ({ ...badge, unlocked: isBadgeUnlocked(badge.id, normalized), unlockedAt: normalized.unlockedBadgeDates[badge.id] || null }));
+}
+
+function applyBadgeUnlockDates(progress = {}, now = new Date().toISOString()) {
+  const normalized = normalizeAchievementTracking(progress);
+  const unlockedBadgeDates = { ...normalized.unlockedBadgeDates };
+  BADGE_DEFINITIONS.forEach(badge => { if (isBadgeUnlocked(badge.id, normalized) && !unlockedBadgeDates[badge.id]) unlockedBadgeDates[badge.id] = now; });
+  return { ...normalized, unlockedBadgeDates };
+}
+
+function getReachedMilestones(progress = {}, totalLevels = 80) {
+  const solvedPercent = totalLevels === 0 ? 0 : Math.floor((countSolvedLevels(progress) / totalLevels) * 100);
+  return MILESTONE_DEFINITIONS.filter(percent => solvedPercent >= percent);
+}
+
+function getNewMilestones(progress = {}, totalLevels = 80) {
+  const normalized = normalizeAchievementTracking(progress);
+  const shown = new Set(normalized.shownMilestones.map(Number));
+  return getReachedMilestones(normalized, totalLevels).filter(percent => !shown.has(percent));
+}
+
 const BLOCKED_COMMANDS = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'REPLACE', 'TRUNCATE', 'PRAGMA', 'ATTACH', 'DETACH'];
 
 function isTestModeFromSearch(search = '') {
@@ -103,6 +175,6 @@ function solveLevelWithStars(levels, progress, levelId, earnedStars) {
     solutionViewedLevelIds: bestStars > previousStars && earnedStars > 1 ? normalized.solutionViewedLevelIds.filter(id => id !== levelId) : normalized.solutionViewedLevelIds
   };
 }
-function solveAllLevelsForTesting(levels, progress = {}) { const levelStars = levels.reduce((stars, level) => ({ ...stars, [level.id]: MAX_STARS }), {}); return { ...normalizeHelpTracking(progress), solvedLevelIds: levels.map(level => level.id), levelStars, hintUsedLevelIds: [], solutionViewedLevelIds: [], score: calculateScoreFromStars(levels, levelStars) }; }
+function solveAllLevelsForTesting(levels, progress = {}) { const levelStars = levels.reduce((stars, level) => ({ ...stars, [level.id]: MAX_STARS }), {}); return applyBadgeUnlockDates({ ...normalizeAchievementTracking(normalizeHelpTracking(progress)), solvedLevelIds: levels.map(level => level.id), levelStars, hintUsedLevelIds: [], solutionViewedLevelIds: [], shownMilestones: getReachedMilestones({ solvedLevelIds: levels.map(level => level.id), levelStars }, levels.length), score: calculateScoreFromStars(levels, levelStars) }); }
 
-module.exports = { MAX_STARS, MIN_STARS_TO_UNLOCK_NEXT_LEVEL, BLOCKED_COMMANDS, isTestModeFromSearch, isLevelUnlocked, getLevelStars, isEveryLevelUnlockedForTesting, findBlockedCommand, hasMultipleStatements, isSelectStatement, calculateStarsForHelpUsage, calculatePointsForStars, calculateScoreFromStars, normalizeHelpTracking, getHelpUsageForLevel, solveLevelWithStars, solveAllLevelsForTesting };
+module.exports = { BADGE_DEFINITIONS, MILESTONE_DEFINITIONS, normalizeAchievementTracking, calculateBadges, applyBadgeUnlockDates, getReachedMilestones, getNewMilestones, MAX_STARS, MIN_STARS_TO_UNLOCK_NEXT_LEVEL, BLOCKED_COMMANDS, isTestModeFromSearch, isLevelUnlocked, getLevelStars, isEveryLevelUnlockedForTesting, findBlockedCommand, hasMultipleStatements, isSelectStatement, calculateStarsForHelpUsage, calculatePointsForStars, calculateScoreFromStars, normalizeHelpTracking, getHelpUsageForLevel, solveLevelWithStars, solveAllLevelsForTesting };
