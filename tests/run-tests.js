@@ -114,4 +114,18 @@ assert.deepEqual(logic.getNewMilestones(resetAchievementProgress, 80), [], 'Rese
 assert.equal(logic.calculateBadges(solved).every(badge => badge.unlocked), true, 'Testmodus löst alle passenden Abzeichen aus.');
 assert.deepEqual(solved.shownMilestones, [25, 50, 75, 100], 'Testmodus aktiviert alle Meilensteine.');
 
+
+assert.equal(logic.getSolvedLevelsForReplay(LEVELS, emptyProgress()).length, 0, 'Keine gelösten Level ergeben eine leere Wiederholungsmenge.');
+const replayProgress = { solvedLevelIds: [1, 3, 999, 'x'], levelStars: { 1: 2, 2: 3, 3: 3 } };
+assert.deepEqual(Array.from(logic.getSolvedLevelsForReplay(LEVELS, replayProgress), level => level.id), [1, 3], 'Nur tatsächlich gelöste Level werden im Wiederholungsmodus angeboten.');
+assert.deepEqual(Array.from(logic.filterReplayLevels(LEVELS, replayProgress, 'underThreeStars'), level => level.id), [1], 'Filter weniger als 3 Sterne zeigt nur passende gelöste Level.');
+for (const randomValue of [0, 0.2, 0.5, 0.9999]) {
+  assert.ok([1, 3].includes(logic.getRandomSolvedLevel(LEVELS, replayProgress, () => randomValue).id), 'Zufallslevel stammt aus den gelösten Levels.');
+}
+assert.equal(logic.getSolvedLevelsForReplay(LEVELS, solved).length, 80, 'Testmodus Alle Level lösen befüllt den Wiederholungsmodus vollständig.');
+assert.equal(logic.getSolvedLevelsForReplay(LEVELS, resetAchievementProgress).length, 0, 'Reset liefert keine Wiederholungslevel.');
+const protectedProgress = logic.solveLevelWithStars(LEVELS, { solvedLevelIds: [1], levelStars: { 1: 3 }, score: fullPoints }, 1, 1);
+assert.equal(protectedProgress.levelStars[1], 3, 'Wiederholen verschlechtert Sterne nicht.');
+assert.equal(protectedProgress.score, fullPoints, 'Wiederholen verschlechtert Punkte nicht und erzeugt keine doppelten Punkte.');
+
 console.log('Alle Tests erfolgreich.');

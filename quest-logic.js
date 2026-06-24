@@ -160,6 +160,40 @@ function getHelpUsageForLevel(progress = {}, levelId) {
     solutionViewed: normalized.solutionViewedLevelIds.includes(levelId)
   };
 }
+
+function getSolvedLevelsForReplay(levels = [], progress = {}) {
+  const solved = getSolvedLevelIdSet(progress);
+  return levels.filter(level => solved.has(Number(level.id)));
+}
+
+function filterReplayLevels(levels = [], progress = {}, filter = 'all') {
+  const replayLevels = getSolvedLevelsForReplay(levels, progress);
+  if (filter === 'underThreeStars') {
+    return replayLevels.filter(level => getLevelStars(progress, level.id) < MAX_STARS);
+  }
+  if (filter === 'beginner') {
+    return replayLevels.filter(level => level.difficulty === 'Anfänger');
+  }
+  if (filter === 'advanced') {
+    return replayLevels.filter(level => level.difficulty === 'Fortgeschritten');
+  }
+  if (filter === 'master') {
+    return replayLevels.filter(level => level.difficulty === 'Meister');
+  }
+  if (filter === 'helpUsed') {
+    const normalized = normalizeHelpTracking(progress);
+    return replayLevels.filter(level => normalized.hintUsedLevelIds.includes(level.id) || normalized.solutionViewedLevelIds.includes(level.id));
+  }
+  return replayLevels;
+}
+
+function getRandomSolvedLevel(levels = [], progress = {}, random = Math.random) {
+  const replayLevels = getSolvedLevelsForReplay(levels, progress);
+  if (!replayLevels.length) return null;
+  const randomValue = Math.max(0, Math.min(0.999999999999, Number(random()) || 0));
+  return replayLevels[Math.floor(randomValue * replayLevels.length)];
+}
+
 function solveLevelWithStars(levels, progress, levelId, earnedStars) {
   const normalized = normalizeHelpTracking(progress);
   const previousStars = getLevelStars(normalized, levelId);
@@ -177,4 +211,4 @@ function solveLevelWithStars(levels, progress, levelId, earnedStars) {
 }
 function solveAllLevelsForTesting(levels, progress = {}) { const levelStars = levels.reduce((stars, level) => ({ ...stars, [level.id]: MAX_STARS }), {}); return applyBadgeUnlockDates({ ...normalizeAchievementTracking(normalizeHelpTracking(progress)), solvedLevelIds: levels.map(level => level.id), levelStars, hintUsedLevelIds: [], solutionViewedLevelIds: [], shownMilestones: getReachedMilestones({ solvedLevelIds: levels.map(level => level.id), levelStars }, levels.length), score: calculateScoreFromStars(levels, levelStars) }); }
 
-module.exports = { BADGE_DEFINITIONS, MILESTONE_DEFINITIONS, normalizeAchievementTracking, calculateBadges, applyBadgeUnlockDates, getReachedMilestones, getNewMilestones, MAX_STARS, MIN_STARS_TO_UNLOCK_NEXT_LEVEL, BLOCKED_COMMANDS, isTestModeFromSearch, isLevelUnlocked, getLevelStars, isEveryLevelUnlockedForTesting, findBlockedCommand, hasMultipleStatements, isSelectStatement, calculateStarsForHelpUsage, calculatePointsForStars, calculateScoreFromStars, normalizeHelpTracking, getHelpUsageForLevel, solveLevelWithStars, solveAllLevelsForTesting };
+module.exports = { BADGE_DEFINITIONS, MILESTONE_DEFINITIONS, normalizeAchievementTracking, calculateBadges, applyBadgeUnlockDates, getReachedMilestones, getNewMilestones, MAX_STARS, MIN_STARS_TO_UNLOCK_NEXT_LEVEL, BLOCKED_COMMANDS, isTestModeFromSearch, isLevelUnlocked, getLevelStars, isEveryLevelUnlockedForTesting, findBlockedCommand, hasMultipleStatements, isSelectStatement, calculateStarsForHelpUsage, calculatePointsForStars, calculateScoreFromStars, normalizeHelpTracking, getHelpUsageForLevel, getSolvedLevelsForReplay, filterReplayLevels, getRandomSolvedLevel, solveLevelWithStars, solveAllLevelsForTesting };

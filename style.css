@@ -2024,3 +2024,20 @@ span {
   .badge-card { padding: 10px; }
   .badge-icon { width: 34px; height: 34px; font-size: 1.15rem; }
 }
+
+.replay-overview-panel {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.replay-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.replay-level-button span:last-child {
+  margin-top: 6px;
+}
