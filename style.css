@@ -2041,3 +2041,34 @@ span {
 .replay-level-button span:last-child {
   margin-top: 6px;
 }
+
+
+.daily-challenge-card {
+  border-color: rgba(255, 204, 102, 0.45);
+  background: linear-gradient(135deg, rgba(255, 204, 102, 0.12), rgba(124, 92, 255, 0.08));
+}
+.daily-challenge-content {
+  display: grid;
+  gap: 12px;
+}
+.daily-challenge-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.daily-challenge-title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.daily-challenge-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.daily-challenge-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+}

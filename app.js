@@ -629,6 +629,8 @@ const elements = {
   badgeGrid: document.querySelector('#badgeGrid'),
   sqlBasicsList: document.querySelector('#sqlBasicsList'),
   sqlBasicsProgress: document.querySelector('#sqlBasicsProgress'),
+  dailyChallengeDate: document.querySelector('#dailyChallengeDate'),
+  dailyChallengeContent: document.querySelector('#dailyChallengeContent'),
   learnedSqlList: document.querySelector('#learnedSqlList'),
   learnedSqlProgress: document.querySelector('#learnedSqlProgress'),
   levelsTabButton: document.querySelector('#levelsTabButton'),
@@ -1018,7 +1020,8 @@ function createEmptyProgress() {
     solutionViewedLevelIds: [],
     unlockedBadgeDates: {},
     shownMilestones: [],
-    starSystemVersion: STAR_SYSTEM_VERSION
+    starSystemVersion: STAR_SYSTEM_VERSION,
+    dailyChallenge: { date: null, levelId: null, completed: false }
   };
 }
 
@@ -1045,6 +1048,7 @@ function loadProgress() {
       solutionViewedLevelIds: Array.isArray(migratedProgress.solutionViewedLevelIds) ? migratedProgress.solutionViewedLevelIds : [],
       unlockedBadgeDates: migratedProgress.unlockedBadgeDates && typeof migratedProgress.unlockedBadgeDates === 'object' ? migratedProgress.unlockedBadgeDates : {},
       shownMilestones: Array.isArray(migratedProgress.shownMilestones) ? migratedProgress.shownMilestones : [],
+      dailyChallenge: normalizeDailyChallenge(migratedProgress).dailyChallenge,
       starSystemVersion: STAR_SYSTEM_VERSION
     };
 
@@ -1075,7 +1079,8 @@ function migrateProgressToCurrentStarSystem(storedProgress) {
   return {
     ...storedProgress,
     levelStars: migratedLevelStars,
-    starSystemVersion: STAR_SYSTEM_VERSION
+    starSystemVersion: STAR_SYSTEM_VERSION,
+    dailyChallenge: { date: null, levelId: null, completed: false }
   };
 }
 
@@ -1093,7 +1098,10 @@ function migrateLegacyStars(oldStars) {
   return 0;
 }
 
-function saveProgress() {
+function saveProgress({ refreshDailyChallenge = true } = {}) {
+  if (refreshDailyChallenge) {
+    progress = updateDailyChallengeProgress(progress);
+  }
   progress.currentLevelIndex = currentLevelIndex;
   progress.starSystemVersion = STAR_SYSTEM_VERSION;
   progress = applyBadgeUnlockDates(progress);
@@ -1234,6 +1242,7 @@ function renderLevelList() {
   elements.levelList.append(createActiveLevelSectionPanel());
   elements.score.textContent = progress.score;
   renderSqlBasicsChapters();
+  renderDailyChallenge();
   updateProgressBar();
 }
 
@@ -1362,6 +1371,114 @@ function createLevelButton(level, index) {
   return button;
 }
 
+
+function getLocalDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function hashStringToIndex(seed, length) {
+  if (!length) return -1;
+  let hash = 2166136261;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash ^= seed.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) % length;
+}
+
+function normalizeDailyChallenge(sourceProgress = progress) {
+  const challenge = sourceProgress.dailyChallenge && typeof sourceProgress.dailyChallenge === 'object' ? sourceProgress.dailyChallenge : {};
+  return {
+    ...sourceProgress,
+    dailyChallenge: {
+      date: typeof challenge.date === 'string' ? challenge.date : null,
+      levelId: Number.isInteger(Number(challenge.levelId)) ? Number(challenge.levelId) : null,
+      completed: Boolean(challenge.completed)
+    }
+  };
+}
+
+function hasDailyChallengeChanged(previousProgress = {}, nextProgress = {}) {
+  const previous = normalizeDailyChallenge(previousProgress).dailyChallenge;
+  const next = normalizeDailyChallenge(nextProgress).dailyChallenge;
+  return previous.date !== next.date || Number(previous.levelId) !== Number(next.levelId) || Boolean(previous.completed) !== Boolean(next.completed);
+}
+
+function persistDailyChallengeIfChanged(previousProgress, nextProgress) {
+  if (!hasDailyChallengeChanged(previousProgress, nextProgress)) return;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(nextProgress));
+}
+
+function selectDailyChallengeLevel(sourceProgress = progress, dateKey = getLocalDateKey()) {
+  const normalized = normalizeDailyChallenge(sourceProgress);
+  const existingIds = new Set(LEVELS.map(level => Number(level.id)));
+  if (normalized.dailyChallenge.date === dateKey && existingIds.has(Number(normalized.dailyChallenge.levelId))) {
+    return LEVELS.find(level => Number(level.id) === Number(normalized.dailyChallenge.levelId)) || null;
+  }
+  const solved = new Set((Array.isArray(normalized.solvedLevelIds) ? normalized.solvedLevelIds : []).map(Number));
+  const unlocked = LEVELS.filter((level, index) => isLevelUnlocked(index));
+  const groups = [
+    unlocked.filter(level => !solved.has(Number(level.id))),
+    unlocked.filter(level => solved.has(Number(level.id)) && getLevelStars(level.id) < MAX_STARS),
+    unlocked,
+    LEVELS.filter(level => solved.has(Number(level.id)))
+  ];
+  const candidates = groups.find(group => group.length > 0) || [];
+  if (!candidates.length) return null;
+  return candidates[hashStringToIndex(`${dateKey}:daily-challenge`, candidates.length)] || null;
+}
+
+function updateDailyChallengeProgress(sourceProgress = progress) {
+  const dateKey = getLocalDateKey();
+  const level = selectDailyChallengeLevel(sourceProgress, dateKey);
+  const normalized = normalizeDailyChallenge(sourceProgress);
+  if (!level) return normalized;
+  const sameChallenge = normalized.dailyChallenge.date === dateKey && Number(normalized.dailyChallenge.levelId) === Number(level.id);
+  return {
+    ...normalized,
+    dailyChallenge: { date: dateKey, levelId: level.id, completed: sameChallenge ? normalized.dailyChallenge.completed : false }
+  };
+}
+
+function renderDailyChallenge() {
+  const previousProgress = progress;
+  progress = updateDailyChallengeProgress(progress);
+  persistDailyChallengeIfChanged(previousProgress, progress);
+  const challenge = progress.dailyChallenge;
+  const level = LEVELS.find(candidate => Number(candidate.id) === Number(challenge.levelId));
+  elements.dailyChallengeDate.textContent = challenge.date ? `Heutige Challenge · ${challenge.date}` : 'Heutige Challenge';
+  elements.dailyChallengeContent.innerHTML = '';
+  if (!level) {
+    elements.dailyChallengeContent.innerHTML = '<p class="empty-state">Noch keine gültige Tages-Challenge verfügbar.</p>';
+    return;
+  }
+  const article = document.createElement('article');
+  article.innerHTML = `
+    <h3 class="daily-challenge-title">Level ${level.id}: ${level.title}</h3>
+    <div class="daily-challenge-meta">
+      <span>Kategorie: ${level.difficulty}</span>
+      <span>Aktuelle Sterne: ${renderStars(getLevelStars(level.id))}</span>
+      <span>${challenge.completed ? 'Heute geschafft' : 'Neue Challenge morgen'}</span>
+    </div>
+    <div class="daily-challenge-actions">
+      <button class="primary-button" type="button">Challenge starten</button>
+      <span class="daily-challenge-note">Zählt normal für Sterne, Punkte und Fortschritt.</span>
+    </div>
+  `;
+  article.querySelector('button').addEventListener('click', () => loadLevel(LEVELS.indexOf(level), { dailyChallenge: true }));
+  elements.dailyChallengeContent.append(article);
+}
+
+function markDailyChallengeCompleted(levelId) {
+  const dateKey = getLocalDateKey();
+  progress = normalizeDailyChallenge(progress);
+  if (progress.dailyChallenge.date === dateKey && Number(progress.dailyChallenge.levelId) === Number(levelId)) {
+    progress.dailyChallenge.completed = true;
+  }
+}
 
 function getSolvedLevelsForReplay() {
   const solved = getSolvedLevelIdSet();
@@ -2298,11 +2415,13 @@ function markLevelSolved() {
     progress.solvedLevelIds.push(level.id);
   }
   progress.score = calculateScoreFromStars();
+  markDailyChallengeCompleted(level.id);
   saveProgress();
   renderLevelList();
   renderLearnedSqlBlocks();
   renderCompletionCard();
   renderBadges();
+  renderDailyChallenge();
   checkAndShowMilestones();
 
   const bestMessage = isNewBest ? ` Neue Bestleistung: ${bestStars} von ${MAX_STARS} Sternen!` : '';
@@ -2320,7 +2439,8 @@ function showSuccessModal({ earnedStars, bestStars, isNewBest }) {
   elements.successModalStars.textContent = '★'.repeat(earnedStars) + '☆'.repeat(MAX_STARS - earnedStars);
   elements.successModalStarText.textContent = `${earnedStars} von ${MAX_STARS} Sternen`;
   elements.successModalBest.hidden = !isNewBest;
-  elements.successModalMessage.textContent = `${getHelpUsageMessage(currentLevelHelpUsage)}. ${getSuccessMessage(earnedStars)}`;
+  const isDailyChallenge = progress.dailyChallenge?.date === getLocalDateKey() && Number(progress.dailyChallenge?.levelId) === Number(level.id);
+  elements.successModalMessage.textContent = `${isDailyChallenge ? 'Tages-Challenge geschafft! ' : ''}${getHelpUsageMessage(currentLevelHelpUsage)}. ${getSuccessMessage(earnedStars)}`;
   elements.successModalCompletion.hidden = !(isFinalLevel && hasBestStarsForUnlock);
   elements.successModalActions.innerHTML = '';
 
@@ -2452,12 +2572,13 @@ function renderCompletionCard() {
 
 function resetProgress() {
   progress = createEmptyProgress();
-  saveProgress();
   currentLevelIndex = 0;
+  saveProgress({ refreshDailyChallenge: false });
   activeLevelSection = 'beginner';
   elements.score.textContent = progress.score;
   renderCompletionCard();
   renderBadges();
+  renderDailyChallenge();
   hideMilestoneBanner();
   showLevelOverview();
 }
@@ -2490,6 +2611,7 @@ function markAllLevelsSolvedForTesting() {
   renderCompletionCard();
   renderLearnedOverview();
   renderReplayOverview();
+  renderDailyChallenge();
   renderBadges();
   checkAndShowMilestones();
   setOverviewFeedback('Testmodus: Alle Level wurden mit 3 Sternen als gelöst gespeichert.', 'success');
@@ -2498,13 +2620,14 @@ function markAllLevelsSolvedForTesting() {
 function resetProgressForTesting() {
   progress = createEmptyProgress();
   areAllLevelsUnlockedForTesting = false;
-  saveProgress();
   currentLevelIndex = 0;
+  saveProgress({ refreshDailyChallenge: false });
   activeLevelSection = 'beginner';
   refreshTestModeProgressDisplay();
   renderCompletionCard();
   renderLearnedOverview();
   renderReplayOverview();
+  renderDailyChallenge();
   renderBadges();
   hideMilestoneBanner();
   showOverviewTab('levels');
