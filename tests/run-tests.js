@@ -89,4 +89,29 @@ const storedSolutionProgress = logic.normalizeHelpTracking({ solvedLevelIds: [],
 const restoredSolutionUsage = logic.getHelpUsageForLevel(storedSolutionProgress, 1);
 assert.deepEqual(restoredSolutionUsage, { hintUsed: false, solutionViewed: true }, 'Gespeicherter Lösungsstatus wird beim Laden rekonstruiert.');
 assert.equal(logic.calculateStarsForHelpUsage(restoredSolutionUsage), 1, 'Rekonstruierter Lösungsstatus bleibt auf maximal 1 Stern begrenzt.');
+
+const badgeIds = progress => logic.calculateBadges(progress).filter(badge => badge.unlocked).map(badge => badge.id);
+const solvedRange = (start, end) => Array.from({ length: end - start + 1 }, (_, index) => start + index);
+assert.deepEqual(badgeIds({ solvedLevelIds: [1], levelStars: { 1: 3 } }).includes('first_steps'), true, 'Erstes gelöstes Level schaltet Erste Schritte frei.');
+assert.deepEqual(badgeIds({ solvedLevelIds: solvedRange(1, 9), levelStars: Object.fromEntries(solvedRange(1, 9).map(id => [id, id === 9 ? 1 : 3])) }).includes('star_collector'), true, '25 Sterne schalten Sternensammler frei.');
+assert.deepEqual(badgeIds({ solvedLevelIds: solvedRange(1, 40), levelStars: {} }).includes('halfway'), true, '40 gelöste Level schalten Halbzeit frei.');
+assert.deepEqual(badgeIds({ solvedLevelIds: solvedRange(1, 5), levelStars: { 1: 3, 2: 3, 3: 3, 4: 3, 5: 3 } }).includes('no_help'), true, 'Fünf 3-Sterne-Level schalten Ohne Hilfe frei.');
+assert.deepEqual(badgeIds({ solvedLevelIds: solvedRange(1, 30), levelStars: {} }).includes('beginner_done'), true, 'Anfänger abgeschlossen schaltet Anfänger-Abzeichen frei.');
+assert.deepEqual(badgeIds({ solvedLevelIds: solvedRange(31, 60), levelStars: {} }).includes('advanced_done'), true, 'Fortgeschritten abgeschlossen schaltet Fortgeschritten-Abzeichen frei.');
+assert.deepEqual(badgeIds({ solvedLevelIds: [80], levelStars: {} }).includes('masterclass'), true, 'Level 80 schaltet Meisterklasse frei.');
+assert.deepEqual(badgeIds({ solvedLevelIds: solvedRange(1, 80), levelStars: {} }).includes('quest_complete'), true, 'Alle 80 Level schalten Abschluss-Abzeichen frei.');
+assert.deepEqual(logic.getReachedMilestones({ solvedLevelIds: solvedRange(1, 20), levelStars: {} }, 80), [25], '20 von 80 Leveln erreichen 25 %.');
+assert.deepEqual(logic.getReachedMilestones({ solvedLevelIds: solvedRange(1, 40), levelStars: {} }, 80), [25, 50], '40 von 80 Leveln erreichen 50 %.');
+assert.deepEqual(logic.getReachedMilestones({ solvedLevelIds: solvedRange(1, 60), levelStars: {} }, 80), [25, 50, 75], '60 von 80 Leveln erreichen 75 %.');
+assert.deepEqual(logic.getReachedMilestones({ solvedLevelIds: solvedRange(1, 80), levelStars: {} }, 80), [25, 50, 75, 100], '80 von 80 Leveln erreichen 100 %.');
+const oldAchievementProgress = logic.normalizeAchievementTracking({ solvedLevelIds: [1], levelStars: { 1: 3 } });
+assert.deepEqual(oldAchievementProgress.unlockedBadgeDates, {}, 'Alte Fortschrittsdaten ohne Abzeichenfelder funktionieren.');
+assert.deepEqual(oldAchievementProgress.shownMilestones, [], 'Alte Fortschrittsdaten ohne Meilensteinfelder funktionieren.');
+assert.equal(logic.getNewMilestones({ solvedLevelIds: solvedRange(1, 40), levelStars: {}, shownMilestones: [25] }, 80)[0], 50, 'Bereits angezeigte Meilensteine werden nicht wiederholt.');
+const resetAchievementProgress = logic.normalizeAchievementTracking({ solvedLevelIds: [], levelStars: {}, unlockedBadgeDates: {}, shownMilestones: [] });
+assert.equal(logic.calculateBadges(resetAchievementProgress).every(badge => !badge.unlocked), true, 'Reset entfernt alle erreichten Abzeichen.');
+assert.deepEqual(logic.getNewMilestones(resetAchievementProgress, 80), [], 'Reset entfernt alle erreichten Meilensteine.');
+assert.equal(logic.calculateBadges(solved).every(badge => badge.unlocked), true, 'Testmodus löst alle passenden Abzeichen aus.');
+assert.deepEqual(solved.shownMilestones, [25, 50, 75, 100], 'Testmodus aktiviert alle Meilensteine.');
+
 console.log('Alle Tests erfolgreich.');

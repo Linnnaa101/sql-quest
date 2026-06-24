@@ -3,6 +3,17 @@ const STAR_SYSTEM_VERSION = 3;
 const MAX_STARS = 3;
 const MIN_STARS_TO_UNLOCK_NEXT_LEVEL = 2;
 const BLOCKED_COMMANDS = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'REPLACE', 'TRUNCATE', 'PRAGMA', 'ATTACH', 'DETACH'];
+const BADGE_DEFINITIONS = [
+  { id: 'first_steps', title: 'Erste Schritte', description: 'Erstes Level gelöst.', icon: '👣' },
+  { id: 'star_collector', title: 'Sternensammler', description: 'Mindestens 25 Sterne gesammelt.', icon: '⭐' },
+  { id: 'halfway', title: 'Halbzeit', description: 'Mindestens 40 von 80 Leveln gelöst.', icon: '🏁' },
+  { id: 'no_help', title: 'Ohne Hilfe', description: 'Mindestens 5 Level mit 3 Sternen gelöst.', icon: '💎' },
+  { id: 'beginner_done', title: 'Anfänger geschafft', description: 'Alle Anfänger-Level 1–30 gelöst.', icon: '🌱' },
+  { id: 'advanced_done', title: 'Fortgeschritten', description: 'Alle Fortgeschritten-Level 31–60 gelöst.', icon: '🚀' },
+  { id: 'masterclass', title: 'Meisterklasse', description: 'Level 80 gelöst.', icon: '👑' },
+  { id: 'quest_complete', title: 'SQL Quest abgeschlossen', description: 'Alle 80 Level gelöst.', icon: '🏆' }
+];
+const MILESTONE_DEFINITIONS = [25, 50, 75, 100];
 const READ_ONLY_SQL_MESSAGE = 'SQL Quest erlaubt nur lesende Abfragen. Die Übungsdatenbank wurde nicht verändert. Verwende für diese Aufgabe bitte eine SELECT-Abfrage.';
 const IS_TEST_MODE = new URLSearchParams(window.location.search).get('testmode') === '1';
 let currentLevelHelpUsage = { hintUsed: false, solutionViewed: false };
@@ -613,6 +624,9 @@ const elements = {
   progressTrack: document.querySelector('#progressTrack'),
   progressFill: document.querySelector('#progressFill'),
   progressPercent: document.querySelector('#progressPercent'),
+  milestoneBanner: document.querySelector('#milestoneBanner'),
+  badgeSummary: document.querySelector('#badgeSummary'),
+  badgeGrid: document.querySelector('#badgeGrid'),
   sqlBasicsList: document.querySelector('#sqlBasicsList'),
   sqlBasicsProgress: document.querySelector('#sqlBasicsProgress'),
   learnedSqlList: document.querySelector('#learnedSqlList'),
@@ -942,6 +956,8 @@ function showLevelOverview() {
     showOverviewTab('levels');
     updateProgressBar();
     renderCompletionCard();
+    renderBadges();
+    checkAndShowMilestones();
   });
 }
 
@@ -985,6 +1001,8 @@ function createEmptyProgress() {
     levelAttempts: {},
     hintUsedLevelIds: [],
     solutionViewedLevelIds: [],
+    unlockedBadgeDates: {},
+    shownMilestones: [],
     starSystemVersion: STAR_SYSTEM_VERSION
   };
 }
@@ -1010,6 +1028,8 @@ function loadProgress() {
       levelAttempts: migratedProgress.levelAttempts && typeof migratedProgress.levelAttempts === 'object' ? migratedProgress.levelAttempts : {},
       hintUsedLevelIds: Array.isArray(migratedProgress.hintUsedLevelIds) ? migratedProgress.hintUsedLevelIds : [],
       solutionViewedLevelIds: Array.isArray(migratedProgress.solutionViewedLevelIds) ? migratedProgress.solutionViewedLevelIds : [],
+      unlockedBadgeDates: migratedProgress.unlockedBadgeDates && typeof migratedProgress.unlockedBadgeDates === 'object' ? migratedProgress.unlockedBadgeDates : {},
+      shownMilestones: Array.isArray(migratedProgress.shownMilestones) ? migratedProgress.shownMilestones : [],
       starSystemVersion: STAR_SYSTEM_VERSION
     };
 
@@ -1061,6 +1081,7 @@ function migrateLegacyStars(oldStars) {
 function saveProgress() {
   progress.currentLevelIndex = currentLevelIndex;
   progress.starSystemVersion = STAR_SYSTEM_VERSION;
+  progress = applyBadgeUnlockDates(progress);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
 }
 
@@ -1090,6 +1111,99 @@ const LEVEL_SECTIONS = [
     lockedHint: 'Wird nach dem Lösen von Level 60 freigeschaltet.'
   }
 ];
+
+
+function getSolvedLevelIdSet() {
+  return new Set((Array.isArray(progress.solvedLevelIds) ? progress.solvedLevelIds : []).map(id => Number(id)));
+}
+
+function countSolvedLevelsInRange(start, end) {
+  const solved = getSolvedLevelIdSet();
+  let count = 0;
+  for (let id = start; id <= end; id += 1) {
+    if (solved.has(id)) count += 1;
+  }
+  return count;
+}
+
+function getSolvedLevelCount() {
+  return countSolvedLevelsInRange(1, LEVELS.length);
+}
+
+function isBadgeUnlocked(badgeId) {
+  const solved = getSolvedLevelIdSet();
+  if (badgeId === 'first_steps') return getSolvedLevelCount() >= 1;
+  if (badgeId === 'star_collector') return getCollectedStars() >= 25;
+  if (badgeId === 'halfway') return getSolvedLevelCount() >= 40;
+  if (badgeId === 'no_help') return Object.values(progress.levelStars || {}).filter(stars => Number(stars) === MAX_STARS).length >= 5;
+  if (badgeId === 'beginner_done') return countSolvedLevelsInRange(1, 30) >= 30;
+  if (badgeId === 'advanced_done') return countSolvedLevelsInRange(31, 60) >= 30;
+  if (badgeId === 'masterclass') return solved.has(80);
+  if (badgeId === 'quest_complete') return getSolvedLevelCount() >= LEVELS.length;
+  return false;
+}
+
+function applyBadgeUnlockDates(currentProgress) {
+  const unlockedBadgeDates = currentProgress.unlockedBadgeDates && typeof currentProgress.unlockedBadgeDates === 'object' ? { ...currentProgress.unlockedBadgeDates } : {};
+  const previousProgress = progress;
+  progress = { ...currentProgress, unlockedBadgeDates };
+  BADGE_DEFINITIONS.forEach(badge => {
+    if (isBadgeUnlocked(badge.id) && !unlockedBadgeDates[badge.id]) {
+      unlockedBadgeDates[badge.id] = new Date().toISOString();
+    }
+  });
+  const updatedProgress = { ...progress, unlockedBadgeDates };
+  progress = previousProgress;
+  return updatedProgress;
+}
+
+function renderBadges() {
+  if (!elements.badgeGrid || !elements.badgeSummary) return;
+  const badges = BADGE_DEFINITIONS.map(badge => ({ ...badge, unlocked: isBadgeUnlocked(badge.id), unlockedAt: progress.unlockedBadgeDates?.[badge.id] || null }));
+  const unlockedCount = badges.filter(badge => badge.unlocked).length;
+  elements.badgeSummary.textContent = `${unlockedCount} von ${badges.length} Abzeichen freigeschaltet`;
+  elements.badgeGrid.innerHTML = '';
+  badges.forEach(badge => {
+    const card = document.createElement('article');
+    card.className = `badge-card${badge.unlocked ? ' unlocked' : ' locked'}`;
+    const statusText = badge.unlocked ? 'Freigeschaltet' : 'Gesperrt';
+    const dateText = badge.unlockedAt ? ` · ${new Date(badge.unlockedAt).toLocaleDateString('de-DE')}` : '';
+    card.setAttribute('aria-label', `${badge.title}: ${statusText}`);
+    card.innerHTML = `
+      <div class="badge-icon" aria-hidden="true">${badge.unlocked ? badge.icon : '🔒'}</div>
+      <div>
+        <h3>${badge.title}</h3>
+        <p>${badge.description}</p>
+        <span>${statusText}${dateText}</span>
+      </div>`;
+    elements.badgeGrid.append(card);
+  });
+}
+
+function getNewMilestones() {
+  const percent = LEVELS.length === 0 ? 0 : Math.floor((getSolvedLevelCount() / LEVELS.length) * 100);
+  const shown = new Set((progress.shownMilestones || []).map(Number));
+  return MILESTONE_DEFINITIONS.filter(milestone => percent >= milestone && !shown.has(milestone));
+}
+
+function checkAndShowMilestones() {
+  const newMilestones = getNewMilestones();
+  if (!newMilestones.length) return;
+  progress.shownMilestones = Array.from(new Set([...(progress.shownMilestones || []), ...newMilestones]));
+  saveProgress();
+  showMilestoneBanner(newMilestones[newMilestones.length - 1]);
+}
+
+function showMilestoneBanner(percent) {
+  if (!elements.milestoneBanner) return;
+  elements.milestoneBanner.textContent = `🎉 Meilenstein erreicht: ${percent} % von SQL Quest geschafft!`;
+  elements.milestoneBanner.hidden = false;
+  window.setTimeout(hideMilestoneBanner, 5200);
+}
+
+function hideMilestoneBanner() {
+  if (elements.milestoneBanner) elements.milestoneBanner.hidden = true;
+}
 
 function renderLevelList() {
   if (!isLevelSectionAccessible(activeLevelSection)) {
@@ -2097,6 +2211,8 @@ function markLevelSolved() {
   renderLevelList();
   renderLearnedSqlBlocks();
   renderCompletionCard();
+  renderBadges();
+  checkAndShowMilestones();
 
   const bestMessage = isNewBest ? ` Neue Bestleistung: ${bestStars} von ${MAX_STARS} Sternen!` : '';
   setFeedback(`Richtig gelöst! ${getHelpUsageMessage(currentLevelHelpUsage)}. Du hast ${earnedStars} von ${MAX_STARS} Sternen erreicht.${bestMessage}`, 'success');
@@ -2250,6 +2366,8 @@ function resetProgress() {
   activeLevelSection = 'beginner';
   elements.score.textContent = progress.score;
   renderCompletionCard();
+  renderBadges();
+  hideMilestoneBanner();
   showLevelOverview();
 }
 
@@ -2280,6 +2398,8 @@ function markAllLevelsSolvedForTesting() {
   refreshTestModeProgressDisplay();
   renderCompletionCard();
   renderLearnedOverview();
+  renderBadges();
+  checkAndShowMilestones();
   setOverviewFeedback('Testmodus: Alle Level wurden mit 3 Sternen als gelöst gespeichert.', 'success');
 }
 
@@ -2292,6 +2412,8 @@ function resetProgressForTesting() {
   refreshTestModeProgressDisplay();
   renderCompletionCard();
   renderLearnedOverview();
+  renderBadges();
+  hideMilestoneBanner();
   showOverviewTab('levels');
   setOverviewFeedback('Testmodus: Der Fortschritt wurde vollständig zurückgesetzt.', 'success');
 }
