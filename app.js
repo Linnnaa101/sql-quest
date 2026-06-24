@@ -1401,6 +1401,17 @@ function normalizeDailyChallenge(sourceProgress = progress) {
   };
 }
 
+function hasDailyChallengeChanged(previousProgress = {}, nextProgress = {}) {
+  const previous = normalizeDailyChallenge(previousProgress).dailyChallenge;
+  const next = normalizeDailyChallenge(nextProgress).dailyChallenge;
+  return previous.date !== next.date || Number(previous.levelId) !== Number(next.levelId) || Boolean(previous.completed) !== Boolean(next.completed);
+}
+
+function persistDailyChallengeIfChanged(previousProgress, nextProgress) {
+  if (!hasDailyChallengeChanged(previousProgress, nextProgress)) return;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(nextProgress));
+}
+
 function selectDailyChallengeLevel(sourceProgress = progress, dateKey = getLocalDateKey()) {
   const normalized = normalizeDailyChallenge(sourceProgress);
   const existingIds = new Set(LEVELS.map(level => Number(level.id)));
@@ -1433,7 +1444,9 @@ function updateDailyChallengeProgress(sourceProgress = progress) {
 }
 
 function renderDailyChallenge() {
+  const previousProgress = progress;
   progress = updateDailyChallengeProgress(progress);
+  persistDailyChallengeIfChanged(previousProgress, progress);
   const challenge = progress.dailyChallenge;
   const level = LEVELS.find(candidate => Number(candidate.id) === Number(challenge.levelId));
   elements.dailyChallengeDate.textContent = challenge.date ? `Heutige Challenge · ${challenge.date}` : 'Heutige Challenge';

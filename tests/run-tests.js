@@ -159,4 +159,18 @@ for (const dateKey of ['2026-06-24', '2026-06-25', '2026-06-26']) {
   assert.ok(LEVELS.some(level => level.id === challenge.dailyChallenge.levelId), 'Challenge-Auswahl enthält nur existierende Level.');
 }
 
+
+const firstStoredDaily = logic.updateDailyChallengeProgress(LEVELS, { solvedLevelIds: [1], levelStars: { 1: 2 } }, '2026-06-24', unlockedForProgress(dailyProgress));
+assert.equal(logic.hasDailyChallengeChanged({ solvedLevelIds: [1], levelStars: { 1: 2 } }, firstStoredDaily), true, 'Neu erzeugte Tages-Challenge wird als speicherpflichtige Änderung erkannt.');
+const reloadedDaily = logic.updateDailyChallengeProgress(LEVELS, firstStoredDaily, '2026-06-24', unlockedForProgress(firstStoredDaily));
+assert.equal(reloadedDaily.dailyChallenge.levelId, firstStoredDaily.dailyChallenge.levelId, 'Reload mit gespeichertem Fortschritt behält dieselbe Level-ID.');
+assert.equal(logic.hasDailyChallengeChanged(firstStoredDaily, reloadedDaily), false, 'Reload derselben Tages-Challenge speichert nicht erneut.');
+const progressedSameDay = { ...firstStoredDaily, solvedLevelIds: [1, 2], levelStars: { 1: 2, 2: 3 } };
+const sameDayAfterProgress = logic.updateDailyChallengeProgress(LEVELS, progressedSameDay, '2026-06-24', unlockedForProgress(progressedSameDay));
+assert.equal(sameDayAfterProgress.dailyChallenge.levelId, firstStoredDaily.dailyChallenge.levelId, 'Fortschrittsänderung am selben Tag behält die ursprüngliche gespeicherte Challenge.');
+assert.equal(logic.hasDailyChallengeChanged(progressedSameDay, sameDayAfterProgress), false, 'Unveränderte gespeicherte Tages-Challenge erzeugt keine Speicherschleife.');
+const nextDayStored = logic.updateDailyChallengeProgress(LEVELS, sameDayAfterProgress, '2026-06-25', unlockedForProgress(sameDayAfterProgress));
+assert.equal(nextDayStored.dailyChallenge.date, '2026-06-25', 'Am nächsten Tag wird eine neue Tages-Challenge gespeichert.');
+assert.equal(logic.hasDailyChallengeChanged(sameDayAfterProgress, nextDayStored), true, 'Tageswechsel wird genau als speicherpflichtige Änderung erkannt.');
+
 console.log('Alle Tests erfolgreich.');
