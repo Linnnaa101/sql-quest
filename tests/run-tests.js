@@ -128,4 +128,35 @@ const protectedProgress = logic.solveLevelWithStars(LEVELS, { solvedLevelIds: [1
 assert.equal(protectedProgress.levelStars[1], 3, 'Wiederholen verschlechtert Sterne nicht.');
 assert.equal(protectedProgress.score, fullPoints, 'Wiederholen verschlechtert Punkte nicht und erzeugt keine doppelten Punkte.');
 
+const unlockedForProgress = progress => (_level, index) => logic.isLevelUnlocked(LEVELS, progress, index);
+const dailyProgress = { solvedLevelIds: [1], levelStars: { 1: 2 } };
+const sameDayA = logic.updateDailyChallengeProgress(LEVELS, dailyProgress, '2026-06-24', unlockedForProgress(dailyProgress));
+const sameDayB = logic.updateDailyChallengeProgress(LEVELS, sameDayA, '2026-06-24', unlockedForProgress(sameDayA));
+assert.equal(sameDayA.dailyChallenge.levelId, sameDayB.dailyChallenge.levelId, 'Gleicher Tag liefert dieselbe Tages-Challenge.');
+const nextDay = logic.updateDailyChallengeProgress(LEVELS, dailyProgress, '2026-06-25', unlockedForProgress(dailyProgress));
+assert.ok(Number.isInteger(nextDay.dailyChallenge.levelId), 'Neuer Tag kann eine gültige neue Tages-Challenge auswählen.');
+
+const unsolvedPreferredProgress = { solvedLevelIds: [1], levelStars: { 1: 2 } };
+const unsolvedChallenge = logic.selectDailyChallengeLevel(LEVELS, unsolvedPreferredProgress, '2026-06-24', unlockedForProgress(unsolvedPreferredProgress));
+assert.equal(unsolvedChallenge.id, 2, 'Ungelöste freigeschaltete Level werden bevorzugt.');
+
+const underThreePreferredProgress = { solvedLevelIds: [1, 2], levelStars: { 1: 3, 2: 2 } };
+const underThreeChallenge = logic.selectDailyChallengeLevel(LEVELS, underThreePreferredProgress, '2026-06-24', (_level, index) => index < 2);
+assert.equal(underThreeChallenge.id, 2, 'Gelöste Level mit weniger als 3 Sternen werden nach ungelösten Leveln bevorzugt.');
+
+const solvedFallbackProgress = { solvedLevelIds: [1, 2], levelStars: { 1: 3, 2: 3 } };
+const solvedFallbackChallenge = logic.selectDailyChallengeLevel(LEVELS, solvedFallbackProgress, '2026-06-24', () => false);
+assert.ok([1, 2].includes(solvedFallbackChallenge.id), 'Fallback auf gelöste Level funktioniert.');
+
+const oldDailyProgress = logic.normalizeDailyChallenge({ solvedLevelIds: [1], levelStars: { 1: 3 } });
+assert.deepEqual(oldDailyProgress.dailyChallenge, { date: null, levelId: null, completed: false }, 'Alte Fortschrittsdaten ohne Tages-Challenge-Felder funktionieren.');
+const resetDailyProgress = logic.normalizeDailyChallenge({ solvedLevelIds: [], levelStars: {} });
+assert.equal(resetDailyProgress.dailyChallenge.levelId, null, 'Reset entfernt Tages-Challenge-Daten.');
+const testModeDaily = logic.updateDailyChallengeProgress(LEVELS, solved, '2026-06-24', () => true);
+assert.ok(LEVELS.some(level => level.id === testModeDaily.dailyChallenge.levelId), 'Testmodus liefert eine gültige Tages-Challenge.');
+for (const dateKey of ['2026-06-24', '2026-06-25', '2026-06-26']) {
+  const challenge = logic.updateDailyChallengeProgress(LEVELS, dailyProgress, dateKey, unlockedForProgress(dailyProgress));
+  assert.ok(LEVELS.some(level => level.id === challenge.dailyChallenge.levelId), 'Challenge-Auswahl enthält nur existierende Level.');
+}
+
 console.log('Alle Tests erfolgreich.');

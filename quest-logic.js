@@ -194,6 +194,85 @@ function getRandomSolvedLevel(levels = [], progress = {}, random = Math.random) 
   return replayLevels[Math.floor(randomValue * replayLevels.length)];
 }
 
+function getLocalDateKey(date = new Date()) {
+  const value = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(value.getTime())) return getLocalDateKey(new Date());
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function hashStringToIndex(seed, length) {
+  if (!length) return -1;
+  let hash = 2166136261;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash ^= seed.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) % length;
+}
+
+function normalizeDailyChallenge(progress = {}) {
+  const challenge = progress.dailyChallenge && typeof progress.dailyChallenge === 'object' ? progress.dailyChallenge : {};
+  return {
+    ...progress,
+    dailyChallenge: {
+      date: typeof challenge.date === 'string' ? challenge.date : null,
+      levelId: Number.isInteger(Number(challenge.levelId)) ? Number(challenge.levelId) : null,
+      completed: Boolean(challenge.completed)
+    }
+  };
+}
+
+function getDailyChallengeCandidateGroups(levels = [], progress = {}, isUnlocked = () => true) {
+  const solved = getSolvedLevelIdSet(progress);
+  const unlockedLevels = levels.filter((level, index) => level && isUnlocked(level, index));
+  return [
+    unlockedLevels.filter(level => !solved.has(Number(level.id))),
+    unlockedLevels.filter(level => solved.has(Number(level.id)) && getLevelStars(progress, level.id) < MAX_STARS),
+    unlockedLevels,
+    levels.filter(level => solved.has(Number(level.id)))
+  ];
+}
+
+function selectDailyChallengeLevel(levels = [], progress = {}, dateKey = getLocalDateKey(), isUnlocked = () => true) {
+  const existingIds = new Set(levels.map(level => Number(level.id)));
+  const normalized = normalizeDailyChallenge(progress);
+  const stored = normalized.dailyChallenge;
+  if (stored.date === dateKey && existingIds.has(Number(stored.levelId))) {
+    return levels.find(level => Number(level.id) === Number(stored.levelId)) || null;
+  }
+
+  const groups = getDailyChallengeCandidateGroups(levels, normalized, isUnlocked);
+  const candidates = groups.find(group => group.length > 0) || [];
+  if (!candidates.length) return null;
+  const index = hashStringToIndex(`${dateKey}:daily-challenge`, candidates.length);
+  return candidates[index] || null;
+}
+
+function updateDailyChallengeProgress(levels = [], progress = {}, date = new Date(), isUnlocked = () => true) {
+  const dateKey = typeof date === 'string' ? date : getLocalDateKey(date);
+  const level = selectDailyChallengeLevel(levels, progress, dateKey, isUnlocked);
+  if (!level) return normalizeDailyChallenge(progress);
+  const current = normalizeDailyChallenge(progress).dailyChallenge;
+  return {
+    ...progress,
+    dailyChallenge: {
+      date: dateKey,
+      levelId: level.id,
+      completed: current.date === dateKey && Number(current.levelId) === Number(level.id) ? Boolean(current.completed) : false
+    }
+  };
+}
+
+function markDailyChallengeCompleted(progress = {}, levelId, date = new Date()) {
+  const dateKey = typeof date === 'string' ? date : getLocalDateKey(date);
+  const normalized = normalizeDailyChallenge(progress);
+  if (normalized.dailyChallenge.date !== dateKey || Number(normalized.dailyChallenge.levelId) !== Number(levelId)) return normalized;
+  return { ...normalized, dailyChallenge: { ...normalized.dailyChallenge, completed: true } };
+}
+
 function solveLevelWithStars(levels, progress, levelId, earnedStars) {
   const normalized = normalizeHelpTracking(progress);
   const previousStars = getLevelStars(normalized, levelId);
@@ -211,4 +290,4 @@ function solveLevelWithStars(levels, progress, levelId, earnedStars) {
 }
 function solveAllLevelsForTesting(levels, progress = {}) { const levelStars = levels.reduce((stars, level) => ({ ...stars, [level.id]: MAX_STARS }), {}); return applyBadgeUnlockDates({ ...normalizeAchievementTracking(normalizeHelpTracking(progress)), solvedLevelIds: levels.map(level => level.id), levelStars, hintUsedLevelIds: [], solutionViewedLevelIds: [], shownMilestones: getReachedMilestones({ solvedLevelIds: levels.map(level => level.id), levelStars }, levels.length), score: calculateScoreFromStars(levels, levelStars) }); }
 
-module.exports = { BADGE_DEFINITIONS, MILESTONE_DEFINITIONS, normalizeAchievementTracking, calculateBadges, applyBadgeUnlockDates, getReachedMilestones, getNewMilestones, MAX_STARS, MIN_STARS_TO_UNLOCK_NEXT_LEVEL, BLOCKED_COMMANDS, isTestModeFromSearch, isLevelUnlocked, getLevelStars, isEveryLevelUnlockedForTesting, findBlockedCommand, hasMultipleStatements, isSelectStatement, calculateStarsForHelpUsage, calculatePointsForStars, calculateScoreFromStars, normalizeHelpTracking, getHelpUsageForLevel, getSolvedLevelsForReplay, filterReplayLevels, getRandomSolvedLevel, solveLevelWithStars, solveAllLevelsForTesting };
+module.exports = { getLocalDateKey, normalizeDailyChallenge, getDailyChallengeCandidateGroups, selectDailyChallengeLevel, updateDailyChallengeProgress, markDailyChallengeCompleted, BADGE_DEFINITIONS, MILESTONE_DEFINITIONS, normalizeAchievementTracking, calculateBadges, applyBadgeUnlockDates, getReachedMilestones, getNewMilestones, MAX_STARS, MIN_STARS_TO_UNLOCK_NEXT_LEVEL, BLOCKED_COMMANDS, isTestModeFromSearch, isLevelUnlocked, getLevelStars, isEveryLevelUnlockedForTesting, findBlockedCommand, hasMultipleStatements, isSelectStatement, calculateStarsForHelpUsage, calculatePointsForStars, calculateScoreFromStars, normalizeHelpTracking, getHelpUsageForLevel, getSolvedLevelsForReplay, filterReplayLevels, getRandomSolvedLevel, solveLevelWithStars, solveAllLevelsForTesting };
