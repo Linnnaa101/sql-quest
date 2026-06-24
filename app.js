@@ -5,6 +5,7 @@ const MIN_STARS_TO_UNLOCK_NEXT_LEVEL = 2;
 const BLOCKED_COMMANDS = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'REPLACE', 'TRUNCATE', 'PRAGMA', 'ATTACH', 'DETACH'];
 const READ_ONLY_SQL_MESSAGE = 'SQL Quest erlaubt nur lesende Abfragen. Die Übungsdatenbank wurde nicht verändert. Verwende für diese Aufgabe bitte eine SELECT-Abfrage.';
 const IS_TEST_MODE = new URLSearchParams(window.location.search).get('testmode') === '1';
+let currentLevelHelpUsage = { hintUsed: false, solutionViewed: false };
 
 
 const SQL_LEARNING_TERMS = {
@@ -982,6 +983,7 @@ function createEmptyProgress() {
     savedQueries: {},
     levelStars: {},
     levelAttempts: {},
+    hintUsedLevelIds: [],
     solutionViewedLevelIds: [],
     starSystemVersion: STAR_SYSTEM_VERSION
   };
@@ -1006,6 +1008,7 @@ function loadProgress() {
       savedQueries: migratedProgress.savedQueries && typeof migratedProgress.savedQueries === 'object' ? migratedProgress.savedQueries : {},
       levelStars: migratedProgress.levelStars && typeof migratedProgress.levelStars === 'object' ? migratedProgress.levelStars : {},
       levelAttempts: migratedProgress.levelAttempts && typeof migratedProgress.levelAttempts === 'object' ? migratedProgress.levelAttempts : {},
+      hintUsedLevelIds: Array.isArray(migratedProgress.hintUsedLevelIds) ? migratedProgress.hintUsedLevelIds : [],
       solutionViewedLevelIds: Array.isArray(migratedProgress.solutionViewedLevelIds) ? migratedProgress.solutionViewedLevelIds : [],
       starSystemVersion: STAR_SYSTEM_VERSION
     };
@@ -1633,6 +1636,7 @@ function loadLevel(index) {
     elements.solutionBox.textContent = `Lösung: ${level.expectedSql}`;
     elements.solutionBox.hidden = true;
     progress.levelAttempts[level.id] = 0;
+    currentLevelHelpUsage = { hintUsed: false, solutionViewed: false };
     elements.sqlInput.value = progress.savedQueries[level.id] || '';
     elements.sqlInput.placeholder = 'Schreibe hier deine SQL-Abfrage …';
     elements.resultTable.className = 'table-wrap empty-state';
@@ -2028,46 +2032,71 @@ function renderResult(result) {
   elements.resultTable.append(table);
 }
 
+function calculateStarsForHelpUsage({ hintUsed = false, solutionViewed = false } = {}) {
+  if (solutionViewed) {
+    return 1;
+  }
+  if (hintUsed) {
+    return 2;
+  }
+  return MAX_STARS;
+}
+
+function calculatePointsForStars(level, stars) {
+  const cappedStars = Math.max(0, Math.min(MAX_STARS, Number(stars) || 0));
+  return Math.round((Number(level.points) || 0) * (cappedStars / MAX_STARS));
+}
+
+function calculateScoreFromStars() {
+  return LEVELS.reduce((score, level) => score + calculatePointsForStars(level, getLevelStars(level.id)), 0);
+}
+
+function getHelpUsageMessage(helpUsage) {
+  if (helpUsage.solutionViewed) {
+    return 'Lösung angesehen: maximal 1 Stern';
+  }
+  if (helpUsage.hintUsed) {
+    return 'Hinweis verwendet: maximal 2 Sterne';
+  }
+  return 'Ohne Hilfe gelöst: 3 Sterne';
+}
+
 function countFailedAttempt(levelId) {
   progress.levelAttempts[levelId] = (Number(progress.levelAttempts[levelId]) || 0) + 1;
   saveProgress();
 }
 
-function calculateStars(levelId) {
-  const failedAttempts = Number(progress.levelAttempts[levelId]) || 0;
-  const solutionViewed = progress.solutionViewedLevelIds.includes(levelId);
-
-  if (solutionViewed || failedAttempts >= 3) {
-    return 1;
-  }
-  if (failedAttempts >= 1) {
-    return 2;
-  }
-  return 3;
+function calculateStars() {
+  return calculateStarsForHelpUsage(currentLevelHelpUsage);
 }
 
 function markLevelSolved() {
   const level = LEVELS[currentLevelIndex];
   const sql = elements.sqlInput.value.trim();
-  const earnedStars = calculateStars(level.id);
+  const earnedStars = calculateStars();
   const previousStars = getLevelStars(level.id);
   const bestStars = Math.max(previousStars, earnedStars);
   const isNewBest = bestStars > previousStars;
 
   progress.savedQueries[level.id] = sql;
   progress.levelStars[level.id] = bestStars;
-  progress.solutionViewedLevelIds = progress.solutionViewedLevelIds.filter(levelId => levelId !== level.id);
+  if (isNewBest && !currentLevelHelpUsage.hintUsed) {
+    progress.hintUsedLevelIds = progress.hintUsedLevelIds.filter(levelId => levelId !== level.id);
+  }
+  if (isNewBest && !currentLevelHelpUsage.solutionViewed) {
+    progress.solutionViewedLevelIds = progress.solutionViewedLevelIds.filter(levelId => levelId !== level.id);
+  }
   if (!progress.solvedLevelIds.includes(level.id)) {
     progress.solvedLevelIds.push(level.id);
-    progress.score += level.points;
   }
+  progress.score = calculateScoreFromStars();
   saveProgress();
   renderLevelList();
   renderLearnedSqlBlocks();
   renderCompletionCard();
 
   const bestMessage = isNewBest ? ` Neue Bestleistung: ${bestStars} von ${MAX_STARS} Sternen!` : '';
-  setFeedback(`Richtig gelöst! Du hast ${earnedStars} von ${MAX_STARS} Sternen erreicht.${bestMessage}`, 'success');
+  setFeedback(`Richtig gelöst! ${getHelpUsageMessage(currentLevelHelpUsage)}. Du hast ${earnedStars} von ${MAX_STARS} Sternen erreicht.${bestMessage}`, 'success');
   showSuccessModal({ earnedStars, bestStars, isNewBest });
 }
 
@@ -2081,7 +2110,7 @@ function showSuccessModal({ earnedStars, bestStars, isNewBest }) {
   elements.successModalStars.textContent = '★'.repeat(earnedStars) + '☆'.repeat(MAX_STARS - earnedStars);
   elements.successModalStarText.textContent = `${earnedStars} von ${MAX_STARS} Sternen`;
   elements.successModalBest.hidden = !isNewBest;
-  elements.successModalMessage.textContent = getSuccessMessage(earnedStars);
+  elements.successModalMessage.textContent = `${getHelpUsageMessage(currentLevelHelpUsage)}. ${getSuccessMessage(earnedStars)}`;
   elements.successModalCompletion.hidden = !(isFinalLevel && hasBestStarsForUnlock);
   elements.successModalActions.innerHTML = '';
 
@@ -2166,18 +2195,25 @@ function handleSuccessModalKeydown(event) {
 }
 
 function showHint() {
+  const level = LEVELS[currentLevelIndex];
   elements.hintText.hidden = false;
-  setFeedback('Der Hinweis ist jetzt sichtbar.', 'info');
+  currentLevelHelpUsage.hintUsed = true;
+  if (!progress.hintUsedLevelIds.includes(level.id)) {
+    progress.hintUsedLevelIds.push(level.id);
+    saveProgress();
+  }
+  setFeedback('Der Hinweis ist jetzt sichtbar. Hinweis verwendet: maximal 2 Sterne.', 'info');
 }
 
 function showSolution() {
   const level = LEVELS[currentLevelIndex];
   elements.solutionBox.hidden = false;
+  currentLevelHelpUsage.solutionViewed = true;
   if (!progress.solutionViewedLevelIds.includes(level.id)) {
     progress.solutionViewedLevelIds.push(level.id);
     saveProgress();
   }
-  setFeedback('Die Musterlösung ist jetzt sichtbar. Führe sie aus, wenn du das Level lösen möchtest.', 'info');
+  setFeedback('Die Musterlösung ist jetzt sichtbar. Lösung angesehen: maximal 1 Stern. Führe sie aus, wenn du das Level lösen möchtest.', 'info');
 }
 
 function isQuestCompleted() {
@@ -2233,7 +2269,8 @@ function markAllLevelsSolvedForTesting() {
   }, {});
   progress.levelAttempts = progress.levelAttempts && typeof progress.levelAttempts === 'object' ? progress.levelAttempts : {};
   progress.savedQueries = progress.savedQueries && typeof progress.savedQueries === 'object' ? progress.savedQueries : {};
-  progress.solutionViewedLevelIds = Array.isArray(progress.solutionViewedLevelIds) ? progress.solutionViewedLevelIds : [];
+  progress.hintUsedLevelIds = [];
+  progress.solutionViewedLevelIds = [];
   progress.score = LEVELS.reduce((score, level) => score + (Number(level.points) || 0), 0);
   currentLevelIndex = Math.min(currentLevelIndex, LEVELS.length - 1);
   saveProgress();
