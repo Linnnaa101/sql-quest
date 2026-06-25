@@ -987,7 +987,7 @@ function showLevelOverview() {
     renderLevelList();
     renderSqlBasicsChapters();
     renderLearnedOverview();
-    showOverviewTab('levels');
+    showOverviewTab('dashboard');
     updateProgressBar();
     renderCompletionCard();
     renderBadges();
@@ -997,25 +997,13 @@ function showLevelOverview() {
 
 
 
-function getDashboardProgressSummary() {
-  const solved = getSolvedLevelIdSet();
-  const buckets = ['Anfänger', 'Fortgeschritten', 'Meister'].map(title => {
-    const bucketLevels = LEVELS.filter(level => level.difficulty === title);
-    const solvedCount = bucketLevels.filter(level => solved.has(level.id)).length;
-    return { title, solved: solvedCount, total: bucketLevels.length, percent: bucketLevels.length ? Math.round((solvedCount / bucketLevels.length) * 100) : 0 };
-  });
-  const solvedLevels = LEVELS.filter(level => solved.has(level.id)).length;
-  return { solvedLevels, totalLevels: LEVELS.length, collectedStars: getCollectedStars(), maxStars: LEVELS.length * MAX_STARS, percent: LEVELS.length ? Math.round((solvedLevels / LEVELS.length) * 100) : 0, buckets };
-}
 
-function selectNextMissionLevel() {
-  const solved = getSolvedLevelIdSet();
-  const unlockedLevels = LEVELS.filter((level, index) => isLevelUnlocked(index));
-  const unsolved = unlockedLevels.find(level => !solved.has(level.id));
-  if (unsolved) return unsolved;
-  const underThree = unlockedLevels.find(level => getLevelStars(level.id) < MAX_STARS);
-  if (underThree) return underThree;
-  return LEVELS.find((level, index) => !isLevelUnlocked(index)) || unlockedLevels[0] || LEVELS[0] || null;
+function withTemporaryProgress(sourceProgress, callback) {
+  const previousProgress = progress;
+  progress = sourceProgress;
+  const result = callback();
+  progress = previousProgress;
+  return result;
 }
 
 function renderDashboard() {
@@ -1023,16 +1011,17 @@ function renderDashboard() {
   const previousProgress = progress;
   progress = updateDailyChallengeProgress(progress);
   persistDailyChallengeIfChanged(previousProgress, progress);
-  const summary = getDashboardProgressSummary();
-  const mission = selectNextMissionLevel();
-  const daily = progress.dailyChallenge;
-  const dailyLevel = daily.levelId ? LEVELS.find(level => Number(level.id) === Number(daily.levelId)) : null;
-  progress = normalizeTimeChallenge(progress);
-  const time = progress.timeChallenge;
-  const badges = BADGE_DEFINITIONS.map(badge => ({ ...badge, unlocked: isBadgeUnlocked(badge.id), unlockedAt: progress.unlockedBadgeDates?.[badge.id] || null }));
-  const unlockedBadges = badges.filter(badge => badge.unlocked).sort((a, b) => String(b.unlockedAt || '').localeCompare(String(a.unlockedAt || '')));
-  const activityId = progress.lastSolvedLevelId || progress.lastOpenedLevelId;
-  const activityLevel = activityId ? LEVELS.find(level => Number(level.id) === Number(activityId)) : null;
+  const dashboard = SqlQuestDashboardLogic.buildDashboardData(LEVELS, progress, {
+    isUnlocked: (_level, index) => isLevelUnlocked(index),
+    updateDailyChallengeProgress: sourceProgress => updateDailyChallengeProgress(sourceProgress),
+    calculateBadges: sourceProgress => BADGE_DEFINITIONS.map(badge => ({ ...badge, unlocked: withTemporaryProgress(sourceProgress, () => isBadgeUnlocked(badge.id)), unlockedAt: sourceProgress.unlockedBadgeDates?.[badge.id] || null }))
+  });
+  const mission = dashboard.nextMission.level;
+  const summary = dashboard.progress;
+  const daily = dashboard.dailyChallenge;
+  const dailyLevel = daily.level;
+  const time = dashboard.timeChallenge;
+  const activityLevel = dashboard.activity.level;
   const missionStars = mission ? getLevelStars(mission.id) : 0;
   elements.dashboardContent.innerHTML = `
     <article class="dashboard-card next-mission-card">
@@ -1042,8 +1031,8 @@ function renderDashboard() {
     <article class="dashboard-card challenge-card daily-dashboard-card"><h3>⚡ Tages-Challenge</h3>${dailyLevel ? `<p>Level ${dailyLevel.id}: ${dailyLevel.title}</p><p>Status: <strong>${daily.completed ? 'geschafft' : 'offen'}</strong></p><button class="primary-button" type="button" data-action="daily">Challenge starten</button>` : '<p class="empty-state">Heute keine Challenge verfügbar.</p>'}</article>
     <article class="dashboard-card challenge-card time-dashboard-card"><h3>⏱ Zeit-Challenge</h3><p>5 Level in 5 Minuten</p><p>${time.completedChallengeCount} erfolgreich abgeschlossen</p><p>Beste Restzeit: ${time.bestRemainingSeconds ? formatTimeChallengeSeconds(time.bestRemainingSeconds) : '—'}</p><button class="primary-button" type="button" data-action="time">Zeit-Challenge starten</button></article>
     <article class="dashboard-card progress-dashboard-card"><h3>Fortschritt</h3><p>${summary.solvedLevels} von ${summary.totalLevels} Leveln gelöst · ${summary.collectedStars} von ${summary.maxStars} Sternen</p><div class="progress-track" role="progressbar" aria-label="Gesamtfortschritt ${summary.percent} Prozent" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${summary.percent}"><div class="progress-fill" style="width:${summary.percent}%"></div></div>${summary.buckets.map(bucket => `<p>${bucket.title}: ${bucket.solved}/${bucket.total} (${bucket.percent} %)</p>`).join('')}</article>
-    <article class="dashboard-card"><h3>Letzte Aktivität</h3>${activityLevel ? `<p>${progress.lastSolvedLevelId ? 'Zuletzt gelöst' : 'Zuletzt geöffnet'}: Level ${activityLevel.id}: ${activityLevel.title}</p><p>${renderStars(getLevelStars(activityLevel.id))}</p><button class="secondary-button" type="button" data-action="activity">Weiter üben</button>` : '<p>Starte dein erstes Level und beginne deine SQL Quest.</p>'}</article>
-    <article class="dashboard-card"><h3>Abzeichen</h3><p>${unlockedBadges.length} von ${badges.length} freigeschaltet</p><p>${unlockedBadges[0] ? `Zuletzt: ${unlockedBadges[0].icon} ${unlockedBadges[0].title}` : 'Noch kein Abzeichen freigeschaltet.'}</p><button class="secondary-button" type="button" data-action="badges">Abzeichen ansehen</button></article>`;
+    <article class="dashboard-card"><h3>Letzte Aktivität</h3>${activityLevel ? `<p>${dashboard.activity.type === 'solved' ? 'Zuletzt gelöst' : 'Zuletzt geöffnet'}: Level ${activityLevel.id}: ${activityLevel.title}</p><p>${renderStars(getLevelStars(activityLevel.id))}</p><button class="secondary-button" type="button" data-action="activity">Weiter üben</button>` : `<p>${dashboard.activity.emptyText}</p>`}</article>
+    <article class="dashboard-card"><h3>Abzeichen</h3><p>${dashboard.badges.unlockedCount} von ${dashboard.badges.totalCount} freigeschaltet</p><p>${dashboard.badges.latest ? `Zuletzt: ${dashboard.badges.latest.icon} ${dashboard.badges.latest.title}` : 'Noch kein Abzeichen freigeschaltet.'}</p><button class="secondary-button" type="button" data-action="badges">Abzeichen ansehen</button></article>`;
   const on = (action, handler) => elements.dashboardContent.querySelector(`[data-action="${action}"]`)?.addEventListener('click', handler);
   on('mission', () => loadLevel(LEVELS.indexOf(mission)));
   on('daily', () => dailyLevel && loadLevel(LEVELS.indexOf(dailyLevel), { dailyChallenge: true }));
