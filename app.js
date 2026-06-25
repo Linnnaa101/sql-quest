@@ -646,6 +646,7 @@ const elements = {
   timeChallengeSummary: document.querySelector('#timeChallengeSummary'),
   timeChallengeContent: document.querySelector('#timeChallengeContent'),
   timeChallengeTimer: document.querySelector('#timeChallengeTimer'),
+  editorCard: document.querySelector('#editorCard'),
   replayOverviewSummary: document.querySelector('#replayOverviewSummary'),
   replayLevelList: document.querySelector('#replayLevelList'),
   replayAllFilterButton: document.querySelector('#replayAllFilterButton'),
@@ -1601,10 +1602,17 @@ function startTimeChallenge() {
   loadLevel(LEVELS.indexOf(levels[0]), { timeChallenge: true });
 }
 
+function scrollToTimeChallengeEditor() {
+  window.requestAnimationFrame(() => {
+    elements.editorCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
 function beginTimeChallenge(level) {
   if (!activeTimeChallenge || activeTimeChallenge.completed || activeTimeChallenge.expired) return;
   activeTimeChallenge.levelId = level.id;
   updateTimeChallengeTimer();
+  scrollToTimeChallengeEditor();
   if (timeChallengeIntervalId) return;
   timeChallengeIntervalId = window.setInterval(() => {
     if (!activeTimeChallenge) return;
@@ -1628,7 +1636,7 @@ function updateTimeChallengeTimer() {
   const currentNumber = Math.min(activeTimeChallenge.currentIndex + 1, total);
   const level = LEVELS.find(candidate => candidate.id === activeTimeChallenge.levelId) || LEVELS.find(candidate => candidate.id === activeTimeChallenge.levelIds[activeTimeChallenge.currentIndex]);
   elements.timeChallengeTimer.hidden = false;
-  elements.timeChallengeTimer.innerHTML = `<div class="time-challenge-timer-top"><strong>⏱ ${formatTimeChallengeSeconds(activeTimeChallenge.remainingSeconds)}</strong><span>Level ${currentNumber} von ${total}</span></div><div class="challenge-progress-track" aria-label="Challenge-Fortschritt" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${solved}" role="progressbar"><span style="width: ${total ? (solved / total) * 100 : 0}%"></span></div><span>${level ? `Level ${level.id}: ${level.title}` : 'Zeit-Challenge'}</span>`;
+  elements.timeChallengeTimer.innerHTML = `<div class="time-challenge-timer-top"><strong>⏱ ${formatTimeChallengeSeconds(activeTimeChallenge.remainingSeconds)}</strong><span>Level ${currentNumber} von ${total}</span></div><div class="challenge-progress-track" aria-label="Challenge-Fortschritt" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${solved}" role="progressbar"><span style="width: ${total ? (solved / total) * 100 : 0}%"></span></div><span class="time-challenge-level-title">${level ? `Level ${level.id}: ${level.title}` : 'Zeit-Challenge'}</span>`;
 }
 
 function stopTimeChallenge() {
@@ -1654,9 +1662,9 @@ function finishTimeChallenge(wasCompleted) {
     progress.timeChallenge.bestExpiredSolvedCount = Math.max(progress.timeChallenge.bestExpiredSolvedCount, summary.solvedCount);
   }
   saveProgress({ refreshDailyChallenge: false });
-  updateTimeChallengeTimer();
-  showTimeChallengeEndCard(summary);
   activeTimeChallenge = null;
+  if (elements.timeChallengeTimer) elements.timeChallengeTimer.hidden = true;
+  showTimeChallengeEndCard(summary);
   return summary;
 }
 
@@ -1681,10 +1689,7 @@ function showTimeChallengeEndCard(summary) {
     ? `🎉 Zeit-Challenge geschafft!\n${summary.solvedCount} von ${summary.totalCount} Leveln gelöst.\nVerbleibende Zeit: ${formatTimeChallengeSeconds(summary.remainingSeconds)}`
     : `⏱ Zeit abgelaufen.\nDu hast ${summary.solvedCount} von ${summary.totalCount} Challenge-Leveln geschafft.\nDeine Sterne und Punkte bleiben unverändert geschützt.`;
   setFeedback(message, summary.wasCompleted ? 'success' : 'info');
-  elements.timeChallengeTimer.hidden = false;
-  elements.timeChallengeTimer.innerHTML = `<div class="time-challenge-end-card"><h3>${summary.wasCompleted ? '🎉 Zeit-Challenge geschafft!' : '⏱ Zeit abgelaufen'}</h3><p>${summary.solvedCount} von ${summary.totalCount} Challenge-Leveln gelöst.</p><p>${summary.wasCompleted ? `Verbleibende Zeit: ${formatTimeChallengeSeconds(summary.remainingSeconds)}` : 'Deine Sterne und Punkte bleiben unverändert geschützt.'}</p><div class="daily-challenge-actions"><button class="primary-button" type="button" data-action="overview">Zur Übersicht</button><button class="secondary-button" type="button" data-action="restart">Neue Zeit-Challenge starten</button></div></div>`;
-  elements.timeChallengeTimer.querySelector('[data-action="overview"]').addEventListener('click', showLevelOverview);
-  elements.timeChallengeTimer.querySelector('[data-action="restart"]').addEventListener('click', startTimeChallenge);
+  if (elements.timeChallengeTimer) elements.timeChallengeTimer.hidden = true;
 }
 
 function getSolvedLevelsForReplay() {

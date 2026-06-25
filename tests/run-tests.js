@@ -9,6 +9,10 @@ vm.runInContext(`${levelsCode}\nthis.LEVELS = LEVELS;`, context);
 const { LEVELS } = context;
 
 const appCode = fs.readFileSync('app.js', 'utf8');
+
+const indexCode = fs.readFileSync('index.html', 'utf8');
+assert.ok(indexCode.indexOf('id="timeChallengeTimer"') > indexCode.indexOf('id="editorCard"'), 'Timerbereich liegt innerhalb der Editor-Karte.');
+assert.ok(indexCode.indexOf('id="timeChallengeTimer"') < indexCode.indexOf('Deine SQL-Abfrage'), 'Timerbereich steht direkt oberhalb der SQL-Eingabe-Überschrift.');
 const normalizeTimeChallengeIndex = appCode.indexOf('function normalizeTimeChallenge(progress = {})');
 assert.ok(normalizeTimeChallengeIndex >= 0, 'Browser-App stellt normalizeTimeChallenge direkt in app.js bereit.');
 assert.ok(normalizeTimeChallengeIndex < appCode.indexOf('function renderTimeChallengeOverview()'), 'normalizeTimeChallenge ist vor dem Zeit-Challenge-Rendering verfügbar.');
@@ -225,5 +229,11 @@ assert.equal(/finishTimeChallenge\(false\)/.test(appCode), true, 'Bei Zeitablauf
 assert.equal(/timeChallengeResult\?\.nextLevel/.test(appCode), true, 'Challenge-Fortschritt lädt nur das nächste Challenge-Level.');
 assert.equal(/stopTimeChallenge\('level-change'\)/.test(appCode), true, 'Timer wird beim normalen Levelwechsel beendet.');
 assert.equal(/stopTimeChallenge\('reset'\)/.test(appCode), true, 'Timer wird beim Reset beendet.');
+
+assert.equal(/activeTimeChallenge = \{ active: true, levelIds: levels\.map\(level => level\.id\), currentIndex: 0, remainingSeconds: TIME_CHALLENGE_LIMIT_SECONDS/.test(appCode), true, 'Zeit-Challenge aktiviert den sichtbaren Timerbereich beim Start sofort mit voller Startzeit.');
+assert.equal(/Level \$\{currentNumber\} von \$\{total\}/.test(appCode), true, 'Timeranzeige enthält Level X von Y.');
+assert.equal(/activeTimeChallenge\.levelId = nextLevel\?\.id;\n\s*updateTimeChallengeTimer\(\);/.test(appCode), true, 'Timer bleibt beim Wechsel zum nächsten Challenge-Level aktiv und aktualisiert sich.');
+assert.equal(/activeTimeChallenge = null;\n\s*if \(elements\.timeChallengeTimer\) elements\.timeChallengeTimer\.hidden = true;\n\s*showTimeChallengeEndCard/.test(appCode), true, 'Timerbereich wird nach Challenge-Ende ausgeblendet.');
+assert.equal(/scrollToTimeChallengeEditor\(\)/.test(appCode), true, 'Zeit-Challenge scrollt automatisch zur Editoransicht.');
 
 console.log('Alle Tests erfolgreich.');

@@ -2086,7 +2086,7 @@ span {
   border-radius: 18px;
   background: rgba(255, 209, 102, 0.1);
 }
-.time-challenge-timer {
+.editor-card .time-challenge-timer {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -2098,6 +2098,7 @@ span {
   color: #ffe6a3;
   font-weight: 800;
   max-width: 100%;
+  margin: 0 0 8px;
 }
 .time-challenge-timer-top {
   display: flex;
@@ -2108,7 +2109,7 @@ span {
 }
 .time-challenge-timer strong {
   color: var(--warning);
-  font-size: clamp(1.25rem, 8vw, 2rem);
+  font-size: clamp(1.2rem, 6vw, 1.65rem);
   line-height: 1;
 }
 .challenge-progress-track {
@@ -2138,12 +2139,12 @@ span {
   overflow-wrap: anywhere;
 }
 @media (max-width: 430px) {
-  .time-challenge-timer,
+  .editor-card .time-challenge-timer,
   .time-challenge-card,
   .daily-challenge-actions {
     width: 100%;
   }
-  .time-challenge-timer {
+  .editor-card .time-challenge-timer {
     align-items: flex-start;
     flex-direction: column;
   }
