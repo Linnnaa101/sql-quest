@@ -354,8 +354,6 @@ produkte 1 ─── n bestellpositionen</pre>
           </article>
         </section>
 
-        <article id="timeChallengeTimer" class="time-challenge-timer" aria-live="polite" hidden></article>
-
         <article class="card level-card">
           <div class="level-meta">
             <span id="difficulty" class="pill">Anfänger</span>
@@ -370,7 +368,8 @@ produkte 1 ─── n bestellpositionen</pre>
           <p id="hintText" class="hint-text" hidden></p>
         </article>
 
-        <article class="card editor-card">
+        <article id="editorCard" class="card editor-card">
+          <article id="timeChallengeTimer" class="time-challenge-timer" aria-live="polite" hidden></article>
           <div class="editor-heading">
             <label for="sqlInput">Deine SQL-Abfrage</label>
             <button id="hintButton" class="hint-button" type="button" aria-label="Tipp anzeigen">💡</button>
@@ -384,6 +383,7 @@ produkte 1 ─── n bestellpositionen</pre>
           </div>
           <div id="solutionBox" class="solution-box" hidden></div>
           <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+          <article id="timeChallengeEndCard" class="time-challenge-end-card" aria-live="polite" hidden></article>
         </article>
 
         <article class="card result-card">
