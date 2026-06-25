@@ -173,4 +173,26 @@ const nextDayStored = logic.updateDailyChallengeProgress(LEVELS, sameDayAfterPro
 assert.equal(nextDayStored.dailyChallenge.date, '2026-06-25', 'Am nächsten Tag wird eine neue Tages-Challenge gespeichert.');
 assert.equal(logic.hasDailyChallengeChanged(sameDayAfterProgress, nextDayStored), true, 'Tageswechsel wird genau als speicherpflichtige Änderung erkannt.');
 
+const unlockedTimeChallengeProgress = { solvedLevelIds: [1], levelStars: { 1: 2 } };
+const timeChallengeUnlockedIds = logic.getTimeChallengeCandidateGroups(LEVELS, unlockedTimeChallengeProgress, unlockedForProgress(unlockedTimeChallengeProgress)).flat().map(level => level.id);
+assert.equal(timeChallengeUnlockedIds.every(id => logic.isLevelUnlocked(LEVELS, unlockedTimeChallengeProgress, indexOf(id))), true, 'Zeit-Challenge wählt nur freigeschaltete Level.');
+const timeUnsolved = logic.selectTimeChallengeLevel(LEVELS, unlockedTimeChallengeProgress, unlockedForProgress(unlockedTimeChallengeProgress), () => 0);
+assert.equal(timeUnsolved.id, 2, 'Zeit-Challenge priorisiert ungelöste freigeschaltete Level.');
+const timeUnderThree = logic.selectTimeChallengeLevel(LEVELS, { solvedLevelIds: [1, 2], levelStars: { 1: 3, 2: 2 } }, (_level, index) => index < 2, () => 0);
+assert.equal(timeUnderThree.id, 2, 'Zeit-Challenge fällt auf Level mit weniger als 3 Sternen zurück.');
+assert.equal(logic.formatTimeChallengeSeconds(300), '5:00', 'Zeit-Challenge formatiert 300 Sekunden als 5:00.');
+assert.equal(logic.isTimeChallengeSuccess({ active: true, levelId: 1, expired: false }, 1, 12), true, 'Zeit-Challenge erkennt Erfolg vor Ablauf.');
+const expiredProtected = logic.solveLevelWithStars(LEVELS, { solvedLevelIds: [1], levelStars: { 1: 3 }, score: fullPoints }, 1, 1);
+assert.equal(expiredProtected.levelStars[1], 3, 'Zeitablauf oder schwächerer Versuch verändert Sterne nicht.');
+assert.equal(expiredProtected.score, fullPoints, 'Zeitablauf oder schwächerer Versuch verändert Punkte nicht.');
+let timeProgress = logic.recordTimeChallengeSuccess({ solvedLevelIds: [1], levelStars: { 1: 3 } }, 1, 100);
+timeProgress = logic.recordTimeChallengeSuccess(timeProgress, 1, 80);
+assert.equal(timeProgress.timeChallenge.bestRemainingSecondsByLevel[1], 100, 'Beste Zeit wird nicht verschlechtert.');
+timeProgress = logic.recordTimeChallengeSuccess(timeProgress, 1, 120);
+assert.equal(timeProgress.timeChallenge.bestRemainingSecondsByLevel[1], 120, 'Beste Zeit wird verbessert.');
+assert.deepEqual(logic.normalizeTimeChallenge({ solvedLevelIds: [], levelStars: {} }).timeChallenge, { bestRemainingSecondsByLevel: {}, completedCount: 0, lastStartedLevelId: null }, 'Reset entfernt gespeicherte Zeit-Challenge-Daten.');
+assert.deepEqual(logic.normalizeTimeChallenge({ solvedLevelIds: [1], levelStars: { 1: 3 } }).timeChallenge, { bestRemainingSecondsByLevel: {}, completedCount: 0, lastStartedLevelId: null }, 'Alte Fortschrittsdaten ohne Zeit-Challenge-Felder funktionieren.');
+const testModeTimeLevel = logic.selectTimeChallengeLevel(LEVELS, solved, () => true, () => 0.4);
+assert.ok(LEVELS.some(level => level.id === testModeTimeLevel.id), 'Testmodus bleibt für Zeit-Challenges kompatibel.');
+
 console.log('Alle Tests erfolgreich.');

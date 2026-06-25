@@ -230,6 +230,7 @@ produkte 1 ─── n bestellpositionen</pre>
         <button id="levelsTabButton" class="overview-tab active" type="button" role="tab" aria-selected="true" aria-controls="levelsOverviewPanel">Levelübersicht</button>
         <button id="learnedOverviewTabButton" class="overview-tab" type="button" role="tab" aria-selected="false" aria-controls="learnedOverviewPanel">Was habe ich gelernt?</button>
         <button id="replayTabButton" class="overview-tab" type="button" role="tab" aria-selected="false" aria-controls="replayOverviewPanel">Wiederholen</button>
+        <button id="timeChallengeTabButton" class="overview-tab" type="button" role="tab" aria-selected="false" aria-controls="timeChallengeOverviewPanel">Zeit-Challenge</button>
       </div>
 
       <div id="levelsOverviewPanel" role="tabpanel" aria-labelledby="levelsTabButton">
@@ -296,6 +297,18 @@ produkte 1 ─── n bestellpositionen</pre>
         <div id="replayLevelList" class="level-list compact-level-grid" aria-live="polite"></div>
       </section>
 
+      <section id="timeChallengeOverviewPanel" class="time-challenge-overview-panel" role="tabpanel" aria-labelledby="timeChallengeTabButton" hidden>
+        <div class="learned-overview-heading">
+          <div>
+            <p class="eyebrow">5-Minuten-Challenge</p>
+            <h3>Zeit-Challenge</h3>
+          </div>
+          <span id="timeChallengeSummary" class="info-progress">Bereit</span>
+        </div>
+        <p class="muted">Starte ein freigeschaltetes Level unter Zeitdruck. Sterne, Punkte, Hinweise und Lösungsabzüge gelten normal – schlechtere Ergebnisse senken deinen Fortschritt nie.</p>
+        <div id="timeChallengeContent" class="daily-challenge-content" aria-live="polite"></div>
+      </section>
+
       <section id="learnedOverviewPanel" class="learned-overview-panel" role="tabpanel" aria-labelledby="learnedOverviewTabButton" hidden>
         <div class="learned-overview-heading">
           <div>
@@ -340,6 +353,8 @@ produkte 1 ─── n bestellpositionen</pre>
             <div id="learnedSqlList" class="learned-sql-list" aria-live="polite"></div>
           </article>
         </section>
+
+        <article id="timeChallengeTimer" class="time-challenge-timer" aria-live="polite" hidden></article>
 
         <article class="card level-card">
           <div class="level-meta">

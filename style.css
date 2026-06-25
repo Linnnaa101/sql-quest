@@ -2072,3 +2072,49 @@ span {
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+.time-challenge-overview-panel {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+.time-challenge-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255, 209, 102, 0.42);
+  border-radius: 18px;
+  background: rgba(255, 209, 102, 0.1);
+}
+.time-challenge-timer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 209, 102, 0.55);
+  border-radius: 18px;
+  background: rgba(255, 209, 102, 0.14);
+  color: #ffe6a3;
+  font-weight: 800;
+}
+.time-challenge-timer strong {
+  color: var(--warning);
+  font-size: clamp(1.25rem, 8vw, 2rem);
+  line-height: 1;
+}
+.time-challenge-timer span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 430px) {
+  .time-challenge-timer,
+  .time-challenge-card,
+  .daily-challenge-actions {
+    width: 100%;
+  }
+  .time-challenge-timer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
