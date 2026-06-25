@@ -1501,6 +1501,19 @@ function markDailyChallengeCompleted(levelId) {
 }
 
 
+function normalizeTimeChallenge(progress = {}) {
+  const challenge = progress.timeChallenge && typeof progress.timeChallenge === 'object' ? progress.timeChallenge : {};
+  return {
+    ...progress,
+    timeChallenge: {
+      bestRemainingSecondsByLevel: challenge.bestRemainingSecondsByLevel && typeof challenge.bestRemainingSecondsByLevel === 'object' ? challenge.bestRemainingSecondsByLevel : {},
+      completedCount: Number.isInteger(Number(challenge.completedCount)) ? Math.max(0, Number(challenge.completedCount)) : 0,
+      lastStartedLevelId: Number.isInteger(Number(challenge.lastStartedLevelId)) ? Number(challenge.lastStartedLevelId) : null
+    }
+  };
+}
+
+
 function formatTimeChallengeSeconds(seconds = 0) {
   const safeSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
   return `${Math.floor(safeSeconds / 60)}:${String(safeSeconds % 60).padStart(2, '0')}`;
