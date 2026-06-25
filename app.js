@@ -15,6 +15,7 @@ const BADGE_DEFINITIONS = [
 ];
 const MILESTONE_DEFINITIONS = [25, 50, 75, 100];
 const TIME_CHALLENGE_LIMIT_SECONDS = 300;
+const TIME_CHALLENGE_LEVEL_COUNT = 5;
 const READ_ONLY_SQL_MESSAGE = 'SQL Quest erlaubt nur lesende Abfragen. Die Übungsdatenbank wurde nicht verändert. Verwende für diese Aufgabe bitte eine SELECT-Abfrage.';
 const IS_TEST_MODE = new URLSearchParams(window.location.search).get('testmode') === '1';
 let currentLevelHelpUsage = { hintUsed: false, solutionViewed: false };
@@ -1508,6 +1509,9 @@ function normalizeTimeChallenge(progress = {}) {
     timeChallenge: {
       bestRemainingSecondsByLevel: challenge.bestRemainingSecondsByLevel && typeof challenge.bestRemainingSecondsByLevel === 'object' ? challenge.bestRemainingSecondsByLevel : {},
       completedCount: Number.isInteger(Number(challenge.completedCount)) ? Math.max(0, Number(challenge.completedCount)) : 0,
+      completedChallengeCount: Number.isInteger(Number(challenge.completedChallengeCount)) ? Math.max(0, Number(challenge.completedChallengeCount)) : (Number.isInteger(Number(challenge.completedCount)) ? Math.max(0, Number(challenge.completedCount)) : 0),
+      bestRemainingSeconds: Number.isFinite(Number(challenge.bestRemainingSeconds)) ? Math.max(0, Math.floor(Number(challenge.bestRemainingSeconds))) : 0,
+      bestExpiredSolvedCount: Number.isInteger(Number(challenge.bestExpiredSolvedCount)) ? Math.max(0, Number(challenge.bestExpiredSolvedCount)) : 0,
       lastStartedLevelId: Number.isInteger(Number(challenge.lastStartedLevelId)) ? Number(challenge.lastStartedLevelId) : null
     }
   };
@@ -1519,70 +1523,95 @@ function formatTimeChallengeSeconds(seconds = 0) {
   return `${Math.floor(safeSeconds / 60)}:${String(safeSeconds % 60).padStart(2, '0')}`;
 }
 
-function selectTimeChallengeLevel(random = Math.random) {
+function getTimeChallengeCandidateGroups() {
   const solved = getSolvedLevelIdSet();
   const unlocked = LEVELS.filter((level, index) => isLevelUnlocked(index));
-  const groups = [
+  return [
     unlocked.filter(level => !solved.has(Number(level.id))),
     unlocked.filter(level => getLevelStars(level.id) < MAX_STARS),
     unlocked
   ];
-  const candidates = groups.find(group => group.length > 0) || [];
-  if (!candidates.length) return null;
-  return candidates[Math.floor(Math.max(0, Math.min(0.999999999999, Number(random()) || 0)) * candidates.length)] || null;
+}
+
+function selectTimeChallengeLevel(random = Math.random) {
+  return selectTimeChallengeLevels(random, 1)[0] || null;
+}
+
+function shuffleTimeChallengeCandidates(candidates = [], random = Math.random) {
+  const shuffled = [...candidates];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomValue = Math.max(0, Math.min(0.999999999999, Number(random()) || 0));
+    const swapIndex = Math.floor(randomValue * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
+}
+
+function selectTimeChallengeLevels(random = Math.random, count = TIME_CHALLENGE_LEVEL_COUNT) {
+  const selected = [];
+  const selectedIds = new Set();
+  for (const group of getTimeChallengeCandidateGroups()) {
+    const uniqueGroup = group.filter(level => !selectedIds.has(Number(level.id)));
+    for (const level of shuffleTimeChallengeCandidates(uniqueGroup, random)) {
+      if (selectedIds.has(Number(level.id))) continue;
+      selected.push(level);
+      selectedIds.add(Number(level.id));
+      if (selected.length >= count) return selected;
+    }
+  }
+  return selected;
 }
 
 function renderTimeChallengeOverview() {
   progress = normalizeTimeChallenge(progress);
-  const level = selectTimeChallengeLevel();
-  elements.timeChallengeSummary.textContent = `${progress.timeChallenge.completedCount} geschafft`;
+  const previewLevels = selectTimeChallengeLevels(Math.random);
+  elements.timeChallengeSummary.textContent = `${progress.timeChallenge.completedChallengeCount} geschafft`;
   elements.timeChallengeContent.innerHTML = '';
-  if (!level) {
+  if (!previewLevels.length) {
     elements.timeChallengeContent.innerHTML = '<p class="empty-state">Noch kein freigeschaltetes Level für die Zeit-Challenge verfügbar.</p>';
     return;
   }
-  const best = Number(progress.timeChallenge.bestRemainingSecondsByLevel[level.id]) || 0;
+  const best = Number(progress.timeChallenge.bestRemainingSeconds) || 0;
   const article = document.createElement('article');
   article.className = 'time-challenge-card';
   article.innerHTML = `
-    <h3 class="daily-challenge-title">Level ${level.id}: ${level.title}</h3>
+    <h3 class="daily-challenge-title">5 zufällige freigeschaltete Level</h3>
     <div class="daily-challenge-meta">
-      <span>Verbleibende Zeit: ${formatTimeChallengeSeconds(TIME_CHALLENGE_LIMIT_SECONDS)}</span>
-      <span>Kategorie: ${level.difficulty}</span>
-      <span>Aktuelle Sterne: ${renderStars(getLevelStars(level.id))}</span>
+      <span>Gesamtzeit: ${formatTimeChallengeSeconds(TIME_CHALLENGE_LIMIT_SECONDS)}</span>
+      <span>Level pro Runde: ${previewLevels.length}</span>
       <span>Bestzeit: ${best ? formatTimeChallengeSeconds(best) : '—'}</span>
+      <span>Bester Ablauf-Fortschritt: ${progress.timeChallenge.bestExpiredSolvedCount || 0}</span>
     </div>
+    <p>Bei jedem Start wird eine neue zufällige Auswahl ohne Duplikate erzeugt. Priorität haben ungelöste Level und Level mit weniger als 3 Sternen.</p>
     <div class="daily-challenge-actions">
-      <button class="primary-button" type="button" data-action="recommended">Zeit-Challenge starten</button>
-      <button class="secondary-button" type="button" data-action="random">Zufälliges freigeschaltetes Level</button>
+      <button class="primary-button" type="button" data-action="start">Zeit-Challenge starten</button>
     </div>`;
-  article.querySelector('[data-action="recommended"]').addEventListener('click', () => startTimeChallenge(level));
-  article.querySelector('[data-action="random"]').addEventListener('click', () => startTimeChallenge(selectTimeChallengeLevel(Math.random)));
+  article.querySelector('[data-action="start"]').addEventListener('click', () => startTimeChallenge());
   elements.timeChallengeContent.append(article);
 }
 
-function startTimeChallenge(level) {
-  if (!level) return;
+function startTimeChallenge() {
+  const levels = selectTimeChallengeLevels(Math.random);
+  if (!levels.length) return;
+  stopTimeChallenge('restart');
   progress = normalizeTimeChallenge(progress);
-  progress.timeChallenge.lastStartedLevelId = level.id;
+  progress.timeChallenge.lastStartedLevelId = levels[0].id;
   saveProgress({ refreshDailyChallenge: false });
-  loadLevel(LEVELS.indexOf(level), { timeChallenge: true });
+  activeTimeChallenge = { active: true, levelIds: levels.map(level => level.id), currentIndex: 0, remainingSeconds: TIME_CHALLENGE_LIMIT_SECONDS, expired: false, completed: false };
+  loadLevel(LEVELS.indexOf(levels[0]), { timeChallenge: true });
 }
 
 function beginTimeChallenge(level) {
-  stopTimeChallenge('restart');
-  activeTimeChallenge = { active: true, levelId: level.id, remainingSeconds: TIME_CHALLENGE_LIMIT_SECONDS, expired: false };
+  if (!activeTimeChallenge || activeTimeChallenge.completed || activeTimeChallenge.expired) return;
+  activeTimeChallenge.levelId = level.id;
   updateTimeChallengeTimer();
+  if (timeChallengeIntervalId) return;
   timeChallengeIntervalId = window.setInterval(() => {
     if (!activeTimeChallenge) return;
     activeTimeChallenge.remainingSeconds -= 1;
     if (activeTimeChallenge.remainingSeconds <= 0) {
       activeTimeChallenge.remainingSeconds = 0;
-      activeTimeChallenge.expired = true;
-      updateTimeChallengeTimer();
-      window.clearInterval(timeChallengeIntervalId);
-      timeChallengeIntervalId = null;
-      setFeedback('Zeit abgelaufen. Das Level bleibt normal spielbar – Sterne und Punkte werden nicht reduziert.', 'info');
+      finishTimeChallenge(false);
       return;
     }
     updateTimeChallengeTimer();
@@ -1594,9 +1623,12 @@ function updateTimeChallengeTimer() {
     elements.timeChallengeTimer.hidden = true;
     return;
   }
-  const level = LEVELS.find(candidate => candidate.id === activeTimeChallenge.levelId);
+  const total = activeTimeChallenge.levelIds.length;
+  const solved = Math.min(activeTimeChallenge.currentIndex, total);
+  const currentNumber = Math.min(activeTimeChallenge.currentIndex + 1, total);
+  const level = LEVELS.find(candidate => candidate.id === activeTimeChallenge.levelId) || LEVELS.find(candidate => candidate.id === activeTimeChallenge.levelIds[activeTimeChallenge.currentIndex]);
   elements.timeChallengeTimer.hidden = false;
-  elements.timeChallengeTimer.innerHTML = `<strong>⏱ ${formatTimeChallengeSeconds(activeTimeChallenge.remainingSeconds)}</strong><span>Level ${level.id}: ${level.title}</span><span>Kategorie: ${level.difficulty}</span><span>Sterne: ${renderStars(getLevelStars(level.id))}</span>`;
+  elements.timeChallengeTimer.innerHTML = `<div class="time-challenge-timer-top"><strong>⏱ ${formatTimeChallengeSeconds(activeTimeChallenge.remainingSeconds)}</strong><span>Level ${currentNumber} von ${total}</span></div><div class="challenge-progress-track" aria-label="Challenge-Fortschritt" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${solved}" role="progressbar"><span style="width: ${total ? (solved / total) * 100 : 0}%"></span></div><span>${level ? `Level ${level.id}: ${level.title}` : 'Zeit-Challenge'}</span>`;
 }
 
 function stopTimeChallenge() {
@@ -1606,16 +1638,53 @@ function stopTimeChallenge() {
   if (elements.timeChallengeTimer) elements.timeChallengeTimer.hidden = true;
 }
 
+function finishTimeChallenge(wasCompleted) {
+  if (!activeTimeChallenge) return null;
+  const summary = { wasCompleted, solvedCount: wasCompleted ? activeTimeChallenge.levelIds.length : activeTimeChallenge.currentIndex, totalCount: activeTimeChallenge.levelIds.length, remainingSeconds: activeTimeChallenge.remainingSeconds };
+  if (timeChallengeIntervalId) window.clearInterval(timeChallengeIntervalId);
+  timeChallengeIntervalId = null;
+  activeTimeChallenge.completed = wasCompleted;
+  activeTimeChallenge.expired = !wasCompleted;
+  progress = normalizeTimeChallenge(progress);
+  if (wasCompleted) {
+    progress.timeChallenge.completedChallengeCount += 1;
+    progress.timeChallenge.completedCount = progress.timeChallenge.completedChallengeCount;
+    progress.timeChallenge.bestRemainingSeconds = Math.max(progress.timeChallenge.bestRemainingSeconds, summary.remainingSeconds);
+  } else {
+    progress.timeChallenge.bestExpiredSolvedCount = Math.max(progress.timeChallenge.bestExpiredSolvedCount, summary.solvedCount);
+  }
+  saveProgress({ refreshDailyChallenge: false });
+  updateTimeChallengeTimer();
+  showTimeChallengeEndCard(summary);
+  activeTimeChallenge = null;
+  return summary;
+}
+
 function completeActiveTimeChallenge(levelId) {
-  if (!activeTimeChallenge || activeTimeChallenge.expired || Number(activeTimeChallenge.levelId) !== Number(levelId) || activeTimeChallenge.remainingSeconds <= 0) return null;
+  if (!activeTimeChallenge || activeTimeChallenge.expired || activeTimeChallenge.completed || Number(activeTimeChallenge.levelId) !== Number(levelId) || activeTimeChallenge.remainingSeconds <= 0) return null;
   const remainingSeconds = activeTimeChallenge.remainingSeconds;
   progress = normalizeTimeChallenge(progress);
   const previousBest = Number(progress.timeChallenge.bestRemainingSecondsByLevel[levelId]) || 0;
   progress.timeChallenge.bestRemainingSecondsByLevel[levelId] = Math.max(previousBest, remainingSeconds);
-  progress.timeChallenge.completedCount += 1;
   progress.timeChallenge.lastStartedLevelId = Number(levelId);
-  stopTimeChallenge('success');
-  return remainingSeconds;
+  activeTimeChallenge.currentIndex += 1;
+  if (activeTimeChallenge.currentIndex >= activeTimeChallenge.levelIds.length) return finishTimeChallenge(true);
+  const nextLevel = LEVELS.find(level => Number(level.id) === Number(activeTimeChallenge.levelIds[activeTimeChallenge.currentIndex]));
+  activeTimeChallenge.levelId = nextLevel?.id;
+  updateTimeChallengeTimer();
+  return { wasCompleted: false, solvedCount: activeTimeChallenge.currentIndex, totalCount: activeTimeChallenge.levelIds.length, remainingSeconds, nextLevel };
+}
+
+function showTimeChallengeEndCard(summary) {
+  hideSuccessModal();
+  const message = summary.wasCompleted
+    ? `🎉 Zeit-Challenge geschafft!\n${summary.solvedCount} von ${summary.totalCount} Leveln gelöst.\nVerbleibende Zeit: ${formatTimeChallengeSeconds(summary.remainingSeconds)}`
+    : `⏱ Zeit abgelaufen.\nDu hast ${summary.solvedCount} von ${summary.totalCount} Challenge-Leveln geschafft.\nDeine Sterne und Punkte bleiben unverändert geschützt.`;
+  setFeedback(message, summary.wasCompleted ? 'success' : 'info');
+  elements.timeChallengeTimer.hidden = false;
+  elements.timeChallengeTimer.innerHTML = `<div class="time-challenge-end-card"><h3>${summary.wasCompleted ? '🎉 Zeit-Challenge geschafft!' : '⏱ Zeit abgelaufen'}</h3><p>${summary.solvedCount} von ${summary.totalCount} Challenge-Leveln gelöst.</p><p>${summary.wasCompleted ? `Verbleibende Zeit: ${formatTimeChallengeSeconds(summary.remainingSeconds)}` : 'Deine Sterne und Punkte bleiben unverändert geschützt.'}</p><div class="daily-challenge-actions"><button class="primary-button" type="button" data-action="overview">Zur Übersicht</button><button class="secondary-button" type="button" data-action="restart">Neue Zeit-Challenge starten</button></div></div>`;
+  elements.timeChallengeTimer.querySelector('[data-action="overview"]').addEventListener('click', showLevelOverview);
+  elements.timeChallengeTimer.querySelector('[data-action="restart"]').addEventListener('click', startTimeChallenge);
 }
 
 function getSolvedLevelsForReplay() {
@@ -2557,7 +2626,7 @@ function markLevelSolved() {
   }
   progress.score = calculateScoreFromStars();
   markDailyChallengeCompleted(level.id);
-  const timeChallengeRemaining = completeActiveTimeChallenge(level.id);
+  const timeChallengeResult = completeActiveTimeChallenge(level.id);
   saveProgress();
   renderLevelList();
   renderLearnedSqlBlocks();
@@ -2567,9 +2636,17 @@ function markLevelSolved() {
   checkAndShowMilestones();
 
   const bestMessage = isNewBest ? ` Neue Bestleistung: ${bestStars} von ${MAX_STARS} Sternen!` : '';
-  const challengeMessage = timeChallengeRemaining === null ? '' : ` Zeit-Challenge geschafft! Verbleibende Zeit: ${formatTimeChallengeSeconds(timeChallengeRemaining)}.`;
-  setFeedback(`Richtig gelöst! ${getHelpUsageMessage(currentLevelHelpUsage)}. Du hast ${earnedStars} von ${MAX_STARS} Sternen erreicht.${bestMessage}${challengeMessage}`, 'success');
-  showSuccessModal({ earnedStars, bestStars, isNewBest, timeChallengeRemaining });
+  if (timeChallengeResult?.nextLevel) {
+    setFeedback(`Richtig gelöst! ${timeChallengeResult.solvedCount} von ${timeChallengeResult.totalCount} Challenge-Leveln geschafft. Weiter geht es mit dem nächsten Level.`, 'success');
+    loadLevel(LEVELS.indexOf(timeChallengeResult.nextLevel), { timeChallenge: true });
+    return;
+  }
+  if (timeChallengeResult?.wasCompleted) {
+    setFeedback(`Richtig gelöst! Zeit-Challenge geschafft! Verbleibende Zeit: ${formatTimeChallengeSeconds(timeChallengeResult.remainingSeconds)}.`, 'success');
+    return;
+  }
+  setFeedback(`Richtig gelöst! ${getHelpUsageMessage(currentLevelHelpUsage)}. Du hast ${earnedStars} von ${MAX_STARS} Sternen erreicht.${bestMessage}`, 'success');
+  showSuccessModal({ earnedStars, bestStars, isNewBest });
 }
 
 function showSuccessModal({ earnedStars, bestStars, isNewBest, timeChallengeRemaining = null }) {
@@ -2583,7 +2660,7 @@ function showSuccessModal({ earnedStars, bestStars, isNewBest, timeChallengeRema
   elements.successModalStarText.textContent = `${earnedStars} von ${MAX_STARS} Sternen`;
   elements.successModalBest.hidden = !isNewBest;
   const isDailyChallenge = progress.dailyChallenge?.date === getLocalDateKey() && Number(progress.dailyChallenge?.levelId) === Number(level.id);
-  elements.successModalMessage.textContent = `${timeChallengeRemaining === null ? '' : `Zeit-Challenge geschafft! Verbleibende Zeit: ${formatTimeChallengeSeconds(timeChallengeRemaining)}. `}${isDailyChallenge ? 'Tages-Challenge geschafft! ' : ''}${getHelpUsageMessage(currentLevelHelpUsage)}. ${getSuccessMessage(earnedStars)}`;
+  elements.successModalMessage.textContent = `${isDailyChallenge ? 'Tages-Challenge geschafft! ' : ''}${getHelpUsageMessage(currentLevelHelpUsage)}. ${getSuccessMessage(earnedStars)}`;
   elements.successModalCompletion.hidden = !(isFinalLevel && hasBestStarsForUnlock);
   elements.successModalActions.innerHTML = '';
 
