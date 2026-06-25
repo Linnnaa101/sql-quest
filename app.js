@@ -646,6 +646,7 @@ const elements = {
   timeChallengeSummary: document.querySelector('#timeChallengeSummary'),
   timeChallengeContent: document.querySelector('#timeChallengeContent'),
   timeChallengeTimer: document.querySelector('#timeChallengeTimer'),
+  timeChallengeEndCard: document.querySelector('#timeChallengeEndCard'),
   editorCard: document.querySelector('#editorCard'),
   replayOverviewSummary: document.querySelector('#replayOverviewSummary'),
   replayLevelList: document.querySelector('#replayLevelList'),
@@ -1595,6 +1596,7 @@ function startTimeChallenge() {
   const levels = selectTimeChallengeLevels(Math.random);
   if (!levels.length) return;
   stopTimeChallenge('restart');
+  hideTimeChallengeEndCard();
   progress = normalizeTimeChallenge(progress);
   progress.timeChallenge.lastStartedLevelId = levels[0].id;
   saveProgress({ refreshDailyChallenge: false });
@@ -1626,6 +1628,12 @@ function beginTimeChallenge(level) {
   }, 1000);
 }
 
+function hideTimeChallengeEndCard() {
+  if (!elements.timeChallengeEndCard) return;
+  elements.timeChallengeEndCard.hidden = true;
+  elements.timeChallengeEndCard.innerHTML = '';
+}
+
 function updateTimeChallengeTimer() {
   if (!activeTimeChallenge) {
     elements.timeChallengeTimer.hidden = true;
@@ -1644,6 +1652,7 @@ function stopTimeChallenge() {
   timeChallengeIntervalId = null;
   activeTimeChallenge = null;
   if (elements.timeChallengeTimer) elements.timeChallengeTimer.hidden = true;
+  hideTimeChallengeEndCard();
 }
 
 function finishTimeChallenge(wasCompleted) {
@@ -1690,6 +1699,15 @@ function showTimeChallengeEndCard(summary) {
     : `⏱ Zeit abgelaufen.\nDu hast ${summary.solvedCount} von ${summary.totalCount} Challenge-Leveln geschafft.\nDeine Sterne und Punkte bleiben unverändert geschützt.`;
   setFeedback(message, summary.wasCompleted ? 'success' : 'info');
   if (elements.timeChallengeTimer) elements.timeChallengeTimer.hidden = true;
+  if (!elements.timeChallengeEndCard) return;
+  elements.timeChallengeEndCard.hidden = false;
+  elements.timeChallengeEndCard.innerHTML = `<h3>${summary.wasCompleted ? '🎉 Zeit-Challenge geschafft!' : '⏱ Zeit abgelaufen.'}</h3><p>${summary.wasCompleted ? `${summary.solvedCount} von ${summary.totalCount} Challenge-Leveln gelöst.` : `Du hast ${summary.solvedCount} von ${summary.totalCount} Challenge-Leveln geschafft.`}</p><p>${summary.wasCompleted ? `Verbleibende Zeit: ${formatTimeChallengeSeconds(summary.remainingSeconds)}` : 'Deine Sterne und Punkte bleiben unverändert geschützt.'}</p><div class="daily-challenge-actions"><button class="primary-button" type="button" data-action="overview">Zur Übersicht</button><button class="secondary-button" type="button" data-action="restart">Neue Zeit-Challenge starten</button></div>`;
+  elements.timeChallengeEndCard.querySelector('[data-action="overview"]').addEventListener('click', () => {
+    stopTimeChallenge('end-overview');
+    showLevelOverview();
+  });
+  elements.timeChallengeEndCard.querySelector('[data-action="restart"]').addEventListener('click', startTimeChallenge);
+  elements.timeChallengeEndCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function getSolvedLevelsForReplay() {
