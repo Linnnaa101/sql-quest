@@ -1,3 +1,6 @@
+const dashboardLogic = require('./dashboard-logic');
+const { getDifficultyBuckets, getProgressSummary, selectNextMissionLevel, normalizeDashboardActivity, getLastActivity } = dashboardLogic;
+
 const MAX_STARS = 3;
 const MIN_STARS_TO_UNLOCK_NEXT_LEVEL = 2;
 
@@ -191,6 +194,19 @@ function getNewMilestones(progress = {}, totalLevels = 80) {
   const normalized = normalizeAchievementTracking(progress);
   const shown = new Set(normalized.shownMilestones.map(Number));
   return getReachedMilestones(normalized, totalLevels).filter(percent => !shown.has(percent));
+}
+
+
+
+function buildDashboardData(levels = [], progress = {}, options = {}) {
+  const date = options.date || getLocalDateKey();
+  const isUnlocked = options.isUnlocked || (() => true);
+  return dashboardLogic.buildDashboardData(levels, progress, {
+    ...options,
+    isUnlocked,
+    updateDailyChallengeProgress: sourceProgress => updateDailyChallengeProgress(levels, sourceProgress, date, isUnlocked),
+    calculateBadges
+  });
 }
 
 const BLOCKED_COMMANDS = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'REPLACE', 'TRUNCATE', 'PRAGMA', 'ATTACH', 'DETACH'];
@@ -417,4 +433,4 @@ function solveLevelWithStars(levels, progress, levelId, earnedStars) {
 }
 function solveAllLevelsForTesting(levels, progress = {}) { const levelStars = levels.reduce((stars, level) => ({ ...stars, [level.id]: MAX_STARS }), {}); return applyBadgeUnlockDates({ ...normalizeAchievementTracking(normalizeHelpTracking(progress)), solvedLevelIds: levels.map(level => level.id), levelStars, hintUsedLevelIds: [], solutionViewedLevelIds: [], shownMilestones: getReachedMilestones({ solvedLevelIds: levels.map(level => level.id), levelStars }, levels.length), score: calculateScoreFromStars(levels, levelStars) }); }
 
-module.exports = { TIME_CHALLENGE_LIMIT_SECONDS, TIME_CHALLENGE_LEVEL_COUNT, formatTimeChallengeSeconds, normalizeTimeChallenge, getTimeChallengeCandidateGroups, selectTimeChallengeLevel, shuffleTimeChallengeCandidates, selectTimeChallengeLevels, isTimeChallengeSuccess, recordTimeChallengeStart, recordTimeChallengeSuccess, recordCompletedTimeChallenge, recordExpiredTimeChallenge, getLocalDateKey, normalizeDailyChallenge, getDailyChallengeCandidateGroups, selectDailyChallengeLevel, updateDailyChallengeProgress, hasDailyChallengeChanged, markDailyChallengeCompleted, BADGE_DEFINITIONS, MILESTONE_DEFINITIONS, normalizeAchievementTracking, calculateBadges, applyBadgeUnlockDates, getReachedMilestones, getNewMilestones, MAX_STARS, MIN_STARS_TO_UNLOCK_NEXT_LEVEL, BLOCKED_COMMANDS, isTestModeFromSearch, isLevelUnlocked, getLevelStars, isEveryLevelUnlockedForTesting, findBlockedCommand, hasMultipleStatements, isSelectStatement, calculateStarsForHelpUsage, calculatePointsForStars, calculateScoreFromStars, normalizeHelpTracking, getHelpUsageForLevel, getSolvedLevelsForReplay, filterReplayLevels, getRandomSolvedLevel, solveLevelWithStars, solveAllLevelsForTesting };
+module.exports = { getDifficultyBuckets, getProgressSummary, selectNextMissionLevel, normalizeDashboardActivity, getLastActivity, buildDashboardData, TIME_CHALLENGE_LIMIT_SECONDS, TIME_CHALLENGE_LEVEL_COUNT, formatTimeChallengeSeconds, normalizeTimeChallenge, getTimeChallengeCandidateGroups, selectTimeChallengeLevel, shuffleTimeChallengeCandidates, selectTimeChallengeLevels, isTimeChallengeSuccess, recordTimeChallengeStart, recordTimeChallengeSuccess, recordCompletedTimeChallenge, recordExpiredTimeChallenge, getLocalDateKey, normalizeDailyChallenge, getDailyChallengeCandidateGroups, selectDailyChallengeLevel, updateDailyChallengeProgress, hasDailyChallengeChanged, markDailyChallengeCompleted, BADGE_DEFINITIONS, MILESTONE_DEFINITIONS, normalizeAchievementTracking, calculateBadges, applyBadgeUnlockDates, getReachedMilestones, getNewMilestones, MAX_STARS, MIN_STARS_TO_UNLOCK_NEXT_LEVEL, BLOCKED_COMMANDS, isTestModeFromSearch, isLevelUnlocked, getLevelStars, isEveryLevelUnlockedForTesting, findBlockedCommand, hasMultipleStatements, isSelectStatement, calculateStarsForHelpUsage, calculatePointsForStars, calculateScoreFromStars, normalizeHelpTracking, getHelpUsageForLevel, getSolvedLevelsForReplay, filterReplayLevels, getRandomSolvedLevel, solveLevelWithStars, solveAllLevelsForTesting };

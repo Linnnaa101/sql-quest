@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const logic = require('../quest-logic');
+const dashboardLogic = require('../dashboard-logic');
 const levelsCode = fs.readFileSync('levels.js', 'utf8');
 const context = {};
 vm.createContext(context);
@@ -18,6 +19,13 @@ const normalizeTimeChallengeIndex = appCode.indexOf('function normalizeTimeChall
 assert.ok(normalizeTimeChallengeIndex >= 0, 'Browser-App stellt normalizeTimeChallenge direkt in app.js bereit.');
 assert.ok(normalizeTimeChallengeIndex < appCode.indexOf('function renderTimeChallengeOverview()'), 'normalizeTimeChallenge ist vor dem Zeit-Challenge-Rendering verfügbar.');
 assert.equal(/require\(['"]\.\/quest-logic['"]\)|require\(['"]\.\.\/quest-logic['"]\)/.test(appCode), false, 'Browser-App hängt nicht von quest-logic.js als Node-only-Datei ab.');
+assert.ok(indexCode.includes('src="dashboard-logic.js"'), 'Browser lädt die zentrale Dashboard-Logik.');
+const showLevelOverviewBody = appCode.slice(appCode.indexOf('function showLevelOverview()'), appCode.indexOf('function withTemporaryProgress'));
+assert.equal(/showOverviewTab\('dashboard'\)/.test(showLevelOverviewBody), true, 'showLevelOverview öffnet standardmäßig das Dashboard.');
+assert.equal(/showOverviewTab\('levels'\)/.test(showLevelOverviewBody), false, 'showLevelOverview öffnet nicht mehr standardmäßig die Level-Liste.');
+assert.equal(/function getDashboardProgressSummary/.test(appCode), false, 'Dashboard-Fortschritt wird nicht doppelt in app.js berechnet.');
+assert.equal(/function selectNextMissionLevel/.test(appCode), false, 'Dashboard-Missionsauswahl wird nicht doppelt in app.js berechnet.');
+assert.equal(/SqlQuestDashboardLogic\.buildDashboardData/.test(appCode), true, 'renderDashboard verwendet das zentrale Dashboard-Datenobjekt.');
 const emptyProgress = () => ({ solvedLevelIds: [], levelStars: {} });
 const indexOf = id => LEVELS.findIndex(level => level.id === id);
 
@@ -248,5 +256,36 @@ assert.equal(/if \(elements\.timeChallengeTimer\) elements\.timeChallengeTimer\.
 const showEndCardBody = appCode.slice(appCode.indexOf('function showTimeChallengeEndCard'), appCode.indexOf('function getSolvedLevelsForReplay'));
 assert.equal(/loadLevel\(/.test(showEndCardBody), false, 'Abschlusskarte lädt kein weiteres Level automatisch.');
 assert.equal(/stopTimeChallenge\('end-overview'\);\n\s*showLevelOverview\(\);/.test(showEndCardBody), true, 'Zur Übersicht beendet die Challenge sauber.');
+
+
+const dashboardUnsolved = logic.buildDashboardData(LEVELS, { solvedLevelIds: [1], levelStars: { 1: 2 } }, { date: '2026-06-25', isUnlocked: unlockedForProgress({ solvedLevelIds: [1], levelStars: { 1: 2 } }), random: () => 0 });
+assert.equal(dashboardUnsolved.nextMission.level.id, 2, 'Dashboard wählt das nächste ungelöste freigeschaltete Level.');
+const dashboardUnderThreeProgress = { solvedLevelIds: [1, 2], levelStars: { 1: 3, 2: 2 } };
+const dashboardUnderThree = logic.buildDashboardData(LEVELS, dashboardUnderThreeProgress, { date: '2026-06-25', isUnlocked: (_level, index) => index < 2, random: () => 0 });
+assert.equal(dashboardUnderThree.nextMission.level.id, 2, 'Dashboard fällt auf ein freigeschaltetes Level mit weniger als 3 Sternen zurück.');
+const dashboardComplete = logic.buildDashboardData(LEVELS, solved, { date: '2026-06-25', isUnlocked: () => true, random: () => 0 });
+assert.ok(dashboardComplete.nextMission.level, 'Dashboard liefert bei vollständig abgeschlossenen Leveln ein Wiederholungslevel.');
+assert.equal(dashboardUnsolved.dailyChallenge.level.id, dashboardUnsolved.dailyChallenge.levelId, 'Dashboard zeigt Tages-Challenge-Daten mit Level an.');
+const dashboardTime = logic.buildDashboardData(LEVELS, logic.recordCompletedTimeChallenge({ solvedLevelIds: [], levelStars: {} }, 88), { date: '2026-06-25', isUnlocked: () => true });
+assert.equal(dashboardTime.timeChallenge.completedChallengeCount, 1, 'Dashboard zeigt erfolgreich abgeschlossene Zeit-Challenges.');
+assert.equal(dashboardTime.timeChallenge.bestRemainingSeconds, 88, 'Dashboard zeigt beste Restzeit der Zeit-Challenge.');
+const dashboardProgress = logic.buildDashboardData(LEVELS, { solvedLevelIds: [1, 2], levelStars: { 1: 3, 2: 2 } }, { date: '2026-06-25', isUnlocked: () => true });
+assert.deepEqual(dashboardProgress.progress, logic.getProgressSummary(LEVELS, { solvedLevelIds: [1, 2], levelStars: { 1: 3, 2: 2 } }), 'Dashboard-Fortschritt stimmt mit der vorhandenen Statistiklogik überein.');
+assert.equal(logic.buildDashboardData(LEVELS, emptyProgress(), { date: '2026-06-25', isUnlocked: () => true }).activity.emptyText, 'Starte dein erstes Level und beginne deine SQL Quest.', 'Leere Aktivität zeigt den Starttext.');
+const oldDashboardProgress = logic.buildDashboardData(LEVELS, { solvedLevelIds: [1], levelStars: { 1: 3 } }, { date: '2026-06-25', isUnlocked: () => true });
+assert.equal(oldDashboardProgress.activity.level, null, 'Alte Fortschrittsdaten ohne Dashboard-Felder funktionieren.');
+const resetDashboard = logic.buildDashboardData(LEVELS, logic.normalizeDashboardActivity({ solvedLevelIds: [], levelStars: {} }), { date: '2026-06-25', isUnlocked: () => true });
+assert.equal(resetDashboard.progress.solvedLevels, 0, 'Reset erzeugt einen sauberen Dashboard-Startzustand.');
+const testModeDashboard = logic.buildDashboardData(LEVELS, solved, { date: '2026-06-25', isUnlocked: () => true });
+assert.equal(Boolean(testModeDashboard.nextMission.level && testModeDashboard.dailyChallenge.level && testModeDashboard.progress.totalLevels && testModeDashboard.badges.totalCount), true, 'Testmodus zeigt vollständige Dashboard-Daten.');
+
+
+const sharedRuleProgress = { solvedLevelIds: [1], levelStars: { 1: 2 } };
+assert.equal(logic.selectNextMissionLevel(LEVELS, sharedRuleProgress, unlockedForProgress(sharedRuleProgress), () => 0).level.id, dashboardLogic.selectNextMissionLevel(LEVELS, sharedRuleProgress, unlockedForProgress(sharedRuleProgress), () => 0).level.id, 'Browser-Code und Test-Code verwenden dieselbe Dashboard-Auswahlregel.');
+const beforeSolvedDashboard = dashboardLogic.buildDashboardData(LEVELS, { solvedLevelIds: [], levelStars: {} }, { isUnlocked: (_level, index) => index === 0, updateDailyChallengeProgress: progress => progress });
+const afterSolvedDashboard = dashboardLogic.buildDashboardData(LEVELS, { solvedLevelIds: [1], levelStars: { 1: 3 }, lastSolvedLevelId: 1 }, { isUnlocked: unlockedForProgress({ solvedLevelIds: [1], levelStars: { 1: 3 } }), updateDailyChallengeProgress: progress => progress });
+assert.equal(beforeSolvedDashboard.progress.solvedLevels, 0, 'Dashboard zeigt vor einem gelösten Level den alten Fortschritt.');
+assert.equal(afterSolvedDashboard.progress.solvedLevels, 1, 'Dashboard zeigt nach einem gelösten Level aktualisierte Fortschrittsdaten.');
+assert.equal(afterSolvedDashboard.activity.level.id, 1, 'Dashboard zeigt nach einem gelösten Level die aktualisierte letzte Aktivität.');
 
 console.log('Alle Tests erfolgreich.');

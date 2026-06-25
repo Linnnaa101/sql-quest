@@ -635,10 +635,13 @@ const elements = {
   dailyChallengeContent: document.querySelector('#dailyChallengeContent'),
   learnedSqlList: document.querySelector('#learnedSqlList'),
   learnedSqlProgress: document.querySelector('#learnedSqlProgress'),
+  dashboardTabButton: document.querySelector('#dashboardTabButton'),
   levelsTabButton: document.querySelector('#levelsTabButton'),
   learnedOverviewTabButton: document.querySelector('#learnedOverviewTabButton'),
   replayTabButton: document.querySelector('#replayTabButton'),
   timeChallengeTabButton: document.querySelector('#timeChallengeTabButton'),
+  dashboardOverviewPanel: document.querySelector('#dashboardOverviewPanel'),
+  dashboardContent: document.querySelector('#dashboardContent'),
   levelsOverviewPanel: document.querySelector('#levelsOverviewPanel'),
   learnedOverviewPanel: document.querySelector('#learnedOverviewPanel'),
   replayOverviewPanel: document.querySelector('#replayOverviewPanel'),
@@ -741,6 +744,7 @@ elements.solutionButton.addEventListener('click', showSolution);
 elements.overviewButton.addEventListener('click', showLevelOverview);
 elements.backToOverviewButton.addEventListener('click', showLevelOverview);
 elements.resetProgressButton.addEventListener('click', resetProgress);
+elements.dashboardTabButton.addEventListener('click', () => showOverviewTab('dashboard'));
 elements.levelsTabButton.addEventListener('click', () => showOverviewTab('levels'));
 elements.learnedOverviewTabButton.addEventListener('click', () => showOverviewTab('learned'));
 elements.replayTabButton.addEventListener('click', () => showOverviewTab('replay'));
@@ -983,7 +987,7 @@ function showLevelOverview() {
     renderLevelList();
     renderSqlBasicsChapters();
     renderLearnedOverview();
-    showOverviewTab('levels');
+    showOverviewTab('dashboard');
     updateProgressBar();
     renderCompletionCard();
     renderBadges();
@@ -992,22 +996,74 @@ function showLevelOverview() {
 }
 
 
+
+
+function withTemporaryProgress(sourceProgress, callback) {
+  const previousProgress = progress;
+  progress = sourceProgress;
+  const result = callback();
+  progress = previousProgress;
+  return result;
+}
+
+function renderDashboard() {
+  if (!elements.dashboardContent) return;
+  const previousProgress = progress;
+  progress = updateDailyChallengeProgress(progress);
+  persistDailyChallengeIfChanged(previousProgress, progress);
+  const dashboard = SqlQuestDashboardLogic.buildDashboardData(LEVELS, progress, {
+    isUnlocked: (_level, index) => isLevelUnlocked(index),
+    updateDailyChallengeProgress: sourceProgress => updateDailyChallengeProgress(sourceProgress),
+    calculateBadges: sourceProgress => BADGE_DEFINITIONS.map(badge => ({ ...badge, unlocked: withTemporaryProgress(sourceProgress, () => isBadgeUnlocked(badge.id)), unlockedAt: sourceProgress.unlockedBadgeDates?.[badge.id] || null }))
+  });
+  const mission = dashboard.nextMission.level;
+  const summary = dashboard.progress;
+  const daily = dashboard.dailyChallenge;
+  const dailyLevel = daily.level;
+  const time = dashboard.timeChallenge;
+  const activityLevel = dashboard.activity.level;
+  const missionStars = mission ? getLevelStars(mission.id) : 0;
+  elements.dashboardContent.innerHTML = `
+    <article class="dashboard-card next-mission-card">
+      <p class="eyebrow">Deine nächste Mission</p>
+      ${mission ? `<h3>Level ${mission.id}: ${mission.title}</h3><p>${mission.difficulty} · ${mission.topic}</p><p aria-label="Aktuelle Sterne: ${missionStars} von ${MAX_STARS}">${renderStars(missionStars)}</p><button class="primary-button" type="button" data-action="mission">Weiterlernen</button>` : '<p class="empty-state">Noch keine Mission verfügbar.</p>'}
+    </article>
+    <article class="dashboard-card challenge-card daily-dashboard-card"><h3>⚡ Tages-Challenge</h3>${dailyLevel ? `<p>Level ${dailyLevel.id}: ${dailyLevel.title}</p><p>Status: <strong>${daily.completed ? 'geschafft' : 'offen'}</strong></p><button class="primary-button" type="button" data-action="daily">Challenge starten</button>` : '<p class="empty-state">Heute keine Challenge verfügbar.</p>'}</article>
+    <article class="dashboard-card challenge-card time-dashboard-card"><h3>⏱ Zeit-Challenge</h3><p>5 Level in 5 Minuten</p><p>${time.completedChallengeCount} erfolgreich abgeschlossen</p><p>Beste Restzeit: ${time.bestRemainingSeconds ? formatTimeChallengeSeconds(time.bestRemainingSeconds) : '—'}</p><button class="primary-button" type="button" data-action="time">Zeit-Challenge starten</button></article>
+    <article class="dashboard-card progress-dashboard-card"><h3>Fortschritt</h3><p>${summary.solvedLevels} von ${summary.totalLevels} Leveln gelöst · ${summary.collectedStars} von ${summary.maxStars} Sternen</p><div class="progress-track" role="progressbar" aria-label="Gesamtfortschritt ${summary.percent} Prozent" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${summary.percent}"><div class="progress-fill" style="width:${summary.percent}%"></div></div>${summary.buckets.map(bucket => `<p>${bucket.title}: ${bucket.solved}/${bucket.total} (${bucket.percent} %)</p>`).join('')}</article>
+    <article class="dashboard-card"><h3>Letzte Aktivität</h3>${activityLevel ? `<p>${dashboard.activity.type === 'solved' ? 'Zuletzt gelöst' : 'Zuletzt geöffnet'}: Level ${activityLevel.id}: ${activityLevel.title}</p><p>${renderStars(getLevelStars(activityLevel.id))}</p><button class="secondary-button" type="button" data-action="activity">Weiter üben</button>` : `<p>${dashboard.activity.emptyText}</p>`}</article>
+    <article class="dashboard-card"><h3>Abzeichen</h3><p>${dashboard.badges.unlockedCount} von ${dashboard.badges.totalCount} freigeschaltet</p><p>${dashboard.badges.latest ? `Zuletzt: ${dashboard.badges.latest.icon} ${dashboard.badges.latest.title}` : 'Noch kein Abzeichen freigeschaltet.'}</p><button class="secondary-button" type="button" data-action="badges">Abzeichen ansehen</button></article>`;
+  const on = (action, handler) => elements.dashboardContent.querySelector(`[data-action="${action}"]`)?.addEventListener('click', handler);
+  on('mission', () => loadLevel(LEVELS.indexOf(mission)));
+  on('daily', () => dailyLevel && loadLevel(LEVELS.indexOf(dailyLevel), { dailyChallenge: true }));
+  on('time', startTimeChallenge);
+  on('activity', () => activityLevel && loadLevel(LEVELS.indexOf(activityLevel), { replay: true }));
+  on('badges', () => showOverviewTab('levels'));
+}
+
 function showOverviewTab(tabName) {
+  const showDashboard = tabName === 'dashboard';
+  const showLevels = tabName === 'levels';
   const showLearned = tabName === 'learned';
   const showReplay = tabName === 'replay';
   const showTimeChallenge = tabName === 'timeChallenge';
-  elements.levelsOverviewPanel.hidden = showLearned || showReplay || showTimeChallenge;
+  elements.dashboardOverviewPanel.hidden = !showDashboard;
+  elements.levelsOverviewPanel.hidden = !showLevels;
   elements.learnedOverviewPanel.hidden = !showLearned;
   elements.replayOverviewPanel.hidden = !showReplay;
   elements.timeChallengeOverviewPanel.hidden = !showTimeChallenge;
-  elements.levelsTabButton.classList.toggle('active', !showLearned && !showReplay && !showTimeChallenge);
+  elements.dashboardTabButton.classList.toggle('active', showDashboard);
+  elements.levelsTabButton.classList.toggle('active', showLevels);
   elements.learnedOverviewTabButton.classList.toggle('active', showLearned);
   elements.replayTabButton.classList.toggle('active', showReplay);
   elements.timeChallengeTabButton.classList.toggle('active', showTimeChallenge);
-  elements.levelsTabButton.setAttribute('aria-selected', String(!showLearned && !showReplay && !showTimeChallenge));
+  elements.dashboardTabButton.setAttribute('aria-selected', String(showDashboard));
+  elements.levelsTabButton.setAttribute('aria-selected', String(showLevels));
   elements.learnedOverviewTabButton.setAttribute('aria-selected', String(showLearned));
   elements.replayTabButton.setAttribute('aria-selected', String(showReplay));
   elements.timeChallengeTabButton.setAttribute('aria-selected', String(showTimeChallenge));
+  if (showDashboard) renderDashboard();
+  if (showLevels) renderLevelList();
   if (showLearned) renderLearnedOverview();
   if (showReplay) renderReplayOverview();
   if (showTimeChallenge) renderTimeChallengeOverview();
@@ -1043,7 +1099,9 @@ function createEmptyProgress() {
     shownMilestones: [],
     starSystemVersion: STAR_SYSTEM_VERSION,
     dailyChallenge: { date: null, levelId: null, completed: false },
-    timeChallenge: { bestRemainingSecondsByLevel: {}, completedCount: 0, lastStartedLevelId: null }
+    timeChallenge: { bestRemainingSecondsByLevel: {}, completedCount: 0, completedChallengeCount: 0, bestRemainingSeconds: 0, bestExpiredSolvedCount: 0, lastStartedLevelId: null },
+    lastOpenedLevelId: null,
+    lastSolvedLevelId: null
   };
 }
 
@@ -1072,6 +1130,8 @@ function loadProgress() {
       shownMilestones: Array.isArray(migratedProgress.shownMilestones) ? migratedProgress.shownMilestones : [],
       dailyChallenge: normalizeDailyChallenge(migratedProgress).dailyChallenge,
       timeChallenge: normalizeTimeChallenge(migratedProgress).timeChallenge,
+      lastOpenedLevelId: Number.isInteger(Number(migratedProgress.lastOpenedLevelId)) ? Number(migratedProgress.lastOpenedLevelId) : null,
+      lastSolvedLevelId: Number.isInteger(Number(migratedProgress.lastSolvedLevelId)) ? Number(migratedProgress.lastSolvedLevelId) : null,
       starSystemVersion: STAR_SYSTEM_VERSION
     };
 
@@ -1104,7 +1164,9 @@ function migrateProgressToCurrentStarSystem(storedProgress) {
     levelStars: migratedLevelStars,
     starSystemVersion: STAR_SYSTEM_VERSION,
     dailyChallenge: { date: null, levelId: null, completed: false },
-    timeChallenge: { bestRemainingSecondsByLevel: {}, completedCount: 0, lastStartedLevelId: null }
+    timeChallenge: { bestRemainingSecondsByLevel: {}, completedCount: 0, completedChallengeCount: 0, bestRemainingSeconds: 0, bestExpiredSolvedCount: 0, lastStartedLevelId: null },
+    lastOpenedLevelId: null,
+    lastSolvedLevelId: null
   };
 }
 
@@ -2190,6 +2252,8 @@ function loadLevel(index, options = {}) {
     elements.gameLayout.hidden = false;
     currentLevelIndex = index;
     const level = LEVELS[currentLevelIndex];
+    progress.lastOpenedLevelId = level.id;
+    saveProgress({ refreshDailyChallenge: false });
     elements.difficulty.textContent = level.difficulty;
     elements.topic.textContent = level.topic;
     elements.levelTitle.textContent = `Level ${level.id}: ${level.title}`;
@@ -2658,6 +2722,7 @@ function markLevelSolved() {
     progress.solvedLevelIds.push(level.id);
   }
   progress.score = calculateScoreFromStars();
+  progress.lastSolvedLevelId = level.id;
   markDailyChallengeCompleted(level.id);
   const timeChallengeResult = completeActiveTimeChallenge(level.id);
   saveProgress();
