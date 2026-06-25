@@ -2118,3 +2118,105 @@ span {
     flex-direction: column;
   }
 }
+
+.profile-stats-overview-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.profile-stats-card,
+.profile-section-card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(68, 91, 120, 0.14);
+  border-radius: 18px;
+  box-shadow: 0 12px 28px rgba(36, 52, 71, 0.08);
+  padding: 16px;
+  min-width: 0;
+}
+
+.profile-stats-wide { grid-column: 1 / -1; }
+
+.profile-stats-card h3,
+.profile-section-card h3 {
+  margin: 0 0 12px;
+  color: #1d2b3a;
+}
+
+.profile-stat-tiles,
+.profile-section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 10px;
+}
+
+.profile-stat-tiles.compact { grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); }
+
+.profile-stat-tile {
+  background: linear-gradient(135deg, rgba(236, 246, 255, 0.95), rgba(250, 252, 255, 0.95));
+  border-radius: 14px;
+  padding: 12px;
+  min-width: 0;
+}
+
+.profile-stat-tile span,
+.profile-stat-tile small {
+  display: block;
+  color: #637083;
+  font-size: 0.82rem;
+}
+
+.profile-stat-tile strong {
+  display: block;
+  color: #15304f;
+  font-size: clamp(1.25rem, 6vw, 2rem);
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.profile-section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.profile-section-head span,
+.profile-section-card p {
+  color: #637083;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.profile-progress-track {
+  background: #e7edf5;
+  border-radius: 999px;
+  height: 10px;
+  margin: 10px 0 8px;
+  overflow: hidden;
+}
+
+.profile-progress-track span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #2f80ed, #27ae60);
+  border-radius: inherit;
+}
+
+@media (max-width: 700px) {
+  .profile-stats-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 430px) {
+  .profile-stats-card,
+  .profile-section-card { padding: 12px; border-radius: 14px; }
+  .profile-stat-tiles,
+  .profile-section-grid,
+  .profile-stat-tiles.compact { grid-template-columns: 1fr; }
+  .profile-section-head { flex-direction: column; align-items: flex-start; }
+}
