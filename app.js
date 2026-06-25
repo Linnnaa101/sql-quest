@@ -927,8 +927,9 @@ function updateScrollTopButton() {
   elements.scrollTopButton.hidden = window.scrollY < 160;
 }
 
-function hideLearningViews() {
-  if (!elements.gameLayout.hidden) {
+function hideLearningViews(options = {}) {
+  const preserveTimeChallenge = Boolean(options.preserveTimeChallenge);
+  if (!preserveTimeChallenge && !elements.gameLayout.hidden) {
     stopTimeChallenge('navigation');
   }
   if (elements.completionCard) {
@@ -2176,7 +2177,7 @@ function loadLevel(index, options = {}) {
   }
 
   navigateToView('game', () => {
-    hideLearningViews();
+    hideLearningViews({ preserveTimeChallenge: isTimeChallenge });
     elements.gameLayout.hidden = false;
     currentLevelIndex = index;
     const level = LEVELS[currentLevelIndex];

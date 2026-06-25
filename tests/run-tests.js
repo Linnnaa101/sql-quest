@@ -230,6 +230,11 @@ assert.equal(/finishTimeChallenge\(false\)/.test(appCode), true, 'Bei Zeitablauf
 assert.equal(/timeChallengeResult\?\.nextLevel/.test(appCode), true, 'Challenge-Fortschritt lädt nur das nächste Challenge-Level.');
 assert.equal(/stopTimeChallenge\('level-change'\)/.test(appCode), true, 'Timer wird beim normalen Levelwechsel beendet.');
 assert.equal(/stopTimeChallenge\('reset'\)/.test(appCode), true, 'Timer wird beim Reset beendet.');
+assert.equal(/function hideLearningViews\(options = \{\}\) \{\n\s*const preserveTimeChallenge = Boolean\(options\.preserveTimeChallenge\);\n\s*if \(!preserveTimeChallenge && !elements\.gameLayout\.hidden\) \{\n\s*stopTimeChallenge\('navigation'\);/.test(appCode), true, 'Normale Navigation beendet die Challenge weiterhin, kann interne Challenge-Wechsel aber explizit schützen.');
+assert.equal(/hideLearningViews\(\{ preserveTimeChallenge: isTimeChallenge \}\);/.test(appCode), true, 'Interner Wechsel zum nächsten Challenge-Level erhält die aktive Challenge.');
+assert.equal(/if \(!isTimeChallenge\) stopTimeChallenge\('level-change'\);/.test(appCode), true, 'Normales Öffnen eines Levels außerhalb der Zeit-Challenge beendet die aktive Challenge.');
+assert.equal(/const remainingSeconds = activeTimeChallenge\.remainingSeconds;[\s\S]*activeTimeChallenge\.currentIndex \+= 1;[\s\S]*activeTimeChallenge\.levelId = nextLevel\?\.id;[\s\S]*return \{ wasCompleted: false, solvedCount: activeTimeChallenge\.currentIndex, totalCount: activeTimeChallenge\.levelIds\.length, remainingSeconds, nextLevel \};/.test(appCode), true, 'Restzeit und activeTimeChallenge bleiben beim Wechsel zum nächsten Challenge-Level erhalten.');
+assert.equal(/if \(timeChallengeIntervalId\) return;\n\s*timeChallengeIntervalId = window\.setInterval/.test(appCode), true, 'Beim nächsten Challenge-Level wird kein zweiter Timer gestartet.');
 
 assert.equal(/activeTimeChallenge = \{ active: true, levelIds: levels\.map\(level => level\.id\), currentIndex: 0, remainingSeconds: TIME_CHALLENGE_LIMIT_SECONDS/.test(appCode), true, 'Zeit-Challenge aktiviert den sichtbaren Timerbereich beim Start sofort mit voller Startzeit.');
 assert.equal(/Level \$\{currentNumber\} von \$\{total\}/.test(appCode), true, 'Timeranzeige enthält Level X von Y.');
