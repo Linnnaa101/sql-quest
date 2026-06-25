@@ -1283,11 +1283,12 @@ function createLevelSectionTabs() {
     tab.type = 'button';
     tab.id = getLevelSectionTabId(section.id);
     tab.className = 'level-section-tab';
+    tab.dataset.section = section.id;
     tab.setAttribute('role', 'tab');
     tab.setAttribute('aria-selected', String(isSelected));
     tab.setAttribute('aria-controls', getLevelSectionPanelId(section.id));
     tab.disabled = !isAccessible;
-    tab.innerHTML = `${!isAccessible ? '<span aria-hidden="true">🔒</span> ' : ''}${section.title}`;
+    tab.innerHTML = `${!isAccessible ? '<span aria-hidden="true">🔒</span> ' : ''}${getLevelSectionIcon(section.id)} ${section.title}`;
     if (!isAccessible) {
       tab.setAttribute('aria-label', `${section.title} gesperrt. ${section.lockedHint}`);
       tab.title = section.lockedHint;
@@ -1324,10 +1325,10 @@ function createActiveLevelSectionPanel() {
   const solved = levels.filter(level => progress.solvedLevelIds.includes(level.id)).length;
   const panel = document.createElement('section');
   panel.id = getLevelSectionPanelId(section.id);
-  panel.className = `level-section ${solved === levels.length ? 'completed' : ''}`;
+  panel.className = `level-section section-${section.id} ${solved === levels.length ? 'completed' : ''}`;
   panel.setAttribute('role', 'tabpanel');
   panel.setAttribute('aria-labelledby', getLevelSectionTabId(section.id));
-  panel.innerHTML = `<div class="level-section-heading"><h3>${section.title}</h3><span>${solved} von ${levels.length} gelöst</span></div>`;
+  panel.innerHTML = `<div class="level-section-heading"><h3 data-icon="${getLevelSectionIcon(section.id)}">${section.title}</h3><span>Mission ${solved} von ${levels.length} gelöst</span></div>`;
 
   const grid = document.createElement('div');
   grid.className = 'level-list compact-level-grid';
@@ -1357,6 +1358,14 @@ function getLevelsForLevelSection(section) {
 function isLevelSectionAccessible(sectionId) {
   const section = LEVEL_SECTIONS.find(levelSection => levelSection.id === sectionId);
   return Boolean(section && (isEveryLevelUnlockedForTesting() || !section.unlockLevelId || progress.solvedLevelIds.includes(section.unlockLevelId)));
+}
+
+
+function getLevelSectionIcon(sectionId) {
+  if (sectionId === 'beginner') return '🌱';
+  if (sectionId === 'advancedJoins') return '🚀';
+  if (sectionId === 'master') return '👑';
+  return '🧭';
 }
 
 function getLevelSectionTabId(sectionId) {
