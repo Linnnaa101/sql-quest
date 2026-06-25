@@ -7,6 +7,12 @@ const context = {};
 vm.createContext(context);
 vm.runInContext(`${levelsCode}\nthis.LEVELS = LEVELS;`, context);
 const { LEVELS } = context;
+
+const appCode = fs.readFileSync('app.js', 'utf8');
+const normalizeTimeChallengeIndex = appCode.indexOf('function normalizeTimeChallenge(progress = {})');
+assert.ok(normalizeTimeChallengeIndex >= 0, 'Browser-App stellt normalizeTimeChallenge direkt in app.js bereit.');
+assert.ok(normalizeTimeChallengeIndex < appCode.indexOf('function renderTimeChallengeOverview()'), 'normalizeTimeChallenge ist vor dem Zeit-Challenge-Rendering verfügbar.');
+assert.equal(/require\(['"]\.\/quest-logic['"]\)|require\(['"]\.\.\/quest-logic['"]\)/.test(appCode), false, 'Browser-App hängt nicht von quest-logic.js als Node-only-Datei ab.');
 const emptyProgress = () => ({ solvedLevelIds: [], levelStars: {} });
 const indexOf = id => LEVELS.findIndex(level => level.id === id);
 
