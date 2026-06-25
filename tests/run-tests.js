@@ -42,6 +42,34 @@ assert.equal(Object.values(solved.levelStars).every(stars => stars === 3), true)
 assert.deepEqual(solved.hintUsedLevelIds, [], 'Testmodus speichert keine Hinweisabzüge.');
 assert.deepEqual(solved.solutionViewedLevelIds, [], 'Testmodus speichert keine Lösungsabzüge.');
 
+const emptyStats = logic.calculateProfileStatistics(LEVELS, emptyProgress());
+assert.equal(emptyStats.total.solvedLevels, 0, 'Profil: Leerer Fortschritt zählt 0 gelöste Level.');
+assert.equal(emptyStats.total.stars, 0, 'Profil: Leerer Fortschritt zählt 0 Sterne.');
+assert.equal(emptyStats.total.percent, 0, 'Profil: Leerer Fortschritt zählt 0 Prozent.');
+const profileProgress = { solvedLevelIds: [1, 2, 31, 61], levelStars: { 1: 3, 2: 2, 31: 1, 61: 3 }, hintUsedLevelIds: [2], solutionViewedLevelIds: [31], unlockedBadgeDates: { first_steps: '2026-06-24' }, timeChallenge: { completedCount: 2, bestRemainingSecondsByLevel: { 2: 80, 31: 140 }, lastStartedLevelId: 31 }, score: 123 };
+const stats = logic.calculateProfileStatistics(LEVELS, profileProgress);
+assert.equal(stats.total.solvedLevels, 4, 'Profil: Gelöste Level werden korrekt gezählt.');
+assert.equal(stats.total.stars, 9, 'Profil: Sterne werden korrekt summiert.');
+assert.deepEqual(stats.sections.map(section => section.solvedLevels), [2, 1, 1], 'Profil: Bereiche werden getrennt gezählt.');
+assert.deepEqual(stats.sections.map(section => section.maxLevels), [30, 30, 20], 'Profil: Bereichsgrößen sind korrekt.');
+assert.equal(stats.help.hintsUsed, 1, 'Profil: Hinweise werden korrekt gezählt.');
+assert.equal(stats.help.solutionsViewed, 1, 'Profil: Lösungen werden korrekt gezählt.');
+assert.equal(stats.help.threeStarLevels, 2, 'Profil: 3-Sterne-Level werden korrekt gezählt.');
+assert.equal(stats.badges.unlocked, logic.calculateBadges(profileProgress).filter(badge => badge.unlocked).length, 'Profil: Abzeichenanzahl wird berechnet.');
+assert.equal(stats.timeChallenge.completedCount, 2, 'Profil: Zeit-Challenge-Erfolge werden dargestellt.');
+assert.equal(stats.timeChallenge.bestRemainingSeconds, 140, 'Profil: Beste Restzeit wird korrekt bestimmt.');
+assert.equal(stats.timeChallenge.bestLevelId, 31, 'Profil: Level mit bester Zeit wird korrekt bestimmt.');
+const legacyStats = logic.calculateProfileStatistics(LEVELS, { solvedLevelIds: [1], levelStars: { 1: 2 }, score: 7 });
+assert.equal(legacyStats.help.hintsUsed, 0, 'Profil: Alte Daten ohne Hilfefelder funktionieren.');
+assert.equal(legacyStats.timeChallenge.completedCount, 0, 'Profil: Alte Daten ohne Zeit-Challenge-Felder funktionieren.');
+const resetStats = logic.calculateProfileStatistics(LEVELS, logic.normalizeTimeChallenge({ solvedLevelIds: [], levelStars: {}, unlockedBadgeDates: {}, shownMilestones: [] }));
+assert.equal(resetStats.total.solvedLevels, 0, 'Profil: Reset setzt gelöste Level zurück.');
+assert.equal(resetStats.total.unlockedBadges, 0, 'Profil: Reset setzt Abzeichen zurück.');
+const testModeStats = logic.calculateProfileStatistics(LEVELS, solved);
+assert.equal(testModeStats.total.solvedLevels, 80, 'Profil: Testmodus liefert vollständige gelöste Level.');
+assert.equal(testModeStats.total.stars, 240, 'Profil: Testmodus liefert vollständige Sterne.');
+assert.deepEqual(testModeStats.sections.map(section => section.percent), [100, 100, 100], 'Profil: Testmodus liefert vollständige Bereichswerte.');
+
 
 const levelOne = LEVELS[0];
 const fullPoints = levelOne.points;

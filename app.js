@@ -638,10 +638,14 @@ const elements = {
   learnedOverviewTabButton: document.querySelector('#learnedOverviewTabButton'),
   replayTabButton: document.querySelector('#replayTabButton'),
   timeChallengeTabButton: document.querySelector('#timeChallengeTabButton'),
+  profileStatsTabButton: document.querySelector('#profileStatsTabButton'),
   levelsOverviewPanel: document.querySelector('#levelsOverviewPanel'),
   learnedOverviewPanel: document.querySelector('#learnedOverviewPanel'),
   replayOverviewPanel: document.querySelector('#replayOverviewPanel'),
   timeChallengeOverviewPanel: document.querySelector('#timeChallengeOverviewPanel'),
+  profileStatsOverviewPanel: document.querySelector('#profileStatsOverviewPanel'),
+  profileStatsSummary: document.querySelector('#profileStatsSummary'),
+  profileStatsContent: document.querySelector('#profileStatsContent'),
   timeChallengeSummary: document.querySelector('#timeChallengeSummary'),
   timeChallengeContent: document.querySelector('#timeChallengeContent'),
   timeChallengeTimer: document.querySelector('#timeChallengeTimer'),
@@ -742,6 +746,7 @@ elements.levelsTabButton.addEventListener('click', () => showOverviewTab('levels
 elements.learnedOverviewTabButton.addEventListener('click', () => showOverviewTab('learned'));
 elements.replayTabButton.addEventListener('click', () => showOverviewTab('replay'));
 elements.timeChallengeTabButton.addEventListener('click', () => showOverviewTab('timeChallenge'));
+elements.profileStatsTabButton.addEventListener('click', () => showOverviewTab('profileStats'));
 elements.replayAllFilterButton.addEventListener('click', () => setReplayFilter('all'));
 elements.replayUnderThreeFilterButton.addEventListener('click', () => setReplayFilter('underThreeStars'));
 elements.replayRandomButton.addEventListener('click', startRandomReplayLevel);
@@ -992,21 +997,26 @@ function showOverviewTab(tabName) {
   const showLearned = tabName === 'learned';
   const showReplay = tabName === 'replay';
   const showTimeChallenge = tabName === 'timeChallenge';
-  elements.levelsOverviewPanel.hidden = showLearned || showReplay || showTimeChallenge;
+  const showProfileStats = tabName === 'profileStats';
+  elements.levelsOverviewPanel.hidden = showLearned || showReplay || showTimeChallenge || showProfileStats;
   elements.learnedOverviewPanel.hidden = !showLearned;
   elements.replayOverviewPanel.hidden = !showReplay;
   elements.timeChallengeOverviewPanel.hidden = !showTimeChallenge;
-  elements.levelsTabButton.classList.toggle('active', !showLearned && !showReplay && !showTimeChallenge);
+  elements.profileStatsOverviewPanel.hidden = !showProfileStats;
+  elements.levelsTabButton.classList.toggle('active', !showLearned && !showReplay && !showTimeChallenge && !showProfileStats);
   elements.learnedOverviewTabButton.classList.toggle('active', showLearned);
   elements.replayTabButton.classList.toggle('active', showReplay);
   elements.timeChallengeTabButton.classList.toggle('active', showTimeChallenge);
-  elements.levelsTabButton.setAttribute('aria-selected', String(!showLearned && !showReplay && !showTimeChallenge));
+  elements.profileStatsTabButton.classList.toggle('active', showProfileStats);
+  elements.levelsTabButton.setAttribute('aria-selected', String(!showLearned && !showReplay && !showTimeChallenge && !showProfileStats));
   elements.learnedOverviewTabButton.setAttribute('aria-selected', String(showLearned));
   elements.replayTabButton.setAttribute('aria-selected', String(showReplay));
   elements.timeChallengeTabButton.setAttribute('aria-selected', String(showTimeChallenge));
+  elements.profileStatsTabButton.setAttribute('aria-selected', String(showProfileStats));
   if (showLearned) renderLearnedOverview();
   if (showReplay) renderReplayOverview();
   if (showTimeChallenge) renderTimeChallengeOverview();
+  if (showProfileStats) renderProfileStatsOverview();
 }
 
 function showDatabaseInfo() {
@@ -1198,6 +1208,55 @@ function applyBadgeUnlockDates(currentProgress) {
   const updatedProgress = { ...progress, unlockedBadgeDates };
   progress = previousProgress;
   return updatedProgress;
+}
+
+function calculateProfileStatisticsForUi() {
+  const normalized = normalizeTimeChallenge(normalizeHelpTracking(normalizeAchievementTracking(progress)));
+  const solved = new Set((Array.isArray(normalized.solvedLevelIds) ? normalized.solvedLevelIds : []).map(Number));
+  const badges = BADGE_DEFINITIONS.map(badge => ({ ...badge, unlocked: isBadgeUnlocked(badge.id) }));
+  const sectionRanges = [
+    { id: 'beginner', title: 'Anfänger', start: 1, end: 30 },
+    { id: 'advanced', title: 'Fortgeschritten', start: 31, end: 60 },
+    { id: 'master', title: 'Meister', start: 61, end: 80 }
+  ];
+  const bestTime = Object.entries(normalized.timeChallenge.bestRemainingSecondsByLevel || {}).reduce((best, [levelId, seconds]) => {
+    const remainingSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
+    return remainingSeconds > best.remainingSeconds ? { levelId: Number(levelId), remainingSeconds } : best;
+  }, { levelId: null, remainingSeconds: 0 });
+  return {
+    total: { solvedLevels: LEVELS.filter(level => solved.has(level.id)).length, totalLevels: LEVELS.length, stars: getCollectedStars(), maxStars: LEVELS.length * MAX_STARS, percent: LEVELS.length ? Math.floor((LEVELS.filter(level => solved.has(level.id)).length / LEVELS.length) * 100) : 0, score: Number(normalized.score) || 0, unlockedBadges: badges.filter(badge => badge.unlocked).length, totalBadges: badges.length, completedTimeChallenges: normalized.timeChallenge.completedCount },
+    sections: sectionRanges.map(section => {
+      const levels = LEVELS.filter(level => level.id >= section.start && level.id <= section.end);
+      const solvedLevels = levels.filter(level => solved.has(level.id)).length;
+      return { ...section, solvedLevels, maxLevels: levels.length, stars: levels.reduce((sum, level) => sum + getLevelStars(level.id), 0), percent: levels.length ? Math.floor((solvedLevels / levels.length) * 100) : 0 };
+    }),
+    help: { hintsUsed: normalized.hintUsedLevelIds.length, solutionsViewed: normalized.solutionViewedLevelIds.length, solvedWithoutHelp: LEVELS.filter(level => solved.has(level.id) && !normalized.hintUsedLevelIds.includes(level.id) && !normalized.solutionViewedLevelIds.includes(level.id)).length, threeStarLevels: Object.values(normalized.levelStars || {}).filter(stars => Number(stars) === MAX_STARS).length },
+    timeChallenge: { completedCount: normalized.timeChallenge.completedCount, bestRemainingSeconds: bestTime.remainingSeconds, bestLevelId: bestTime.levelId },
+    badges: { unlocked: badges.filter(badge => badge.unlocked).length, locked: badges.filter(badge => !badge.unlocked).length, total: badges.length }
+  };
+}
+
+function renderStatTile(label, value, detail = '') {
+  return `<article class="profile-stat-tile"><span>${label}</span><strong>${value}</strong>${detail ? `<small>${detail}</small>` : ''}</article>`;
+}
+
+function renderProfileStatsOverview() {
+  if (!elements.profileStatsContent) return;
+  const stats = calculateProfileStatisticsForUi();
+  elements.profileStatsSummary.textContent = `${stats.total.percent} % abgeschlossen`;
+  const sectionCards = stats.sections.map(section => `
+    <article class="profile-section-card">
+      <div class="profile-section-head"><h3>${section.title}</h3><span>${section.solvedLevels}/${section.maxLevels} Level</span></div>
+      <div class="profile-progress-track" role="progressbar" aria-label="${section.title}: ${section.percent} Prozent abgeschlossen" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${section.percent}"><span style="width: ${section.percent}%"></span></div>
+      <p>${section.stars} Sterne · ${section.percent} %</p>
+    </article>`).join('');
+  elements.profileStatsContent.innerHTML = `
+    <section class="profile-stats-card profile-stats-wide" aria-labelledby="profileTotalTitle"><h3 id="profileTotalTitle">Gesamtfortschritt</h3><div class="profile-stat-tiles">${renderStatTile('Gelöste Level', `${stats.total.solvedLevels}/${stats.total.totalLevels}`)}${renderStatTile('Sterne', `${stats.total.stars}/${stats.total.maxStars}`)}${renderStatTile('Fortschritt', `${stats.total.percent} %`)}${renderStatTile('Punktzahl', stats.total.score)}${renderStatTile('Abzeichen', `${stats.total.unlockedBadges}/${stats.total.totalBadges}`)}${renderStatTile('Zeit-Challenges', stats.total.completedTimeChallenges)}</div></section>
+    <section class="profile-stats-card profile-stats-wide" aria-labelledby="profileSectionsTitle"><h3 id="profileSectionsTitle">Fortschritt nach Bereichen</h3><div class="profile-section-grid">${sectionCards}</div></section>
+    <section class="profile-stats-card" aria-labelledby="profileHelpTitle"><h3 id="profileHelpTitle">Hilfe-Nutzung</h3><div class="profile-stat-tiles compact">${renderStatTile('Hinweise', stats.help.hintsUsed)}${renderStatTile('Lösungen', stats.help.solutionsViewed)}${renderStatTile('Ohne Hilfe', stats.help.solvedWithoutHelp)}${renderStatTile('3-Sterne-Level', stats.help.threeStarLevels)}</div></section>
+    <section class="profile-stats-card" aria-labelledby="profileTimeTitle"><h3 id="profileTimeTitle">Zeit-Challenge</h3><div class="profile-stat-tiles compact">${renderStatTile('Erfolgreich', stats.timeChallenge.completedCount)}${renderStatTile('Beste Restzeit', stats.timeChallenge.bestRemainingSeconds ? formatTimeChallengeSeconds(stats.timeChallenge.bestRemainingSeconds) : '—', stats.timeChallenge.bestLevelId ? `Level ${stats.timeChallenge.bestLevelId}` : '')}</div></section>
+    <section class="profile-stats-card" aria-labelledby="profileBadgesTitle"><h3 id="profileBadgesTitle">Abzeichen</h3><div class="profile-stat-tiles compact">${renderStatTile('Freigeschaltet', stats.badges.unlocked)}${renderStatTile('Gesperrt', stats.badges.locked)}</div><button class="secondary-button" type="button" data-profile-action="badges">Zur Abzeichenübersicht</button></section>`;
+  elements.profileStatsContent.querySelector('[data-profile-action="badges"]')?.addEventListener('click', () => showOverviewTab('levels'));
 }
 
 function renderBadges() {
@@ -2551,6 +2610,7 @@ function markLevelSolved() {
   renderCompletionCard();
   renderBadges();
   renderDailyChallenge();
+  renderProfileStatsOverview();
   checkAndShowMilestones();
 
   const bestMessage = isNewBest ? ` Neue Bestleistung: ${bestStars} von ${MAX_STARS} Sternen!` : '';
@@ -2745,6 +2805,7 @@ function markAllLevelsSolvedForTesting() {
   renderDailyChallenge();
   renderBadges();
   checkAndShowMilestones();
+  renderProfileStatsOverview();
   setOverviewFeedback('Testmodus: Alle Level wurden mit 3 Sternen als gelöst gespeichert.', 'success');
 }
 
@@ -2762,6 +2823,7 @@ function resetProgressForTesting() {
   renderDailyChallenge();
   renderBadges();
   hideMilestoneBanner();
+  renderProfileStatsOverview();
   showOverviewTab('levels');
   setOverviewFeedback('Testmodus: Der Fortschritt wurde vollständig zurückgesetzt.', 'success');
 }

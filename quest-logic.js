@@ -68,6 +68,66 @@ function recordTimeChallengeSuccess(progress = {}, levelId, remainingSeconds = 0
   };
 }
 
+
+const PROFILE_SECTIONS = [
+  { id: 'beginner', title: 'Anfänger', start: 1, end: 30 },
+  { id: 'advanced', title: 'Fortgeschritten', start: 31, end: 60 },
+  { id: 'master', title: 'Meister', start: 61, end: 80 }
+];
+
+function getBestTimeChallengeResult(progress = {}) {
+  const normalized = normalizeTimeChallenge(progress);
+  return Object.entries(normalized.timeChallenge.bestRemainingSecondsByLevel).reduce((best, [levelId, seconds]) => {
+    const remainingSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
+    if (!remainingSeconds || remainingSeconds <= best.remainingSeconds) return best;
+    return { levelId: Number(levelId), remainingSeconds };
+  }, { levelId: null, remainingSeconds: 0 });
+}
+
+function calculateProfileStatistics(levels = [], progress = {}) {
+  const normalized = normalizeTimeChallenge(normalizeAchievementTracking(normalizeHelpTracking(progress)));
+  const totalLevels = levels.length || 80;
+  const solvedLevelIds = getSolvedLevelIdSet(normalized);
+  const solvedLevels = levels.filter(level => solvedLevelIds.has(Number(level.id))).length || countSolvedLevels(normalized);
+  const badges = calculateBadges(normalized);
+  const bestTimeChallenge = getBestTimeChallengeResult(normalized);
+  const sectionStats = PROFILE_SECTIONS.map(section => {
+    const sectionLevels = levels.filter(level => Number(level.id) >= section.start && Number(level.id) <= section.end);
+    const maxLevels = sectionLevels.length || (section.end - section.start + 1);
+    const solved = countSolvedLevelsInRange(normalized, section.start, section.end);
+    const stars = sectionLevels.length
+      ? sectionLevels.reduce((sum, level) => sum + getLevelStars(normalized, level.id), 0)
+      : Object.entries(normalized.levelStars || {}).reduce((sum, [levelId, stars]) => Number(levelId) >= section.start && Number(levelId) <= section.end ? sum + Math.max(0, Math.min(MAX_STARS, Number(stars) || 0)) : sum, 0);
+    return { ...section, solvedLevels: solved, maxLevels, stars, percent: maxLevels ? Math.floor((solved / maxLevels) * 100) : 0 };
+  });
+  return {
+    total: {
+      solvedLevels,
+      totalLevels,
+      stars: countCollectedStars(normalized),
+      maxStars: totalLevels * MAX_STARS,
+      percent: totalLevels ? Math.floor((solvedLevels / totalLevels) * 100) : 0,
+      score: Math.max(0, Number(normalized.score) || 0),
+      unlockedBadges: badges.filter(badge => badge.unlocked).length,
+      totalBadges: badges.length,
+      completedTimeChallenges: normalized.timeChallenge.completedCount
+    },
+    sections: sectionStats,
+    help: {
+      hintsUsed: normalized.hintUsedLevelIds.length,
+      solutionsViewed: normalized.solutionViewedLevelIds.length,
+      solvedWithoutHelp: levels.filter(level => solvedLevelIds.has(Number(level.id)) && !normalized.hintUsedLevelIds.includes(level.id) && !normalized.solutionViewedLevelIds.includes(level.id)).length,
+      threeStarLevels: countThreeStarLevels(normalized)
+    },
+    timeChallenge: {
+      completedCount: normalized.timeChallenge.completedCount,
+      bestRemainingSeconds: bestTimeChallenge.remainingSeconds,
+      bestLevelId: bestTimeChallenge.levelId
+    },
+    badges: { unlocked: badges.filter(badge => badge.unlocked).length, locked: badges.filter(badge => !badge.unlocked).length, total: badges.length }
+  };
+}
+
 const BADGE_DEFINITIONS = [
   { id: 'first_steps', title: 'Erste Schritte', description: 'Erstes Level gelöst.', icon: '👣' },
   { id: 'star_collector', title: 'Sternensammler', description: 'Mindestens 25 Sterne gesammelt.', icon: '⭐' },
@@ -363,4 +423,4 @@ function solveLevelWithStars(levels, progress, levelId, earnedStars) {
 }
 function solveAllLevelsForTesting(levels, progress = {}) { const levelStars = levels.reduce((stars, level) => ({ ...stars, [level.id]: MAX_STARS }), {}); return applyBadgeUnlockDates({ ...normalizeAchievementTracking(normalizeHelpTracking(progress)), solvedLevelIds: levels.map(level => level.id), levelStars, hintUsedLevelIds: [], solutionViewedLevelIds: [], shownMilestones: getReachedMilestones({ solvedLevelIds: levels.map(level => level.id), levelStars }, levels.length), score: calculateScoreFromStars(levels, levelStars) }); }
 
-module.exports = { TIME_CHALLENGE_LIMIT_SECONDS, formatTimeChallengeSeconds, normalizeTimeChallenge, getTimeChallengeCandidateGroups, selectTimeChallengeLevel, isTimeChallengeSuccess, recordTimeChallengeStart, recordTimeChallengeSuccess, getLocalDateKey, normalizeDailyChallenge, getDailyChallengeCandidateGroups, selectDailyChallengeLevel, updateDailyChallengeProgress, hasDailyChallengeChanged, markDailyChallengeCompleted, BADGE_DEFINITIONS, MILESTONE_DEFINITIONS, normalizeAchievementTracking, calculateBadges, applyBadgeUnlockDates, getReachedMilestones, getNewMilestones, MAX_STARS, MIN_STARS_TO_UNLOCK_NEXT_LEVEL, BLOCKED_COMMANDS, isTestModeFromSearch, isLevelUnlocked, getLevelStars, isEveryLevelUnlockedForTesting, findBlockedCommand, hasMultipleStatements, isSelectStatement, calculateStarsForHelpUsage, calculatePointsForStars, calculateScoreFromStars, normalizeHelpTracking, getHelpUsageForLevel, getSolvedLevelsForReplay, filterReplayLevels, getRandomSolvedLevel, solveLevelWithStars, solveAllLevelsForTesting };
+module.exports = { PROFILE_SECTIONS, getBestTimeChallengeResult, calculateProfileStatistics, TIME_CHALLENGE_LIMIT_SECONDS, formatTimeChallengeSeconds, normalizeTimeChallenge, getTimeChallengeCandidateGroups, selectTimeChallengeLevel, isTimeChallengeSuccess, recordTimeChallengeStart, recordTimeChallengeSuccess, getLocalDateKey, normalizeDailyChallenge, getDailyChallengeCandidateGroups, selectDailyChallengeLevel, updateDailyChallengeProgress, hasDailyChallengeChanged, markDailyChallengeCompleted, BADGE_DEFINITIONS, MILESTONE_DEFINITIONS, normalizeAchievementTracking, calculateBadges, applyBadgeUnlockDates, getReachedMilestones, getNewMilestones, MAX_STARS, MIN_STARS_TO_UNLOCK_NEXT_LEVEL, BLOCKED_COMMANDS, isTestModeFromSearch, isLevelUnlocked, getLevelStars, isEveryLevelUnlockedForTesting, findBlockedCommand, hasMultipleStatements, isSelectStatement, calculateStarsForHelpUsage, calculatePointsForStars, calculateScoreFromStars, normalizeHelpTracking, getHelpUsageForLevel, getSolvedLevelsForReplay, filterReplayLevels, getRandomSolvedLevel, solveLevelWithStars, solveAllLevelsForTesting };
