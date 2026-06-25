@@ -227,13 +227,19 @@ produkte 1 ─── n bestellpositionen</pre>
       </section>
 
       <div class="overview-tabs" role="tablist" aria-label="Bereiche der Levelübersicht">
-        <button id="levelsTabButton" class="overview-tab active" type="button" role="tab" aria-selected="true" aria-controls="levelsOverviewPanel">Levelübersicht</button>
+        <button id="dashboardTabButton" class="overview-tab active" type="button" role="tab" aria-selected="true" aria-controls="dashboardOverviewPanel">Start</button>
+        <button id="levelsTabButton" class="overview-tab" type="button" role="tab" aria-selected="false" aria-controls="levelsOverviewPanel">Level</button>
         <button id="learnedOverviewTabButton" class="overview-tab" type="button" role="tab" aria-selected="false" aria-controls="learnedOverviewPanel">Was habe ich gelernt?</button>
         <button id="replayTabButton" class="overview-tab" type="button" role="tab" aria-selected="false" aria-controls="replayOverviewPanel">Wiederholen</button>
         <button id="timeChallengeTabButton" class="overview-tab" type="button" role="tab" aria-selected="false" aria-controls="timeChallengeOverviewPanel">Zeit-Challenge</button>
       </div>
 
-      <div id="levelsOverviewPanel" role="tabpanel" aria-labelledby="levelsTabButton">
+
+      <section id="dashboardOverviewPanel" class="dashboard-overview-panel" role="tabpanel" aria-labelledby="dashboardTabButton">
+        <div id="dashboardContent" class="dashboard-grid" aria-live="polite"></div>
+      </section>
+
+      <div id="levelsOverviewPanel" role="tabpanel" aria-labelledby="levelsTabButton" hidden>
       <section class="progress-card" aria-labelledby="progressTitle">
         <div class="progress-header">
           <span id="progressTitle">Fortschritt</span>

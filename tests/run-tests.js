@@ -249,4 +249,26 @@ const showEndCardBody = appCode.slice(appCode.indexOf('function showTimeChalleng
 assert.equal(/loadLevel\(/.test(showEndCardBody), false, 'Abschlusskarte lädt kein weiteres Level automatisch.');
 assert.equal(/stopTimeChallenge\('end-overview'\);\n\s*showLevelOverview\(\);/.test(showEndCardBody), true, 'Zur Übersicht beendet die Challenge sauber.');
 
+
+const dashboardUnsolved = logic.buildDashboardData(LEVELS, { solvedLevelIds: [1], levelStars: { 1: 2 } }, { date: '2026-06-25', isUnlocked: unlockedForProgress({ solvedLevelIds: [1], levelStars: { 1: 2 } }), random: () => 0 });
+assert.equal(dashboardUnsolved.nextMission.level.id, 2, 'Dashboard wählt das nächste ungelöste freigeschaltete Level.');
+const dashboardUnderThreeProgress = { solvedLevelIds: [1, 2], levelStars: { 1: 3, 2: 2 } };
+const dashboardUnderThree = logic.buildDashboardData(LEVELS, dashboardUnderThreeProgress, { date: '2026-06-25', isUnlocked: (_level, index) => index < 2, random: () => 0 });
+assert.equal(dashboardUnderThree.nextMission.level.id, 2, 'Dashboard fällt auf ein freigeschaltetes Level mit weniger als 3 Sternen zurück.');
+const dashboardComplete = logic.buildDashboardData(LEVELS, solved, { date: '2026-06-25', isUnlocked: () => true, random: () => 0 });
+assert.ok(dashboardComplete.nextMission.level, 'Dashboard liefert bei vollständig abgeschlossenen Leveln ein Wiederholungslevel.');
+assert.equal(dashboardUnsolved.dailyChallenge.level.id, dashboardUnsolved.dailyChallenge.levelId, 'Dashboard zeigt Tages-Challenge-Daten mit Level an.');
+const dashboardTime = logic.buildDashboardData(LEVELS, logic.recordCompletedTimeChallenge({ solvedLevelIds: [], levelStars: {} }, 88), { date: '2026-06-25', isUnlocked: () => true });
+assert.equal(dashboardTime.timeChallenge.completedChallengeCount, 1, 'Dashboard zeigt erfolgreich abgeschlossene Zeit-Challenges.');
+assert.equal(dashboardTime.timeChallenge.bestRemainingSeconds, 88, 'Dashboard zeigt beste Restzeit der Zeit-Challenge.');
+const dashboardProgress = logic.buildDashboardData(LEVELS, { solvedLevelIds: [1, 2], levelStars: { 1: 3, 2: 2 } }, { date: '2026-06-25', isUnlocked: () => true });
+assert.deepEqual(dashboardProgress.progress, logic.getProgressSummary(LEVELS, { solvedLevelIds: [1, 2], levelStars: { 1: 3, 2: 2 } }), 'Dashboard-Fortschritt stimmt mit der vorhandenen Statistiklogik überein.');
+assert.equal(logic.buildDashboardData(LEVELS, emptyProgress(), { date: '2026-06-25', isUnlocked: () => true }).activity.emptyText, 'Starte dein erstes Level und beginne deine SQL Quest.', 'Leere Aktivität zeigt den Starttext.');
+const oldDashboardProgress = logic.buildDashboardData(LEVELS, { solvedLevelIds: [1], levelStars: { 1: 3 } }, { date: '2026-06-25', isUnlocked: () => true });
+assert.equal(oldDashboardProgress.activity.level, null, 'Alte Fortschrittsdaten ohne Dashboard-Felder funktionieren.');
+const resetDashboard = logic.buildDashboardData(LEVELS, logic.normalizeDashboardActivity({ solvedLevelIds: [], levelStars: {} }), { date: '2026-06-25', isUnlocked: () => true });
+assert.equal(resetDashboard.progress.solvedLevels, 0, 'Reset erzeugt einen sauberen Dashboard-Startzustand.');
+const testModeDashboard = logic.buildDashboardData(LEVELS, solved, { date: '2026-06-25', isUnlocked: () => true });
+assert.equal(Boolean(testModeDashboard.nextMission.level && testModeDashboard.dailyChallenge.level && testModeDashboard.progress.totalLevels && testModeDashboard.badges.totalCount), true, 'Testmodus zeigt vollständige Dashboard-Daten.');
+
 console.log('Alle Tests erfolgreich.');
