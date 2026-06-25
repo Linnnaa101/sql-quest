@@ -3,6 +3,7 @@ const MIN_STARS_TO_UNLOCK_NEXT_LEVEL = 2;
 
 
 const TIME_CHALLENGE_LIMIT_SECONDS = 300;
+const TIME_CHALLENGE_LEVEL_COUNT = 5;
 
 function formatTimeChallengeSeconds(seconds = 0) {
   const safeSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
@@ -18,6 +19,9 @@ function normalizeTimeChallenge(progress = {}) {
     timeChallenge: {
       bestRemainingSecondsByLevel: challenge.bestRemainingSecondsByLevel && typeof challenge.bestRemainingSecondsByLevel === 'object' ? challenge.bestRemainingSecondsByLevel : {},
       completedCount: Number.isInteger(Number(challenge.completedCount)) ? Math.max(0, Number(challenge.completedCount)) : 0,
+      completedChallengeCount: Number.isInteger(Number(challenge.completedChallengeCount)) ? Math.max(0, Number(challenge.completedChallengeCount)) : (Number.isInteger(Number(challenge.completedCount)) ? Math.max(0, Number(challenge.completedCount)) : 0),
+      bestRemainingSeconds: Number.isFinite(Number(challenge.bestRemainingSeconds)) ? Math.max(0, Math.floor(Number(challenge.bestRemainingSeconds))) : 0,
+      bestExpiredSolvedCount: Number.isInteger(Number(challenge.bestExpiredSolvedCount)) ? Math.max(0, Number(challenge.bestExpiredSolvedCount)) : 0,
       lastStartedLevelId: Number.isInteger(Number(challenge.lastStartedLevelId)) ? Number(challenge.lastStartedLevelId) : null
     }
   };
@@ -39,6 +43,31 @@ function selectTimeChallengeLevel(levels = [], progress = {}, isUnlocked = () =>
   if (!candidates.length) return null;
   const randomValue = Math.max(0, Math.min(0.999999999999, Number(random()) || 0));
   return candidates[Math.floor(randomValue * candidates.length)] || null;
+}
+
+function shuffleTimeChallengeCandidates(candidates = [], random = Math.random) {
+  const shuffled = [...candidates];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomValue = Math.max(0, Math.min(0.999999999999, Number(random()) || 0));
+    const swapIndex = Math.floor(randomValue * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
+}
+
+function selectTimeChallengeLevels(levels = [], progress = {}, isUnlocked = () => true, random = Math.random, count = TIME_CHALLENGE_LEVEL_COUNT) {
+  const selected = [];
+  const selectedIds = new Set();
+  for (const group of getTimeChallengeCandidateGroups(levels, progress, isUnlocked)) {
+    const uniqueGroup = group.filter(level => level && !selectedIds.has(Number(level.id)));
+    for (const level of shuffleTimeChallengeCandidates(uniqueGroup, random)) {
+      if (selectedIds.has(Number(level.id))) continue;
+      selected.push(level);
+      selectedIds.add(Number(level.id));
+      if (selected.length >= count) return selected;
+    }
+  }
+  return selected;
 }
 
 function isTimeChallengeSuccess(activeChallenge = {}, levelId, remainingSeconds = 0) {
@@ -64,6 +93,31 @@ function recordTimeChallengeSuccess(progress = {}, levelId, remainingSeconds = 0
         ...normalized.timeChallenge.bestRemainingSecondsByLevel,
         [levelId]: Math.max(previousBest, safeRemaining)
       }
+    }
+  };
+}
+
+function recordCompletedTimeChallenge(progress = {}, remainingSeconds = 0) {
+  const normalized = normalizeTimeChallenge(progress);
+  const safeRemaining = Math.max(0, Math.floor(Number(remainingSeconds) || 0));
+  return {
+    ...normalized,
+    timeChallenge: {
+      ...normalized.timeChallenge,
+      completedChallengeCount: normalized.timeChallenge.completedChallengeCount + 1,
+      completedCount: normalized.timeChallenge.completedChallengeCount + 1,
+      bestRemainingSeconds: Math.max(normalized.timeChallenge.bestRemainingSeconds, safeRemaining)
+    }
+  };
+}
+
+function recordExpiredTimeChallenge(progress = {}, solvedCount = 0) {
+  const normalized = normalizeTimeChallenge(progress);
+  return {
+    ...normalized,
+    timeChallenge: {
+      ...normalized.timeChallenge,
+      bestExpiredSolvedCount: Math.max(normalized.timeChallenge.bestExpiredSolvedCount, Math.max(0, Number(solvedCount) || 0))
     }
   };
 }
@@ -363,4 +417,4 @@ function solveLevelWithStars(levels, progress, levelId, earnedStars) {
 }
 function solveAllLevelsForTesting(levels, progress = {}) { const levelStars = levels.reduce((stars, level) => ({ ...stars, [level.id]: MAX_STARS }), {}); return applyBadgeUnlockDates({ ...normalizeAchievementTracking(normalizeHelpTracking(progress)), solvedLevelIds: levels.map(level => level.id), levelStars, hintUsedLevelIds: [], solutionViewedLevelIds: [], shownMilestones: getReachedMilestones({ solvedLevelIds: levels.map(level => level.id), levelStars }, levels.length), score: calculateScoreFromStars(levels, levelStars) }); }
 
-module.exports = { TIME_CHALLENGE_LIMIT_SECONDS, formatTimeChallengeSeconds, normalizeTimeChallenge, getTimeChallengeCandidateGroups, selectTimeChallengeLevel, isTimeChallengeSuccess, recordTimeChallengeStart, recordTimeChallengeSuccess, getLocalDateKey, normalizeDailyChallenge, getDailyChallengeCandidateGroups, selectDailyChallengeLevel, updateDailyChallengeProgress, hasDailyChallengeChanged, markDailyChallengeCompleted, BADGE_DEFINITIONS, MILESTONE_DEFINITIONS, normalizeAchievementTracking, calculateBadges, applyBadgeUnlockDates, getReachedMilestones, getNewMilestones, MAX_STARS, MIN_STARS_TO_UNLOCK_NEXT_LEVEL, BLOCKED_COMMANDS, isTestModeFromSearch, isLevelUnlocked, getLevelStars, isEveryLevelUnlockedForTesting, findBlockedCommand, hasMultipleStatements, isSelectStatement, calculateStarsForHelpUsage, calculatePointsForStars, calculateScoreFromStars, normalizeHelpTracking, getHelpUsageForLevel, getSolvedLevelsForReplay, filterReplayLevels, getRandomSolvedLevel, solveLevelWithStars, solveAllLevelsForTesting };
+module.exports = { TIME_CHALLENGE_LIMIT_SECONDS, TIME_CHALLENGE_LEVEL_COUNT, formatTimeChallengeSeconds, normalizeTimeChallenge, getTimeChallengeCandidateGroups, selectTimeChallengeLevel, shuffleTimeChallengeCandidates, selectTimeChallengeLevels, isTimeChallengeSuccess, recordTimeChallengeStart, recordTimeChallengeSuccess, recordCompletedTimeChallenge, recordExpiredTimeChallenge, getLocalDateKey, normalizeDailyChallenge, getDailyChallengeCandidateGroups, selectDailyChallengeLevel, updateDailyChallengeProgress, hasDailyChallengeChanged, markDailyChallengeCompleted, BADGE_DEFINITIONS, MILESTONE_DEFINITIONS, normalizeAchievementTracking, calculateBadges, applyBadgeUnlockDates, getReachedMilestones, getNewMilestones, MAX_STARS, MIN_STARS_TO_UNLOCK_NEXT_LEVEL, BLOCKED_COMMANDS, isTestModeFromSearch, isLevelUnlocked, getLevelStars, isEveryLevelUnlockedForTesting, findBlockedCommand, hasMultipleStatements, isSelectStatement, calculateStarsForHelpUsage, calculatePointsForStars, calculateScoreFromStars, normalizeHelpTracking, getHelpUsageForLevel, getSolvedLevelsForReplay, filterReplayLevels, getRandomSolvedLevel, solveLevelWithStars, solveAllLevelsForTesting };

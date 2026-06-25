@@ -2097,11 +2097,41 @@ span {
   background: rgba(255, 209, 102, 0.14);
   color: #ffe6a3;
   font-weight: 800;
+  max-width: 100%;
+}
+.time-challenge-timer-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
 }
 .time-challenge-timer strong {
   color: var(--warning);
   font-size: clamp(1.25rem, 8vw, 2rem);
   line-height: 1;
+}
+.challenge-progress-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.16);
+}
+.challenge-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--warning), var(--success));
+}
+.time-challenge-end-card {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+.time-challenge-end-card p {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 .time-challenge-timer span {
   min-width: 0;
